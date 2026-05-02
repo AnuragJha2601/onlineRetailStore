@@ -1,10 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ProductUploadForm from '@/components/ProductUploadForm';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AdminPage() {
+    const { isAdmin, isLoading, logout } = useAuth();
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+    // Redirect to login if not authenticated
+    useEffect(() => {
+        if (!isLoading && !isAdmin) {
+            window.location.href = '/login';
+        }
+    }, [isAdmin, isLoading]);
 
     const handleSuccess = (text: string) => {
         setMessage({ type: 'success', text });
@@ -18,6 +27,8 @@ export default function AdminPage() {
         setTimeout(() => setMessage(null), 8000);
     };
 
+    if (isLoading || !isAdmin) return null;
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
@@ -28,19 +39,22 @@ export default function AdminPage() {
                             <h1 className="text-2xl font-bold text-gray-900">Dhanak Trinket</h1>
                             <p className="text-sm text-gray-600">Admin Dashboard</p>
                         </div>
-                        <nav className="flex space-x-4">
+                        <nav className="flex space-x-4 items-center">
                             <a
                                 href="/"
                                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                             >
                                 View Catalog
                             </a>
-                            <a
-                                href="/admin"
-                                className="bg-indigo-600 text-white px-3 py-2 rounded-md text-sm font-medium"
-                            >
+                            <span className="bg-indigo-600 text-white px-3 py-2 rounded-md text-sm font-medium">
                                 Admin Panel
-                            </a>
+                            </span>
+                            <button
+                                onClick={logout}
+                                className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium border border-gray-300 hover:border-red-300 transition-colors"
+                            >
+                                Logout
+                            </button>
                         </nav>
                     </div>
                 </div>
@@ -51,8 +65,8 @@ export default function AdminPage() {
                 {/* Success/Error Messages */}
                 {message && (
                     <div className={`mb-6 p-4 rounded-md ${message.type === 'success'
-                            ? 'bg-green-50 border border-green-200 text-green-800'
-                            : 'bg-red-50 border border-red-200 text-red-800'
+                        ? 'bg-green-50 border border-green-200 text-green-800'
+                        : 'bg-red-50 border border-red-200 text-red-800'
                         }`}>
                         <div className="flex">
                             <div className="flex-shrink-0">

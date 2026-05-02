@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import ProductCatalog from '@/components/ProductCatalog';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Home() {
+  const { isAdmin, logout } = useAuth();
   const [message, setMessage] = useState<{ type: 'error'; text: string } | null>(null);
 
   const handleError = (text: string) => {
@@ -22,19 +24,33 @@ export default function Home() {
               <h1 className="text-2xl font-bold text-gray-900">Dhanak Trinket</h1>
               <p className="text-sm text-gray-600">Ethnic Finds, Timeless Shine</p>
             </div>
-            <nav className="flex space-x-4">
-              <a
-                href="/"
-                className="bg-indigo-600 text-white px-3 py-2 rounded-md text-sm font-medium"
-              >
+            <nav className="flex space-x-4 items-center">
+              <span className="bg-indigo-600 text-white px-3 py-2 rounded-md text-sm font-medium">
                 Catalog
-              </a>
-              <a
-                href="/admin"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Admin
-              </a>
+              </span>
+              {isAdmin ? (
+                <>
+                  <a
+                    href="/admin"
+                    className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Admin
+                  </a>
+                  <button
+                    onClick={logout}
+                    className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium border border-gray-300 hover:border-red-300 transition-colors"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <a
+                  href="/login"
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Login
+                </a>
+              )}
             </nav>
           </div>
         </div>

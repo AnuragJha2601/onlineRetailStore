@@ -2,6 +2,7 @@ using AutoMapper;
 using DhanakTrinket.Core.DTOs;
 using DhanakTrinket.Core.Entities;
 using DhanakTrinket.Core.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DhanakTrinket.Api.Controllers;
@@ -100,6 +101,7 @@ public class ProductsController : ControllerBase
     /// <summary>
     /// Create a new product (Admin only)
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<ProductDto>>> CreateProduct([FromBody] CreateProductDto createProductDto)
     {
@@ -128,6 +130,7 @@ public class ProductsController : ControllerBase
     /// <summary>
     /// Upload product image (Admin only)
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPost("{id}/images")]
     public async Task<ActionResult<ApiResponse<ProductImageDto>>> UploadProductImage(int id, IFormFile image)
     {
@@ -207,6 +210,7 @@ public class ProductsController : ControllerBase
     /// <summary>
     /// Update a product (Admin only)
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
     public async Task<ActionResult<ApiResponse<ProductDto>>> UpdateProduct(int id, [FromBody] UpdateProductDto updateProductDto)
     {
@@ -234,6 +238,7 @@ public class ProductsController : ControllerBase
     /// <summary>
     /// Delete a product (Admin only)
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     public async Task<ActionResult<ApiResponse<object>>> DeleteProduct(int id)
     {

@@ -4,6 +4,9 @@ using DhanakTrinket.Infrastructure.Repositories;
 using DhanakTrinket.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Azure.Storage.Blobs;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,6 +77,28 @@ builder.Services.AddCors(options =>
 // Configure logging
 builder.Services.AddLogging();
 
+// Configure JWT Authentication
+var jwtSecret = builder.Configuration["Jwt:Secret"]
+    ?? throw new InvalidOperationException("Jwt:Secret configuration is required. Set Jwt__Secret environment variable.");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = "DhanakTrinketApi",
+            ValidAudience = "DhanakTrinketFrontend",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
@@ -88,6 +113,7 @@ var app = builder.Build();
 // Enable CORS
 app.UseCors("AllowFrontend");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -10,6 +10,18 @@ import {
 // Base API configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
 
+// Get stored JWT token for admin requests
+function getAuthToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('auth_token');
+}
+
+// Build Authorization header for admin endpoints
+function authHeader(): Record<string, string> {
+    const token = getAuthToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 // Generic API request helper
 async function apiRequest<T>(
     endpoint: string,
@@ -24,6 +36,14 @@ async function apiRequest<T>(
             },
             ...options,
         });
+
+        if (response.status === 401) {
+            // Token expired or invalid — redirect to login
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('auth_token');
+                window.location.href = '/login';
+            }
+        }
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -73,6 +93,7 @@ export const productApi = {
     async createProduct(product: CreateProductRequest): Promise<ApiResponse<Product>> {
         return apiRequest<Product>('/products', {
             method: 'POST',
+            headers: authHeader(),
             body: JSON.stringify(product),
         });
     },
@@ -81,6 +102,7 @@ export const productApi = {
     async updateProduct(id: number, product: UpdateProductRequest): Promise<ApiResponse<Product>> {
         return apiRequest<Product>(`/products/${id}`, {
             method: 'PUT',
+            headers: authHeader(),
             body: JSON.stringify(product),
         });
     },
@@ -89,6 +111,7 @@ export const productApi = {
     async deleteProduct(id: number): Promise<ApiResponse<null>> {
         return apiRequest<null>(`/products/${id}`, {
             method: 'DELETE',
+            headers: authHeader(),
         });
     },
 
@@ -100,15 +123,23 @@ export const productApi = {
     },
 
     // Upload product image (Admin only)
-    async uploadProductImage(productId: number, file: File): Promise<ApiResponse<any>> {
+    async uploadProductImage(productId: number, file: File): Promise<ApiResponse<unknown>> {
         try {
             const formData = new FormData();
             formData.append('image', file);
 
             const response = await fetch(`${API_BASE_URL}/products/${productId}/images`, {
                 method: 'POST',
+                headers: authHeader(),
                 body: formData,
             });
+
+            if (response.status === 401) {
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem('auth_token');
+                    window.location.href = '/login';
+                }
+            }
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
