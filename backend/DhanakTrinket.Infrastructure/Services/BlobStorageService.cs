@@ -21,8 +21,8 @@ public class BlobStorageService : IBlobStorageService
             // Get container client
             var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
 
-            // Ensure container exists
-            await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
+            // Ensure container exists (skip public access - container was pre-created)
+            await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
 
             // Generate unique filename
             var fileExtension = Path.GetExtension(fileName);
