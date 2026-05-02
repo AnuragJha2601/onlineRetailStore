@@ -97,4 +97,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Note**: This is an active development project. Features and functionality are continuously being added and improved. For the latest updates, check our [Open Issues](OPEN_ISSUES.md) or follow the repository.
 
-*Made with ❤️ for jewelry lovers everywhere*
+*Made with ❤️ for jewelry lovers everywhere*# Dhanak Trinket - Live Deployment
