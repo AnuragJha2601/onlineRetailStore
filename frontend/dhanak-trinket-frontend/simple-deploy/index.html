@@ -73,8 +73,10 @@
     </main>
 
     <script>
+        // Force production API - cache busting version 2.0
         const API_BASE_URL = 'https://api-dhanak-trinket-2026.azurewebsites.net';
         let allProducts = [];
+        console.log('🚀 Dhanak Trinket - Using Production API:', API_BASE_URL);
 
         // Load products when page loads
         document.addEventListener('DOMContentLoaded', loadProducts);
@@ -82,7 +84,8 @@
         async function loadProducts() {
             try {
                 document.getElementById('loading').classList.remove('hidden');
-                const response = await fetch(`${API_BASE_URL}/api/Products`);
+                console.log('📡 Fetching from:', `${API_BASE_URL}/api/Products`);
+                const response = await fetch(`${API_BASE_URL}/api/Products?v=2.0`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);

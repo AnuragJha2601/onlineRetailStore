@@ -127,7 +127,9 @@
     </main>
 
     <script>
+        // Force production API - cache busting version 2.0
         const API_BASE_URL = 'https://api-dhanak-trinket-2026.azurewebsites.net';
+        console.log('🚀 Dhanak Trinket Admin - Using Production API:', API_BASE_URL);
 
         document.addEventListener('DOMContentLoaded', function () {
             loadRecentProducts();
