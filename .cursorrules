@@ -1,0 +1,84 @@
+# Cursor AI Rules for Dhanak Trinket E-commerce Platform
+
+## Project Overview
+You're working on Dhanak Trinket - an ethnic finds e-commerce platform with .NET Core backend, Next.js frontend, and Azure cloud services.
+
+## Technology Stack
+- Backend: ASP.NET Core 8.0 Web API
+- Frontend: Next.js 14+ with TypeScript  
+- Database: Azure SQL Database
+- Storage: Azure Blob Storage
+- Cloud: Azure App Service + Static Web Apps
+
+## Code Style Rules
+
+### C# (.NET Core)
+- Use PascalCase for public members, camelCase for private fields
+- Always use async/await for database operations
+- Prefer LINQ methods over traditional loops
+- Use nullable reference types consistently
+- Implement proper error handling with Result patterns
+
+### TypeScript/React
+- No 'any' types - use proper type definitions
+- Prefer functional components with hooks
+- Use Tailwind CSS classes for styling
+- Always handle loading and error states
+- Use Next.js Image component for product photos
+
+### Database
+- Use Entity Framework Core with code-first migrations
+- Add audit fields (CreatedAt, UpdatedAt) to all entities
+- Implement soft deletes for important data
+- Use proper navigation properties for relationships
+
+## File Structure Conventions
+```
+/backend
+  /JewelryHaven.Api - Controllers and API configuration
+  /JewelryHaven.Core - Domain models and business logic
+  /JewelryHaven.Infrastructure - Data access and external services
+
+/frontend  
+  /components - Reusable UI components
+  /pages - Next.js page components
+  /services - API communication logic
+  /types - TypeScript type definitions
+```
+
+## Business Rules
+- All jewelry products must have at least one image
+- Stock status updates should be real-time
+- Mobile-first responsive design is mandatory  
+- Product likes don't require user authentication (for now)
+- SEO optimization is critical for product discovery
+
+## API Patterns
+- Use standardized response format with success/error structure
+- Implement proper HTTP status codes
+- Follow RESTful naming conventions
+- Add pagination to list endpoints
+- Include filtering and search capabilities
+
+## Performance Guidelines
+- Use Azure CDN for image delivery
+- Implement database query optimization
+- Add caching for frequently accessed data
+- Optimize images for different screen sizes
+- Use lazy loading for product listings
+
+## Security Rules
+- Validate all inputs server-side
+- Use parameterized queries to prevent SQL injection
+- Implement proper CORS configuration
+- Store sensitive configuration in Azure Key Vault
+- Plan for future authentication integration
+
+## Testing Requirements
+- Write unit tests for business logic
+- Create integration tests for API endpoints
+- Test mobile responsiveness
+- Validate image loading performance
+- Test error handling scenarios
+
+Remember: This is a jewelry business focusing on beautiful product presentation and excellent user experience. Always consider the visual and mobile aspects when suggesting code changes.

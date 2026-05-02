@@ -1,0 +1,301 @@
+'use client';
+
+import { useState } from 'react';
+import { ProductCategory, CreateProductRequest, getCategoryDisplayName } from '@/types/product';
+import { productApi } from '@/services/productApi';
+
+interface ProductUploadFormProps {
+    onSuccess?: (message: string) => void;
+    onError?: (message: string) => void;
+}
+
+export default function ProductUploadForm({ onSuccess, onError }: ProductUploadFormProps) {
+    const [isLoading, setIsLoading] = useState(false);
+    const [selectedImages, setSelectedImages] = useState<File[]>([]);
+    const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+
+    const [formData, setFormData] = useState<CreateProductRequest>({
+        name: '',
+        description: '',
+        category: ProductCategory.Bangles,
+        price: 0,
+        stockQuantity: 1,
+        isInStock: true,
+    });
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value, type } = e.target;
+
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'number' ? Number(value) :
+                type === 'checkbox' ? (e.target as HTMLInputElement).checked :
+                    name === 'category' ? Number(value) : value
+        }));
+    };
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        // Validate file types and sizes
+        const validFiles = files.filter(file => {
+            const isValidType = file.type.startsWith('image/');
+            const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB limit
+            return isValidType && isValidSize;
+        });
+
+        if (validFiles.length !== files.length) {
+            onError?.('Some files were rejected. Please ensure all files are images under 5MB.');
+        }
+
+        setSelectedImages(validFiles);
+
+        // Create preview URLs
+        const previewUrls = validFiles.map(file => URL.createObjectURL(file));
+        setImagePreviewUrls(previewUrls);
+    };
+
+    const removeImage = (index: number) => {
+        const newImages = selectedImages.filter((_, i) => i !== index);
+        const newPreviews = imagePreviewUrls.filter((_, i) => i !== index);
+
+        // Clean up the removed preview URL
+        URL.revokeObjectURL(imagePreviewUrls[index]);
+
+        setSelectedImages(newImages);
+        setImagePreviewUrls(newPreviews);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+
+        try {
+            // Create product first
+            const productResponse = await productApi.createProduct(formData);
+
+            if (!productResponse.success) {
+                throw new Error(productResponse.message || 'Failed to create product');
+            }
+
+            const createdProduct = productResponse.data;
+            if (!createdProduct) {
+                throw new Error('Product creation returned no data');
+            }
+
+            // Upload images if any are selected
+            if (selectedImages.length > 0 && createdProduct.id) {
+                const imageUploadPromises = selectedImages.map(image =>
+                    productApi.uploadProductImage(createdProduct.id, image)
+                );
+
+                const imageResults = await Promise.all(imageUploadPromises);
+                const failedUploads = imageResults.filter(result => !result.success);
+
+                if (failedUploads.length > 0) {
+                    onError?.(`Product created but ${failedUploads.length} image(s) failed to upload.`);
+                }
+            }
+
+            // Reset form
+            setFormData({
+                name: '',
+                description: '',
+                category: ProductCategory.Bangles,
+                price: 0,
+                stockQuantity: 1,
+                isInStock: true,
+            });
+            setSelectedImages([]);
+            setImagePreviewUrls([]);
+
+            onSuccess?.(`Product "${createdProduct.name}" created successfully!`);
+
+        } catch (error) {
+            console.error('Error creating product:', error);
+            onError?.(error instanceof Error ? error.message : 'Failed to create product');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const categories = Object.values(ProductCategory)
+        .filter(value => typeof value === 'number')
+        .map(value => ({
+            value: value as ProductCategory,
+            label: getCategoryDisplayName(value as ProductCategory)
+        }));
+
+    return (
+        <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+            <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Add New Product</h2>
+                <p className="text-gray-600">Upload a new product to Dhanak Trinket catalog</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Product Name */}
+                <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                        Product Name *
+                    </label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        required
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., Traditional Gold Bangles Set"
+                    />
+                </div>
+
+                {/* Description */}
+                <div>
+                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                        Description
+                    </label>
+                    <textarea
+                        id="description"
+                        name="description"
+                        rows={3}
+                        value={formData.description}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Describe your product features, material, occasion..."
+                    />
+                </div>
+
+                {/* Category and Price Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                            Category *
+                        </label>
+                        <select
+                            id="category"
+                            name="category"
+                            required
+                            value={formData.category}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        >
+                            {categories.map(({ value, label }) => (
+                                <option key={value} value={value}>
+                                    {label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+                            Price (₹) *
+                        </label>
+                        <input
+                            type="number"
+                            id="price"
+                            name="price"
+                            required
+                            min="0"
+                            step="0.01"
+                            value={formData.price}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="299"
+                        />
+                    </div>
+                </div>
+
+                {/* Stock Quantity and In Stock */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label htmlFor="stockQuantity" className="block text-sm font-medium text-gray-700 mb-1">
+                            Stock Quantity *
+                        </label>
+                        <input
+                            type="number"
+                            id="stockQuantity"
+                            name="stockQuantity"
+                            required
+                            min="0"
+                            value={formData.stockQuantity}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        />
+                    </div>
+
+                    <div className="flex items-center">
+                        <input
+                            type="checkbox"
+                            id="isInStock"
+                            name="isInStock"
+                            checked={formData.isInStock}
+                            onChange={handleInputChange}
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="isInStock" className="ml-2 block text-sm text-gray-700">
+                            Available for sale
+                        </label>
+                    </div>
+                </div>
+
+                {/* Image Upload */}
+                <div>
+                    <label htmlFor="images" className="block text-sm font-medium text-gray-700 mb-1">
+                        Product Images
+                    </label>
+                    <input
+                        type="file"
+                        id="images"
+                        multiple
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                        Select multiple images. Max 5MB per image. JPEG, PNG, WebP supported.
+                    </p>
+                </div>
+
+                {/* Image Previews */}
+                {imagePreviewUrls.length > 0 && (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Image Previews</label>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {imagePreviewUrls.map((url, index) => (
+                                <div key={index} className="relative">
+                                    <img
+                                        src={url}
+                                        alt={`Preview ${index + 1}`}
+                                        className="w-full h-24 object-cover rounded-md border border-gray-300"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => removeImage(index)}
+                                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Submit Button */}
+                <div className="flex justify-end pt-4">
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isLoading ? 'Creating...' : 'Create Product'}
+                    </button>
+                </div>
+            </form>
+        </div>
+    );
+}
