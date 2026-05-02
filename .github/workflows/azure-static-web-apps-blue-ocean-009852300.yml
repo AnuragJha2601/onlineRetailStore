@@ -43,9 +43,9 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLUE_OCEAN_009852300 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "frontend/dhanak-trinket-frontend"
+          app_location: "frontend/dhanak-trinket-frontend/out"
           api_location: ""
-          output_location: "out"
+          output_location: ""
           skip_app_build: true
 
   close_pull_request_job:
