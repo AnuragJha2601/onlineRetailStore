@@ -1,5 +1,6 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
 using DhanakTrinket.Core.Interfaces;
 
 namespace DhanakTrinket.Infrastructure.Services;
@@ -72,19 +73,36 @@ public class BlobStorageService : IBlobStorageService
             var containerClient = _blobServiceClient.GetBlobContainerClient(_defaultContainer);
             var blobClient = containerClient.GetBlobClient(blobPath);
 
-            // Check if blob exists
             var exists = await blobClient.ExistsAsync();
             if (!exists)
             {
                 throw new FileNotFoundException($"Image not found: {blobPath}");
             }
 
-            return blobClient.Uri.ToString();
+            return GenerateSasUrl(blobPath);
         }
         catch (Exception ex)
         {
             throw new InvalidOperationException($"Failed to get image URL: {ex.Message}", ex);
         }
+    }
+
+    public string GenerateSasUrl(string blobPath)
+    {
+        var blobClient = _blobServiceClient
+            .GetBlobContainerClient(_defaultContainer)
+            .GetBlobClient(blobPath);
+
+        var sasBuilder = new BlobSasBuilder
+        {
+            BlobContainerName = _defaultContainer,
+            BlobName = blobPath,
+            Resource = "b",
+            ExpiresOn = DateTimeOffset.UtcNow.AddHours(2)
+        };
+        sasBuilder.SetPermissions(BlobSasPermissions.Read);
+
+        return blobClient.GenerateSasUri(sasBuilder).ToString();
     }
 
     private static string GetContentType(string fileExtension)

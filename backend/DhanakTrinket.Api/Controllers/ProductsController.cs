@@ -58,6 +58,10 @@ public class ProductsController : ControllerBase
             }
 
             var productDtos = _mapper.Map<List<ProductDto>>(products.ToList());
+            // Generate fresh SAS URLs for all blob-stored images
+            foreach (var dto in productDtos)
+                foreach (var img in dto.Images.Where(i => !i.ImageUrl.StartsWith("data:") && !i.ImageUrl.StartsWith("http")))
+                    img.ImageUrl = _blobStorageService.GenerateSasUrl(img.ImageUrl);
             return Ok(ApiResponse<List<ProductDto>>.SuccessResponse(productDtos, "Products retrieved successfully"));
         }
         catch (Exception ex)
@@ -82,6 +86,8 @@ public class ProductsController : ControllerBase
             }
 
             var productDto = _mapper.Map<ProductDto>(product);
+            foreach (var img in productDto.Images.Where(i => !i.ImageUrl.StartsWith("data:") && !i.ImageUrl.StartsWith("http")))
+                img.ImageUrl = _blobStorageService.GenerateSasUrl(img.ImageUrl);
             return Ok(ApiResponse<ProductDto>.SuccessResponse(productDto, "Product retrieved successfully"));
         }
         catch (Exception ex)
@@ -160,7 +166,8 @@ public class ProductsController : ControllerBase
             {
                 using var stream = image.OpenReadStream();
                 blobPath = await _blobStorageService.UploadImageAsync(stream, image.FileName);
-                imageUrl = await _blobStorageService.GetImageUrlAsync(blobPath);
+                // Store blob path (durable); SAS URL generated fresh on each GET
+                imageUrl = blobPath;
             }
             catch (Exception blobEx)
             {
