@@ -59,9 +59,12 @@ builder.Services.AddCors(options =>
         }
         else
         {
-            var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? new string[0];
+            var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
             policy
-                .WithOrigins(allowedOrigins)
+                .SetIsOriginAllowed(origin =>
+                    origin.EndsWith(".azurestaticapps.net") ||
+                    origin.EndsWith(".azurewebsites.net") ||
+                    allowedOrigins.Contains(origin))
                 .AllowAnyMethod()
                 .AllowAnyHeader();
         }
