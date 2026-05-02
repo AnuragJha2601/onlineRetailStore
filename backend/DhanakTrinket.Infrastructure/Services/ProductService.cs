@@ -90,4 +90,9 @@ public class ProductService : IProductService
 
         await _productRepository.IncrementLikesAsync(id);
     }
+
+    public async Task AddProductImageAsync(DhanakTrinket.Core.Entities.ProductImage image)
+    {
+        await _productRepository.AddProductImageAsync(image);
+    }
 }

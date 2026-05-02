@@ -13,6 +13,7 @@ public interface IProductRepository
     Task DeleteAsync(int id);
     Task<bool> ExistsAsync(int id);
     Task IncrementLikesAsync(int id);
+    Task AddProductImageAsync(ProductImage image);
 }
 
 public interface IProductService
@@ -25,6 +26,7 @@ public interface IProductService
     Task<Product> UpdateProductAsync(Product product);
     Task DeleteProductAsync(int id);
     Task LikeProductAsync(int id);
+    Task AddProductImageAsync(ProductImage image);
 }
 
 public interface IBlobStorageService

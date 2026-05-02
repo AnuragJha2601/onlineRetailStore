@@ -97,4 +97,10 @@ public class ProductRepository : IProductRepository
             await _context.SaveChangesAsync();
         }
     }
+
+    public async Task AddProductImageAsync(DhanakTrinket.Core.Entities.ProductImage image)
+    {
+        _context.ProductImages.Add(image);
+        await _context.SaveChangesAsync();
+    }
 }

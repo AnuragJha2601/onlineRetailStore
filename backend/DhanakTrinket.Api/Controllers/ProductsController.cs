@@ -153,25 +153,39 @@ public class ProductsController : ControllerBase
                 return BadRequest(ApiResponse<ProductImageDto>.ErrorResponse("File size too large. Maximum size is 5MB"));
             }
 
-            // Upload to blob storage
-            using var stream = image.OpenReadStream();
-            var blobPath = await _blobStorageService.UploadImageAsync(stream, image.FileName);
-            var imageUrl = await _blobStorageService.GetImageUrlAsync(blobPath);
+            // Try blob storage, fall back to base64 data URL
+            string imageUrl;
+            string blobPath;
+            try
+            {
+                using var stream = image.OpenReadStream();
+                blobPath = await _blobStorageService.UploadImageAsync(stream, image.FileName);
+                imageUrl = await _blobStorageService.GetImageUrlAsync(blobPath);
+            }
+            catch (Exception blobEx)
+            {
+                _logger.LogWarning(blobEx, "Blob storage unavailable, storing image as base64");
+                using var ms = new MemoryStream();
+                await image.CopyToAsync(ms);
+                var base64 = Convert.ToBase64String(ms.ToArray());
+                imageUrl = $"data:{image.ContentType};base64,{base64}";
+                blobPath = $"base64/{Guid.NewGuid()}";
+            }
 
-            // Create product image record
+            // Save image record to database
             var productImage = new ProductImage
             {
                 ProductId = id,
                 ImageUrl = imageUrl,
                 BlobPath = blobPath,
                 AltText = $"{product.Name} image",
-                IsPrimary = !product.Images.Any(), // First image is primary
+                IsPrimary = !product.Images.Any(),
                 DisplayOrder = product.Images.Count,
                 CreatedAt = DateTime.UtcNow
             };
 
-            // Add image to product (this would require updating the repository)
-            // For now, return the created image info
+            await _productService.AddProductImageAsync(productImage);
+
             var imageDto = _mapper.Map<ProductImageDto>(productImage);
 
             return Ok(ApiResponse<ProductImageDto>.SuccessResponse(imageDto, "Image uploaded successfully"));
