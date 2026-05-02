@@ -4,6 +4,7 @@ using DhanakTrinket.Infrastructure.Repositories;
 using DhanakTrinket.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Azure.Storage.Blobs;
+using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,8 +31,18 @@ builder.Services.AddDbContext<DhanakTrinketDbContext>(options =>
 // Configure Azure Blob Storage
 builder.Services.AddSingleton(provider =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("BlobStorage");
-    return new BlobServiceClient(connectionString);
+    if (builder.Environment.IsDevelopment())
+    {
+        var connectionString = builder.Configuration.GetConnectionString("BlobStorage");
+        return new BlobServiceClient(connectionString);
+    }
+    else
+    {
+        // Use Managed Identity in production (no secrets needed)
+        var blobServiceUri = new Uri(builder.Configuration["BlobStorage:ServiceUri"]
+            ?? "https://stdhanak2026prod.blob.core.windows.net");
+        return new BlobServiceClient(blobServiceUri, new DefaultAzureCredential());
+    }
 });
 
 // Configure AutoMapper
