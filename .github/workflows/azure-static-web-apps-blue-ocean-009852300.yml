@@ -32,6 +32,8 @@ jobs:
           npm ci
           
       - name: Build Next.js app
+        env:
+          NEXT_PUBLIC_API_BASE_URL: https://api-dhanak-trinket-2026.azurewebsites.net/api
         run: |
           cd frontend/dhanak-trinket-frontend
           npm run build
