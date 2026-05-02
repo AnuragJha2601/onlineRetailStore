@@ -1,0 +1,15 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/images/*.{png,jpg,gif,ico}", "/_next/*", "/favicon.ico"]
+  },
+  "routes": [
+    {
+      "route": "/admin",
+      "rewrite": "/admin/index.html"
+    }
+  ],
+  "mimeTypes": {
+    ".json": "text/json"
+  }
+}
