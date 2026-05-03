@@ -4,7 +4,10 @@ import {
     UpdateProductRequest,
     ProductFilterRequest,
     ProductCategory,
-    ApiResponse
+    ApiResponse,
+    RecordSaleRequest,
+    SaleDto,
+    SalesSummaryDto,
 } from '@/types/product';
 
 // Base API configuration
@@ -155,6 +158,34 @@ export const productApi = {
                 errors: [error instanceof Error ? error.message : 'Unknown error'],
             };
         }
+    },
+
+    // Record a sale (Admin only) — called from "Mark as Sold" modal
+    async recordSale(request: RecordSaleRequest): Promise<ApiResponse<SaleDto>> {
+        return apiRequest<SaleDto>('/sales', {
+            method: 'POST',
+            headers: authHeader(),
+            body: JSON.stringify(request),
+        });
+    },
+
+    // Get sales list with optional filters (Admin only)
+    async getSales(year?: number, month?: number): Promise<ApiResponse<SaleDto[]>> {
+        const params = new URLSearchParams();
+        if (year) params.append('year', year.toString());
+        if (month) params.append('month', month.toString());
+        const qs = params.toString();
+        return apiRequest<SaleDto[]>(`/sales${qs ? `?${qs}` : ''}`, {
+            headers: authHeader(),
+        });
+    },
+
+    // Get monthly P&L summary (Admin only)
+    async getSalesSummary(year?: number): Promise<ApiResponse<SalesSummaryDto[]>> {
+        const qs = year ? `?year=${year}` : '';
+        return apiRequest<SalesSummaryDto[]>(`/sales/summary${qs}`, {
+            headers: authHeader(),
+        });
     },
 };
 

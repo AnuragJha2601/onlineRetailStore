@@ -12,6 +12,8 @@ public class DhanakTrinketDbContext : DbContext
 
     public DbSet<Product> Products { get; set; }
     public DbSet<ProductImage> ProductImages { get; set; }
+    public DbSet<Sale> Sales { get; set; }
+    public DbSet<WholesaleDeal> WholesaleDeals { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,13 +61,55 @@ public class DhanakTrinketDbContext : DbContext
             entity.HasIndex(e => e.IsPrimary);
         });
 
+        // Sale configuration
+        modelBuilder.Entity<Sale>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ProductName).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.SellingPrice).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.TotalAmount).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.SaleType).HasConversion<int>();
+            entity.Property(e => e.CustomerName).HasMaxLength(255);
+            entity.Property(e => e.CustomerPhone).HasMaxLength(20);
+            entity.Property(e => e.SaleChannel).HasMaxLength(100);
+            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasOne(e => e.Product)
+                  .WithMany()
+                  .HasForeignKey(e => e.ProductId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.WholesaleDeal)
+                  .WithMany(d => d.Sales)
+                  .HasForeignKey(e => e.WholesaleDealId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => e.SaleDate);
+            entity.HasIndex(e => e.SaleType);
+            entity.HasIndex(e => e.ProductId);
+        });
+
+        // WholesaleDeal configuration
+        modelBuilder.Entity<WholesaleDeal>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.BuyerName).HasMaxLength(255);
+            entity.Property(e => e.BuyerPhone).HasMaxLength(20);
+            entity.Property(e => e.TotalAmount).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.HasIndex(e => e.DealDate);
+        });
+
         // Seed initial data for development
         SeedData(modelBuilder);
     }
 
     private static void SeedData(ModelBuilder modelBuilder)
     {
-        // Seed some sample products for development
+        // Seed some sample products for development — use static dates to avoid EF migration churn
+        var seedDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         modelBuilder.Entity<Product>().HasData(
             new Product
             {
@@ -77,8 +121,8 @@ public class DhanakTrinketDbContext : DbContext
                 IsInStock = true,
                 StockQuantity = 10,
                 LikesCount = 0,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = seedDate,
+                UpdatedAt = seedDate
             },
             new Product
             {
@@ -90,8 +134,8 @@ public class DhanakTrinketDbContext : DbContext
                 IsInStock = true,
                 StockQuantity = 5,
                 LikesCount = 0,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = seedDate,
+                UpdatedAt = seedDate
             },
             new Product
             {
@@ -103,8 +147,8 @@ public class DhanakTrinketDbContext : DbContext
                 IsInStock = false,
                 StockQuantity = 0,
                 LikesCount = 0,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = seedDate,
+                UpdatedAt = seedDate
             }
         );
     }

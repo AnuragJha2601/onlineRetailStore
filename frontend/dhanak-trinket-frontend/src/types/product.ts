@@ -83,3 +83,55 @@ export const getCategoryDisplayName = (category: ProductCategory): string => {
     };
     return categoryNames[category] || 'Unknown';
 };
+
+// ─── Sales types ──────────────────────────────────────────────────────────────
+
+export enum SaleType {
+    Retail = 1,
+    Wholesale = 2
+}
+
+export interface RecordSaleRequest {
+    productId: number;
+    productName: string;
+    saleType: SaleType;
+    quantitySold: number;
+    sellingPrice: number;
+    saleDate: string; // ISO string
+    buyerName?: string;
+    buyerPhone?: string;
+    customerName?: string;
+    customerPhone?: string;
+    saleChannel?: string;
+    notes?: string;
+}
+
+export interface SaleDto {
+    id: number;
+    productId?: number;
+    productName: string;
+    saleType: string;
+    quantitySold: number;
+    sellingPrice: number;
+    totalAmount: number;
+    saleDate: string;
+    customerName?: string;
+    customerPhone?: string;
+    saleChannel?: string;
+    notes?: string;
+    wholesaleDealId?: number;
+    createdAt: string;
+}
+
+export const SALE_CHANNELS = ['Website', 'WhatsApp', 'Instagram', 'In-Person', 'Other'] as const;
+
+export interface SalesSummaryDto {
+    year: number;
+    month: number;
+    monthName: string;
+    totalRevenue: number;
+    totalItemsSold: number;
+    retailCount: number;
+    wholesaleCount: number;
+    sales: SaleDto[];
+}

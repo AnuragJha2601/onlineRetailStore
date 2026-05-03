@@ -1,12 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ProductUploadForm from '@/components/ProductUploadForm';
+import MarkAsSoldModal from '@/components/MarkAsSoldModal';
 import { useAuth } from '@/contexts/AuthContext';
+import { Product } from '@/types/product';
+import { productApi } from '@/services/productApi';
 
 export default function AdminPage() {
     const { isAdmin, isLoading, logout } = useAuth();
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [soldModalProduct, setSoldModalProduct] = useState<Product | null>(null);
+
+    const loadProducts = useCallback(async () => {
+        const res = await productApi.getProducts({ inStockOnly: false, pageSize: 100 });
+        if (res.success && res.data) setProducts(res.data);
+    }, []);
 
     // Redirect to login if not authenticated
     useEffect(() => {
@@ -15,9 +25,13 @@ export default function AdminPage() {
         }
     }, [isAdmin, isLoading]);
 
+    useEffect(() => {
+        if (isAdmin) loadProducts();
+    }, [isAdmin, loadProducts]);
+
     const handleSuccess = (text: string) => {
         setMessage({ type: 'success', text });
-        // Auto-clear success message after 5 seconds
+        loadProducts(); // refresh stock counts
         setTimeout(() => setMessage(null), 5000);
     };
 
@@ -127,7 +141,68 @@ export default function AdminPage() {
                         <li>• Keep stock quantities updated to avoid overselling</li>
                     </ul>
                 </div>
+
+                {/* ── Inventory — Mark as Sold ───────────────────────────── */}
+                <div className="mt-10">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-1">Inventory</h2>
+                    <p className="text-sm text-gray-500 mb-4">Click &quot;Mark as Sold&quot; on any item to record a sale and update stock.</p>
+
+                    {products.length === 0 ? (
+                        <p className="text-gray-400 text-sm">No products found.</p>
+                    ) : (
+                        <div className="overflow-hidden border border-gray-200 rounded-lg">
+                            <table className="min-w-full divide-y divide-gray-200 text-sm">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left font-medium text-gray-500">Product</th>
+                                        <th className="px-4 py-3 text-left font-medium text-gray-500">Category</th>
+                                        <th className="px-4 py-3 text-right font-medium text-gray-500">Price</th>
+                                        <th className="px-4 py-3 text-center font-medium text-gray-500">Stock</th>
+                                        <th className="px-4 py-3 text-center font-medium text-gray-500">Status</th>
+                                        <th className="px-4 py-3 text-center font-medium text-gray-500">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-100">
+                                    {products.map(p => (
+                                        <tr key={p.id} className={`hover:bg-gray-50 ${!p.isInStock ? 'opacity-60' : ''}`}>
+                                            <td className="px-4 py-3 font-medium text-gray-900 max-w-[200px] truncate">{p.name}</td>
+                                            <td className="px-4 py-3 text-gray-500">{p.category}</td>
+                                            <td className="px-4 py-3 text-right text-gray-700">₹{p.price.toFixed(0)}</td>
+                                            <td className="px-4 py-3 text-center text-gray-700">{p.stockQuantity}</td>
+                                            <td className="px-4 py-3 text-center">
+                                                {p.isInStock ? (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">In Stock</span>
+                                                ) : (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Sold Out</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <button
+                                                    onClick={() => setSoldModalProduct(p)}
+                                                    disabled={p.stockQuantity === 0}
+                                                    className="px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                                >
+                                                    Mark as Sold
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
             </main>
+
+            {/* Mark as Sold Modal */}
+            {soldModalProduct && (
+                <MarkAsSoldModal
+                    product={soldModalProduct}
+                    onClose={() => setSoldModalProduct(null)}
+                    onSuccess={handleSuccess}
+                    onError={handleError}
+                />
+            )}
         </div>
     );
 }

@@ -124,12 +124,12 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<DhanakTrinketDbContext>();
     if (app.Environment.IsDevelopment())
     {
-        context.Database.EnsureCreated();
+        context.Database.Migrate();
     }
     else
     {
-        // In production, ensure database is created and run any pending migrations
-        context.Database.EnsureCreated();
+        // In production, apply any pending EF migrations automatically on startup
+        context.Database.Migrate();
     }
 }
 

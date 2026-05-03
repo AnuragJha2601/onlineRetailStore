@@ -8,11 +8,11 @@ Your configuration has been secured by removing secrets from files. Follow this 
 
 ## 🚨 Security Issues Addressed
 
-### ✅ Fixed Issues:
-- ❌ **Removed**: Azure Storage Account Key from appsettings.Production.json
-- ❌ **Removed**: Application Insights Instrumentation Key from config files
-- ✅ **Added**: Backend .gitignore to exclude sensitive files
-- ✅ **Secured**: Frontend .env files already properly ignored
+### Current State:
+- ⚠️ **In progress**: Azure Blob Storage account key is in `appsettings.Production.json` (gitignored, not in source control — but should move to App Service config)
+- ✅ **Secured**: `appsettings.Production.json` is in `.gitignore` — never committed
+- ✅ **Secured**: Database uses Managed Identity (`Authentication=Active Directory Default`) — no password
+- ✅ **Secured**: CORS uses `SetIsOriginAllowed` lambda — restricts to `*.azurestaticapps.net` and `*.azurewebsites.net` only
 
 ### 🔧 Secure Configuration Required:
 
@@ -105,13 +105,12 @@ Consider adding rate limiting middleware.
 
 Before deploying, verify:
 
-- [ ] No secrets in appsettings.Production.json
-- [ ] Connection strings configured in Azure App Service
-- [ ] Application settings configured in Azure App Service  
-- [ ] .gitignore files prevent committing sensitive data
-- [ ] Database uses Azure AD authentication
-- [ ] CORS restricted to your domains only
-- [ ] HTTPS enforced (Azure App Service default)
+- [x] `appsettings.Production.json` excluded from git via `.gitignore`
+- [ ] Move blob connection string to Azure App Service environment variable (currently in gitignored file)
+- [x] Database uses Azure AD authentication (Managed Identity) — no password stored anywhere
+- [x] CORS restricted to `*.azurestaticapps.net` and `*.azurewebsites.net`
+- [x] HTTPS enforced (Azure App Service default)
+- [x] Private blob container — images served via time-limited SAS URLs
 
 ## 🚨 What NOT to Do
 

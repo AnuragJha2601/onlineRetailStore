@@ -96,3 +96,55 @@ public class ProductFilterRequest
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 20;
 }
+
+// ─── Sales DTOs ──────────────────────────────────────────────────────────────
+
+public class RecordSaleRequest
+{
+    public int ProductId { get; set; }
+    public string ProductName { get; set; } = string.Empty;
+    public SaleType SaleType { get; set; } = SaleType.Retail;
+    public int QuantitySold { get; set; } = 1;
+    public decimal SellingPrice { get; set; }
+    public DateTime SaleDate { get; set; } = DateTime.UtcNow;
+
+    // Wholesale only
+    public string? BuyerName { get; set; }
+    public string? BuyerPhone { get; set; }
+
+    // Optional
+    public string? CustomerName { get; set; }
+    public string? CustomerPhone { get; set; }
+    public string? SaleChannel { get; set; }
+    public string? Notes { get; set; }
+}
+
+public class SaleDto
+{
+    public int Id { get; set; }
+    public int? ProductId { get; set; }
+    public string ProductName { get; set; } = string.Empty;
+    public string SaleType { get; set; } = string.Empty;
+    public int QuantitySold { get; set; }
+    public decimal SellingPrice { get; set; }
+    public decimal TotalAmount { get; set; }
+    public DateTime SaleDate { get; set; }
+    public string? CustomerName { get; set; }
+    public string? CustomerPhone { get; set; }
+    public string? SaleChannel { get; set; }
+    public string? Notes { get; set; }
+    public int? WholesaleDealId { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class SalesSummaryDto
+{
+    public int Year { get; set; }
+    public int Month { get; set; }
+    public string MonthName { get; set; } = string.Empty;
+    public decimal TotalRevenue { get; set; }
+    public int TotalItemsSold { get; set; }
+    public int RetailCount { get; set; }
+    public int WholesaleCount { get; set; }
+    public List<SaleDto> Sales { get; set; } = new();
+}
