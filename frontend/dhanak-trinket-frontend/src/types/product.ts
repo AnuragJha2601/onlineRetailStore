@@ -92,7 +92,7 @@ export enum SaleType {
 }
 
 export interface RecordSaleRequest {
-    productId: number;
+    productId?: number;        // omit for custom items / wholesale deals
     productName: string;
     saleType: SaleType;
     quantitySold: number;

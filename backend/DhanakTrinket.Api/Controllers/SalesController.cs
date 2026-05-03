@@ -23,10 +23,8 @@ public class SalesController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ApiResponse<SaleDto>>> RecordSale([FromBody] RecordSaleRequest request)
     {
-        // Validate product exists
-        var product = await _db.Products.FindAsync(request.ProductId);
-        if (product == null)
-            return NotFound(ApiResponse<SaleDto>.ErrorResponse("Product not found."));
+        if (string.IsNullOrWhiteSpace(request.ProductName))
+            return BadRequest(ApiResponse<SaleDto>.ErrorResponse("Product name is required."));
 
         if (request.QuantitySold <= 0)
             return BadRequest(ApiResponse<SaleDto>.ErrorResponse("Quantity must be at least 1."));
@@ -34,9 +32,18 @@ public class SalesController : ControllerBase
         if (request.SellingPrice <= 0)
             return BadRequest(ApiResponse<SaleDto>.ErrorResponse("Selling price must be greater than zero."));
 
+        // Look up the catalog product only when ProductId is provided
+        DhanakTrinket.Core.Entities.Product? product = null;
+        if (request.ProductId.HasValue)
+        {
+            product = await _db.Products.FindAsync(request.ProductId.Value);
+            if (product == null)
+                return NotFound(ApiResponse<SaleDto>.ErrorResponse("Product not found."));
+        }
+
         WholesaleDeal? deal = null;
 
-        // For wholesale: create or attach to a deal
+        // For wholesale: create a deal record
         if (request.SaleType == SaleType.Wholesale)
         {
             deal = new WholesaleDeal
@@ -54,7 +61,7 @@ public class SalesController : ControllerBase
         var sale = new Sale
         {
             ProductId = request.ProductId,
-            ProductName = product.Name,
+            ProductName = product?.Name ?? request.ProductName,
             SaleType = request.SaleType,
             QuantitySold = request.QuantitySold,
             SellingPrice = request.SellingPrice,
@@ -70,17 +77,18 @@ public class SalesController : ControllerBase
 
         _db.Sales.Add(sale);
 
-        // Reduce stock on the product
-        product.StockQuantity = Math.Max(0, product.StockQuantity - request.QuantitySold);
-        if (product.StockQuantity == 0)
-            product.IsInStock = false;
-        product.UpdatedAt = DateTime.UtcNow;
+        // Reduce stock only for catalog products
+        if (product != null)
+        {
+            product.StockQuantity = Math.Max(0, product.StockQuantity - request.QuantitySold);
+            if (product.StockQuantity == 0)
+                product.IsInStock = false;
+            product.UpdatedAt = DateTime.UtcNow;
+        }
 
         // Update wholesale deal total
         if (deal != null)
-        {
             deal.TotalAmount = sale.TotalAmount;
-        }
 
         await _db.SaveChangesAsync();
 

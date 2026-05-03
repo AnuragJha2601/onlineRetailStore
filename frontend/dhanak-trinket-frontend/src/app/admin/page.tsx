@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react';
 import ProductUploadForm from '@/components/ProductUploadForm';
 import InventoryScreen from '@/components/InventoryScreen';
 import ExpensesScreen from '@/components/ExpensesScreen';
+import SalesScreen from '@/components/SalesScreen';
 import { useAuth } from '@/contexts/AuthContext';
 
-type Tab = 'inventory' | 'expenses' | 'add-product';
+type Tab = 'inventory' | 'expenses' | 'sales' | 'add-product';
 
 const TABS: { id: Tab; label: string }[] = [
     { id: 'inventory', label: 'Inventory' },
     { id: 'expenses', label: 'Expenses' },
+    { id: 'sales', label: 'Sales' },
     { id: 'add-product', label: 'Add Product' },
 ];
 
@@ -65,6 +67,8 @@ export default function AdminPage() {
                 {activeTab === 'inventory' && <InventoryScreen />}
 
                 {activeTab === 'expenses' && <ExpensesScreen />}
+
+                {activeTab === 'sales' && <SalesScreen />}
 
                 {activeTab === 'add-product' && (
                     <div className="max-w-3xl">

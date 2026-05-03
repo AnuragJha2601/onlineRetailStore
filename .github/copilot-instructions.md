@@ -157,4 +157,35 @@ frontend/
 - **Specification pattern** for dynamic queries
 - **DTO mapping** with AutoMapper between layers
 
+## Implemented Features (as of May 2026)
+- Product catalog with images (Azure Blob Storage + CDN)
+- Admin authentication (JWT, BCrypt, single `dhanakadmin` user, 8-hour tokens)
+- Inventory management: add product, mark as sold, stock tracking
+- Expenses tracking: create expense with category + optional bill image upload
+- Sales recording: retail (catalog or custom item) + wholesale (description + total)
+- Admin dashboard: tabbed UI — Inventory | Expenses | Sales | Add Product
+
+## Deployment
+- **Backend**: Azure App Service `api-dhanak-trinket-2026`, manually `dotnet publish → zip → az webapp deploy`
+- **Frontend**: Azure Static Web Apps `blue-ocean-089852300.7.azurestaticapps.net`, auto-deploys on `git push` via GitHub Actions
+- **Database**: Azure SQL `db-dhanak-trinket`. EF migrations run on startup. Provider-aware migration branching required (`ActiveProvider == "Microsoft.EntityFrameworkCore.SqlServer"` for raw SQL DDL vs EF methods for SQLite).
+- **Auth localStorage key**: `dhanak_admin_token` — must be consistent in both `AuthContext.tsx` and `productApi.ts`
+
+## Known Gotchas
+- `apiRequest` spread order: always put `...options` **first**, then override `headers` — otherwise the headers object is overwritten
+- FormData uploads: do NOT set `Content-Type` header; let the browser set the multipart boundary automatically
+- `PendingModelChangesWarning`: suppress with `options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning))` in Program.cs
+- Azure SQL `TEXT` column: cannot have a `DEFAULT` constraint — use `nvarchar` instead
+
+## Future Features (Planned)
+- **P&L dashboard**: Monthly revenue-vs-expenses chart and summary table
+- **Wholesale line-item breakdown**: Replace single description with structured item list (quantity, unit price per SKU)
+- **Product image upload from UI**: Currently requires direct Azure Blob upload; build an upload widget in the admin Add Product tab
+- **Customer management / CRM**: Link sales to customer profiles, view purchase history
+- **Export to CSV**: Download sales and expense data for accounting
+- **Google OAuth admin login**: Replace username/password with Google SSO for the admin account
+- **Inventory alerts**: Low-stock notifications (push or email) when stock drops below a threshold
+- **Discount / promo codes**: Apply percentage or flat discounts at checkout for future e-commerce mode
+- **Order management**: Cart → checkout → order tracking when direct purchase is enabled
+
 Remember: This is a jewelry e-commerce platform focusing on user experience, mobile responsiveness, and beautiful product presentation. Always consider the business context when making technical suggestions.

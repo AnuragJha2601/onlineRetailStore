@@ -37,12 +37,16 @@ async function apiRequest<T>(
 ): Promise<ApiResponse<T>> {
     try {
         const url = `${API_BASE_URL}${endpoint}`;
+        // Spread options first, then override headers — this ensures our Content-Type
+        // default isn't silently overwritten by the spread. Skip Content-Type for
+        // FormData bodies (browser must set the multipart boundary itself).
+        const isFormData = options?.body instanceof FormData;
         const response = await fetch(url, {
+            ...options,
             headers: {
-                'Content-Type': 'application/json',
+                ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
                 ...options?.headers,
             },
-            ...options,
         });
 
         if (response.status === 401) {
@@ -228,6 +232,13 @@ export const productApi = {
 
     async deleteExpense(id: number): Promise<ApiResponse<object>> {
         return apiRequest<object>(`/expenses/${id}`, {
+            method: 'DELETE',
+            headers: authHeader(),
+        });
+    },
+
+    async deleteSale(id: number): Promise<ApiResponse<object>> {
+        return apiRequest<object>(`/sales/${id}`, {
             method: 'DELETE',
             headers: authHeader(),
         });

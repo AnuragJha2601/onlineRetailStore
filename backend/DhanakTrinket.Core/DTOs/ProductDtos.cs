@@ -101,7 +101,7 @@ public class ProductFilterRequest
 
 public class RecordSaleRequest
 {
-    public int ProductId { get; set; }
+    public int? ProductId { get; set; }          // null for custom items / wholesale
     public string ProductName { get; set; } = string.Empty;
     public SaleType SaleType { get; set; } = SaleType.Retail;
     public int QuantitySold { get; set; } = 1;
