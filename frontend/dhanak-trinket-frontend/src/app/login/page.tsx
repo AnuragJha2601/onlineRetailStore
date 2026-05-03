@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
@@ -38,9 +39,12 @@ export default function LoginPage() {
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center">
             <div className="max-w-sm w-full mx-auto px-4">
                 {/* Branding */}
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Dhanak Trinket</h1>
-                    <p className="text-sm text-gray-500 mt-1">Ethnic Finds, Timeless Shine</p>
+                <div className="flex flex-col items-center mb-8 gap-3">
+                    <Image src="/logo.jpg" alt="Dhanak Trinket" width={80} height={80} className="rounded-full object-cover" priority />
+                    <div className="text-center">
+                        <h1 className="text-3xl font-bold text-gray-900">Dhanak Trinket</h1>
+                        <p className="text-sm text-gray-500 mt-1">Ethnic Finds, Timeless Shine</p>
+                    </div>
                 </div>
 
                 {/* Card */}

@@ -92,7 +92,7 @@ public class ProductFilterRequest
 {
     public ProductCategory? Category { get; set; }
     public string? SearchTerm { get; set; }
-    public bool? InStockOnly { get; set; } = true;
+    public bool? InStockOnly { get; set; }
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 20;
 }

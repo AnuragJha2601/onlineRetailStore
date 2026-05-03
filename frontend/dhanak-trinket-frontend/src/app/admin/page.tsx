@@ -56,8 +56,8 @@ export default function AdminPage() {
                         {TABS.map(tab => (
                             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                                 className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
-                                        ? 'border-indigo-600 text-indigo-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    ? 'border-indigo-600 text-indigo-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}>
                                 {tab.label}
                             </button>
@@ -83,8 +83,8 @@ export default function AdminPage() {
                         </div>
                         {addProductMessage && (
                             <div className={`mb-5 rounded-lg px-4 py-3 text-sm flex items-start gap-3 ${addProductMessage.type === 'success'
-                                    ? 'bg-green-50 border border-green-200 text-green-800'
-                                    : 'bg-red-50 border border-red-200 text-red-700'
+                                ? 'bg-green-50 border border-green-200 text-green-800'
+                                : 'bg-red-50 border border-red-200 text-red-700'
                                 }`}>
                                 <span className="flex-1">{addProductMessage.text}</span>
                                 <button onClick={() => setAddProductMessage(null)} className="opacity-60 hover:opacity-100">✕</button>
