@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import ProductCatalog from '@/components/ProductCatalog';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -19,11 +20,21 @@ export default function Home() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Dhanak Trinket</h1>
-              <p className="text-sm text-gray-600">Ethnic Finds, Timeless Shine</p>
-            </div>
+            <div className="flex justify-between items-center py-3">
+            <div className="flex items-center gap-3">
+                <Image
+                  src="/logo.jpg"
+                  alt="Dhanak Trinket"
+                  width={56}
+                  height={56}
+                  className="rounded-full object-cover"
+                  priority
+                />
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Dhanak Trinket</h1>
+                  <p className="text-sm text-gray-500">Ethnic Finds, Timeless Shine</p>
+                </div>
+              </div>
             <nav className="flex space-x-4 items-center">
               <span className="bg-indigo-600 text-white px-3 py-2 rounded-md text-sm font-medium">
                 Catalog
@@ -97,7 +108,7 @@ export default function Home() {
       <footer className="bg-white border-t border-gray-200 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
-            <p className="text-gray-600 mb-2">© 2024 Dhanak Trinket. All rights reserved.</p>
+            <p className="text-gray-600 mb-2">© 2026 Dhanak Trinket. All rights reserved.</p>
             <p className="text-sm text-gray-500">
               Handcrafted jewelry collection featuring bangles, necklaces, and ethnic accessories.
             </p>

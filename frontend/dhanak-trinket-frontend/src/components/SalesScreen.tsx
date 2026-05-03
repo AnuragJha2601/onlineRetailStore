@@ -194,13 +194,12 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
             <div className="grid grid-cols-2 gap-2">
                 {([SaleType.Retail, SaleType.BulkSale] as const).map(t => (
                     <button key={t} type="button" onClick={() => handleSaleTypeChange(t)}
-                        className={`py-2.5 rounded-lg border-2 text-sm font-medium transition-colors ${
-                            saleType === t
+                        className={`py-2.5 rounded-lg border-2 text-sm font-medium transition-colors ${saleType === t
                                 ? t === SaleType.Retail
                                     ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
                                     : 'border-amber-500 bg-amber-50 text-amber-700'
                                 : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                        }`}>
+                            }`}>
                         {t === SaleType.Retail ? '🛍️ Retail' : '📦 Bulk Sale'}
                         <p className="text-xs font-normal mt-0.5 opacity-70">
                             {t === SaleType.Retail ? 'Single / regular sale' : 'Multiple items, one deal'}
@@ -317,19 +316,17 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
                     {/* Line-items / Summary toggle */}
                     <div className="flex items-center gap-2">
                         <button type="button" onClick={() => setBulkSummaryMode(false)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                                !bulkSummaryMode
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${!bulkSummaryMode
                                     ? 'border-amber-500 bg-amber-50 text-amber-700'
                                     : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                            }`}>
+                                }`}>
                             Line items
                         </button>
                         <button type="button" onClick={() => setBulkSummaryMode(true)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                                bulkSummaryMode
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${bulkSummaryMode
                                     ? 'border-amber-500 bg-amber-50 text-amber-700'
                                     : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                            }`}>
+                                }`}>
                             Summary only
                         </button>
                         <span className="text-xs text-gray-400">
@@ -450,11 +447,10 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
                     Cancel
                 </button>
                 <button type="submit" disabled={isSubmitting}
-                    className={`flex-1 py-2.5 text-white rounded-lg text-sm font-medium disabled:opacity-60 transition-colors ${
-                        saleType === SaleType.Retail
+                    className={`flex-1 py-2.5 text-white rounded-lg text-sm font-medium disabled:opacity-60 transition-colors ${saleType === SaleType.Retail
                             ? 'bg-indigo-600 hover:bg-indigo-700'
                             : 'bg-amber-600 hover:bg-amber-700'
-                    }`}>
+                        }`}>
                     {isSubmitting ? 'Saving…' : 'Record Sale'}
                 </button>
             </div>
@@ -595,7 +591,7 @@ export default function SalesScreen() {
                                         {s.saleType === 'BulkSale' && s.items.length > 0
                                             ? <p className="text-xs text-gray-400 truncate mt-0.5" title={s.items.map(i => i.description).join(', ')}>
                                                 {s.items.map(i => i.description).join(', ')}
-                                              </p>
+                                            </p>
                                             : s.notes && (
                                                 <p className="text-xs text-gray-400 truncate mt-0.5" title={s.notes}>
                                                     {s.notes}
@@ -604,11 +600,10 @@ export default function SalesScreen() {
                                         }
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                                            s.saleType === 'BulkSale'
+                                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${s.saleType === 'BulkSale'
                                                 ? 'bg-amber-50 text-amber-700'
                                                 : 'bg-indigo-50 text-indigo-700'
-                                        }`}>
+                                            }`}>
                                             {s.saleType === 'BulkSale' ? 'Bulk Sale' : s.saleType}
                                         </span>
                                     </td>

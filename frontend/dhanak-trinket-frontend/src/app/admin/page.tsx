@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import ProductUploadForm from '@/components/ProductUploadForm';
 import InventoryScreen from '@/components/InventoryScreen';
 import ExpensesScreen from '@/components/ExpensesScreen';
@@ -33,10 +34,13 @@ export default function AdminPage() {
         <div className="min-h-screen bg-gray-50">
             <header className="bg-white shadow-sm border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center py-4">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Dhanak Trinket</h1>
-                            <p className="text-sm text-gray-500">Admin Dashboard</p>
+                    <div className="flex justify-between items-center py-2">
+                        <div className="flex items-center gap-3">
+                            <Image src="/logo.jpg" alt="Dhanak Trinket" width={48} height={48} className="rounded-full object-cover" priority />
+                            <div>
+                                <h1 className="text-xl font-bold text-gray-900">Dhanak Trinket</h1>
+                                <p className="text-xs text-gray-500">Admin Dashboard</p>
+                            </div>
                         </div>
                         <div className="flex items-center gap-3">
                             <a href="/" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">

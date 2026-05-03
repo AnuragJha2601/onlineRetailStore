@@ -104,11 +104,6 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
     return (
         <div className="max-w-7xl mx-auto p-6">
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Dhanak Trinket</h1>
-                <p className="text-gray-600">Ethnic Finds, Timeless Shine</p>
-            </div>
-
             {/* Filters */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
