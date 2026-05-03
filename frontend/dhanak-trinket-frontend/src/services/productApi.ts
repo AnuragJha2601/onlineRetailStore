@@ -8,6 +8,9 @@ import {
     RecordSaleRequest,
     SaleDto,
     SalesSummaryDto,
+    CreateExpenseRequest,
+    ExpenseDto,
+    ExpenseCategory,
 } from '@/types/product';
 
 // Base API configuration
@@ -186,6 +189,44 @@ export const productApi = {
     async getSalesSummary(year?: number): Promise<ApiResponse<SalesSummaryDto[]>> {
         const qs = year ? `?year=${year}` : '';
         return apiRequest<SalesSummaryDto[]>(`/sales/summary${qs}`, {
+            headers: authHeader(),
+        });
+    },
+
+    // ─── Expenses ─────────────────────────────────────────────────────────────
+
+    async createExpense(request: CreateExpenseRequest): Promise<ApiResponse<ExpenseDto>> {
+        return apiRequest<ExpenseDto>('/expenses', {
+            method: 'POST',
+            headers: { ...authHeader(), 'Content-Type': 'application/json' },
+            body: JSON.stringify(request),
+        });
+    },
+
+    async uploadExpenseBill(expenseId: number, file: File): Promise<ApiResponse<ExpenseDto>> {
+        const formData = new FormData();
+        formData.append('file', file);
+        return apiRequest<ExpenseDto>(`/expenses/${expenseId}/bill`, {
+            method: 'POST',
+            headers: authHeader(),   // No Content-Type: browser sets multipart boundary
+            body: formData,
+        });
+    },
+
+    async getExpenses(year?: number, month?: number, category?: ExpenseCategory): Promise<ApiResponse<ExpenseDto[]>> {
+        const params = new URLSearchParams();
+        if (year) params.set('year', String(year));
+        if (month) params.set('month', String(month));
+        if (category !== undefined) params.set('category', String(category));
+        const qs = params.toString() ? `?${params.toString()}` : '';
+        return apiRequest<ExpenseDto[]>(`/expenses${qs}`, {
+            headers: authHeader(),
+        });
+    },
+
+    async deleteExpense(id: number): Promise<ApiResponse<object>> {
+        return apiRequest<object>(`/expenses/${id}`, {
+            method: 'DELETE',
             headers: authHeader(),
         });
     },

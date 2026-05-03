@@ -148,3 +148,28 @@ public class SalesSummaryDto
     public int WholesaleCount { get; set; }
     public List<SaleDto> Sales { get; set; } = new();
 }
+
+// ─── Expense DTOs ───────────────────────────────────────────────────────────
+
+public class CreateExpenseRequest
+{
+    public DateTime ExpenseDate { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public ExpenseCategory Category { get; set; }
+    public string? VendorName { get; set; }
+    public string? Notes { get; set; }
+}
+
+public class ExpenseDto
+{
+    public int Id { get; set; }
+    public DateTime ExpenseDate { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public string Category { get; set; } = string.Empty;
+    public string? VendorName { get; set; }
+    public string? BillImageUrl { get; set; }   // SAS URL, null if no bill uploaded
+    public string? Notes { get; set; }
+    public DateTime CreatedAt { get; set; }
+}

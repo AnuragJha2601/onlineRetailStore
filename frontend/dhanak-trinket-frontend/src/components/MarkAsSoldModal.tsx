@@ -97,8 +97,8 @@ export default function MarkAsSoldModal({ product, onClose, onSuccess, onError }
                                 type="button"
                                 onClick={() => setSaleType(SaleType.Retail)}
                                 className={`py-2.5 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${saleType === SaleType.Retail
-                                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
                                     }`}
                             >
                                 🛍️ Retail
@@ -108,8 +108,8 @@ export default function MarkAsSoldModal({ product, onClose, onSuccess, onError }
                                 type="button"
                                 onClick={() => setSaleType(SaleType.Wholesale)}
                                 className={`py-2.5 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${saleType === SaleType.Wholesale
-                                        ? 'border-amber-500 bg-amber-50 text-amber-700'
-                                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                    ? 'border-amber-500 bg-amber-50 text-amber-700'
+                                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
                                     }`}
                             >
                                 📦 Wholesale

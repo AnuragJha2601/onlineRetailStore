@@ -14,6 +14,7 @@ public class DhanakTrinketDbContext : DbContext
     public DbSet<ProductImage> ProductImages { get; set; }
     public DbSet<Sale> Sales { get; set; }
     public DbSet<WholesaleDeal> WholesaleDeals { get; set; }
+    public DbSet<Expense> Expenses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -100,6 +101,21 @@ public class DhanakTrinketDbContext : DbContext
             entity.Property(e => e.Notes).HasMaxLength(500);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.HasIndex(e => e.DealDate);
+        });
+
+        // Expense configuration
+        modelBuilder.Entity<Expense>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Description).IsRequired().HasMaxLength(1000);
+            entity.Property(e => e.Amount).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.Category).HasConversion<int>();
+            entity.Property(e => e.VendorName).HasMaxLength(255);
+            entity.Property(e => e.BillImagePath).HasMaxLength(500);
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.HasIndex(e => e.ExpenseDate);
+            entity.HasIndex(e => e.Category);
         });
 
         // Seed initial data for development

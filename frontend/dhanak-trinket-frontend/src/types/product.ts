@@ -135,3 +135,42 @@ export interface SalesSummaryDto {
     wholesaleCount: number;
     sales: SaleDto[];
 }
+
+// ─── Expense types ───────────────────────────────────────────────────────────
+
+export enum ExpenseCategory {
+    InventoryPurchase = 1,
+    Packaging = 2,
+    Shipping = 3,
+    Marketing = 4,
+    Other = 5,
+}
+
+export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
+    [ExpenseCategory.InventoryPurchase]: 'Inventory Purchase',
+    [ExpenseCategory.Packaging]: 'Packaging',
+    [ExpenseCategory.Shipping]: 'Shipping',
+    [ExpenseCategory.Marketing]: 'Marketing',
+    [ExpenseCategory.Other]: 'Other',
+};
+
+export interface CreateExpenseRequest {
+    expenseDate: string;       // ISO string
+    description: string;
+    amount: number;
+    category: ExpenseCategory;
+    vendorName?: string;
+    notes?: string;
+}
+
+export interface ExpenseDto {
+    id: number;
+    expenseDate: string;
+    description: string;
+    amount: number;
+    category: string;
+    vendorName?: string;
+    billImageUrl?: string;
+    notes?: string;
+    createdAt: string;
+}

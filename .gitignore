@@ -1,4 +1,6 @@
 # Azure webapp log downloads
 webapp_logs/
 webapp_logs*/
+app_logs_new/
+app_logs*/
 *.zip

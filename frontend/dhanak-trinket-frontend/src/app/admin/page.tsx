@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import ProductUploadForm from '@/components/ProductUploadForm';
 import MarkAsSoldModal from '@/components/MarkAsSoldModal';
+import ExpenseForm from '@/components/ExpenseForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { Product } from '@/types/product';
 import { productApi } from '@/services/productApi';
@@ -193,6 +194,15 @@ export default function AdminPage() {
                     )}
                 </div>
             </main>
+
+            {/* ─── Expenses Section ─────────────────────────────── */}
+            <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-16">
+                <div className="mb-4">
+                    <h2 className="text-xl font-bold text-gray-900">Expenses</h2>
+                    <p className="text-sm text-gray-500 mt-0.5">Track what you spent — inventory purchases, packaging, shipping, and more.</p>
+                </div>
+                <ExpenseForm onExpenseAdded={() => setMessage({ type: 'success', text: 'Expense recorded.' })} />
+            </section>
 
             {/* Mark as Sold Modal */}
             {soldModalProduct && (
