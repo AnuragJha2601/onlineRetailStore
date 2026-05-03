@@ -128,14 +128,16 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<DhanakTrinketDbContext>();
-    if (app.Environment.IsDevelopment())
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    try
     {
         context.Database.Migrate();
+        logger.LogInformation("Database migrations applied successfully.");
     }
-    else
+    catch (Exception ex)
     {
-        // In production, apply any pending EF migrations automatically on startup
-        context.Database.Migrate();
+        logger.LogError(ex, "An error occurred applying database migrations.");
+        throw; // still crash — but now the error is in the logs
     }
 }
 

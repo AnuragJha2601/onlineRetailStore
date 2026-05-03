@@ -14,7 +14,7 @@ namespace DhanakTrinket.Infrastructure.Migrations
             if (migrationBuilder.ActiveProvider == "Microsoft.EntityFrameworkCore.SqlServer")
             {
                 // Azure SQL: drop FK, index, column, then the table; add new columns
-                migrationBuilder.Sql("ALTER TABLE [Sales] DROP CONSTRAINT IF EXISTS [FK_Sales_WholesaleDeals_WholesaleDealId];");
+                migrationBuilder.Sql("ALTER TABLE [Sales] DROP CONSTRAINT IF EXISTS [FK_Sales_WholesaleDeals];");
                 migrationBuilder.Sql("DROP INDEX IF EXISTS [IX_Sales_WholesaleDealId] ON [Sales];");
                 migrationBuilder.Sql("ALTER TABLE [Sales] DROP COLUMN IF EXISTS [WholesaleDealId];");
                 migrationBuilder.Sql("DROP TABLE IF EXISTS [WholesaleDeals];");
