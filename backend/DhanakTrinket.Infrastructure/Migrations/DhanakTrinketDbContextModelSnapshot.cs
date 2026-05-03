@@ -227,7 +227,7 @@ namespace DhanakTrinket.Infrastructure.Migrations
                     b.Property<int>("ProductId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("ThumbnailBlobPath")
+                    b.Property<string>("ThumbnailUrl")
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 

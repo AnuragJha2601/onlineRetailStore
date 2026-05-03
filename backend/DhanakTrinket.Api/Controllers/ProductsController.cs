@@ -62,15 +62,8 @@ public class ProductsController : ControllerBase
             }
 
             var productDtos = _mapper.Map<List<ProductDto>>(products.ToList());
-            // Generate fresh SAS URLs for all blob-stored images and thumbnails
-            foreach (var dto in productDtos)
-                foreach (var img in dto.Images)
-                {
-                    if (!img.ImageUrl.StartsWith("data:") && !img.ImageUrl.StartsWith("http"))
-                        img.ImageUrl = _blobStorageService.GenerateSasUrl(img.ImageUrl);
-                    if (!string.IsNullOrEmpty(img.ThumbnailUrl) && !img.ThumbnailUrl.StartsWith("http"))
-                        img.ThumbnailUrl = _blobStorageService.GenerateSasUrl(img.ThumbnailUrl);
-                }
+            // List view: ThumbnailUrl is already a plain public HTTPS URL — no blob calls needed.
+            // Full ImageUrl is intentionally omitted from list responses (SAS generated only on detail open).
             return Ok(ApiResponse<List<ProductDto>>.SuccessResponse(productDtos, "Products retrieved successfully"));
         }
         catch (Exception ex)
@@ -95,13 +88,11 @@ public class ProductsController : ControllerBase
             }
 
             var productDto = _mapper.Map<ProductDto>(product);
+            // Detail view: generate SAS for full image only (lazy, called on modal open)
             foreach (var img in productDto.Images)
-            {
                 if (!img.ImageUrl.StartsWith("data:") && !img.ImageUrl.StartsWith("http"))
                     img.ImageUrl = _blobStorageService.GenerateSasUrl(img.ImageUrl);
-                if (!string.IsNullOrEmpty(img.ThumbnailUrl) && !img.ThumbnailUrl.StartsWith("http"))
-                    img.ThumbnailUrl = _blobStorageService.GenerateSasUrl(img.ThumbnailUrl);
-            }
+            // ThumbnailUrl is a plain public HTTPS URL — no SAS needed
             return Ok(ApiResponse<ProductDto>.SuccessResponse(productDto, "Product retrieved successfully"));
         }
         catch (Exception ex)
@@ -197,8 +188,9 @@ public class ProductsController : ControllerBase
                 blobPath = $"base64/{Guid.NewGuid()}";
             }
 
-            // Generate and upload thumbnail (300×300 max, quality 75)
-            string? thumbnailBlobPath = null;
+            // Generate and upload thumbnail to PUBLIC container (300×300, quality 75)
+            // Returns a plain https:// URL — no SAS needed for list views
+            string? thumbnailUrl = null;
             try
             {
                 imageMemory.Position = 0;
@@ -212,7 +204,7 @@ public class ProductsController : ControllerBase
                 await thumbImage.SaveAsJpegAsync(thumbStream, new JpegEncoder { Quality = 75 });
                 thumbStream.Position = 0;
                 var thumbFileName = "thumb_" + Path.GetFileNameWithoutExtension(image.FileName) + ".jpg";
-                thumbnailBlobPath = await _blobStorageService.UploadImageAsync(thumbStream, thumbFileName);
+                thumbnailUrl = await _blobStorageService.UploadThumbnailPublicAsync(thumbStream, thumbFileName);
             }
             catch (Exception thumbEx)
             {
@@ -225,7 +217,7 @@ public class ProductsController : ControllerBase
                 ProductId = id,
                 ImageUrl = imageUrl,
                 BlobPath = blobPath,
-                ThumbnailBlobPath = thumbnailBlobPath,
+                ThumbnailUrl = thumbnailUrl,
                 AltText = $"{product.Name} image",
                 IsPrimary = !product.Images.Any(),
                 DisplayOrder = product.Images.Count,

@@ -15,6 +15,32 @@ public class BlobStorageService : IBlobStorageService
         _blobServiceClient = blobServiceClient;
     }
 
+    public async Task<string> UploadThumbnailPublicAsync(Stream imageStream, string fileName)
+    {
+        const string thumbnailContainer = "product-thumbnails";
+        try
+        {
+            var containerClient = _blobServiceClient.GetBlobContainerClient(thumbnailContainer);
+            // PublicAccessType.Blob allows anonymous read on individual blobs
+            await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
+
+            var uniqueFileName = $"{Guid.NewGuid()}.jpg";
+            var blobPath = $"thumbnails/{DateTime.UtcNow:yyyy/MM/dd}/{uniqueFileName}";
+            var blobClient = containerClient.GetBlobClient(blobPath);
+
+            var blobHttpHeaders = new BlobHttpHeaders { ContentType = "image/jpeg" };
+            await blobClient.UploadAsync(imageStream, overwrite: true);
+            await blobClient.SetHttpHeadersAsync(blobHttpHeaders);
+
+            // Return permanent plain HTTPS URL — no SAS, no expiry
+            return blobClient.Uri.ToString();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to upload thumbnail: {ex.Message}", ex);
+        }
+    }
+
     public async Task<string> UploadImageAsync(Stream imageStream, string fileName, string containerName = "product-images")
     {
         try

@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DhanakTrinket.Infrastructure.Migrations
 {
     [DbContext(typeof(DhanakTrinketDbContext))]
-    [Migration("20260503200000_AddThumbnailBlobPath")]
-    partial class AddThumbnailBlobPath
+    [Migration("20260503210000_RenameThumbnailBlobPathToUrl")]
+    partial class RenameThumbnailBlobPathToUrl
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

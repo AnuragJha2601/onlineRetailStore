@@ -28,14 +28,13 @@ public class ProductProfile : Profile
             .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
             .ForMember(dest => dest.Images, opt => opt.Ignore());
 
-        // ProductImage mappings
-        CreateMap<ProductImage, ProductImageDto>()
-            .ForMember(dest => dest.ThumbnailUrl, opt => opt.MapFrom(src => src.ThumbnailBlobPath));
+        // ProductImage mappings — ThumbnailUrl maps by convention (same name on both sides)
+        CreateMap<ProductImage, ProductImageDto>();
         CreateMap<ProductImageDto, ProductImage>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.ProductId, opt => opt.Ignore())
             .ForMember(dest => dest.BlobPath, opt => opt.Ignore())
-            .ForMember(dest => dest.ThumbnailBlobPath, opt => opt.Ignore())
+            .ForMember(dest => dest.ThumbnailUrl, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.Product, opt => opt.Ignore());
     }

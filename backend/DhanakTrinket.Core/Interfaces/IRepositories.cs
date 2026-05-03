@@ -32,6 +32,7 @@ public interface IProductService
 public interface IBlobStorageService
 {
     Task<string> UploadImageAsync(Stream imageStream, string fileName, string containerName = "product-images");
+    Task<string> UploadThumbnailPublicAsync(Stream imageStream, string fileName);
     Task DeleteImageAsync(string blobPath);
     Task<string> GetImageUrlAsync(string blobPath);
     string GenerateSasUrl(string blobPath);

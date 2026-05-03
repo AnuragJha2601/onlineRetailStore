@@ -1,25 +1,43 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Product } from '@/types/product';
-import { formatPrice } from '@/services/productApi';
+import { productApi, formatPrice } from '@/services/productApi';
 
 interface ProductDetailModalProps {
-    product: Product;
+    product: Product;   // from the list — has name/price/description/thumbnailUrl
     onClose: () => void;
 }
 
 export default function ProductDetailModal({ product, onClose }: ProductDetailModalProps) {
-    const primaryImage = product.images.find(img => img.isPrimary) || product.images[0];
+    // Full-image SAS URL fetched lazily on open (not available in list response)
+    const [fullImageUrl, setFullImageUrl] = useState<string | null>(null);
+    const [imageLoading, setImageLoading] = useState(true);
+
+    // Fetch product detail on mount to get the fresh SAS URL for the full image
+    useEffect(() => {
+        let cancelled = false;
+        productApi.getProduct(product.id).then(res => {
+            if (cancelled) return;
+            const primaryImg = res.data?.images.find(i => i.isPrimary) ?? res.data?.images[0];
+            setFullImageUrl(primaryImg?.imageUrl ?? null);
+            setImageLoading(false);
+        }).catch(() => {
+            if (!cancelled) setImageLoading(false);
+        });
+        return () => { cancelled = true; };
+    }, [product.id]);
 
     // Close on Escape key
     useEffect(() => {
-        const handleKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
-        };
+        const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
         document.addEventListener('keydown', handleKey);
         return () => document.removeEventListener('keydown', handleKey);
     }, [onClose]);
+
+    // Show thumbnail from the list data while the full image loads
+    const primaryImg = product.images.find(i => i.isPrimary) ?? product.images[0];
+    const displaySrc = fullImageUrl ?? primaryImg?.thumbnailUrl ?? primaryImg?.imageUrl;
 
     return (
         <div
@@ -39,13 +57,13 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                     ✕
                 </button>
 
-                {/* Full-size image */}
+                {/* Image area */}
                 <div className="relative aspect-square bg-gray-100">
-                    {primaryImage ? (
+                    {displaySrc ? (
                         <img
-                            src={primaryImage.imageUrl}
-                            alt={primaryImage.altText || product.name}
-                            className="w-full h-full object-contain"
+                            src={displaySrc}
+                            alt={primaryImg?.altText || product.name}
+                            className={`w-full h-full object-contain transition-opacity duration-300 ${imageLoading ? 'opacity-60' : 'opacity-100'}`}
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -55,6 +73,14 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                             </div>
                         </div>
                     )}
+
+                    {/* Loading overlay while full image fetches */}
+                    {imageLoading && displaySrc && (
+                        <div className="absolute inset-0 flex items-end justify-center pb-3 pointer-events-none">
+                            <span className="text-xs text-white bg-black/40 px-2 py-0.5 rounded-full">Loading full image…</span>
+                        </div>
+                    )}
+
                     {!product.isInStock && (
                         <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
                             Sold Out
@@ -87,3 +113,4 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         </div>
     );
 }
+
