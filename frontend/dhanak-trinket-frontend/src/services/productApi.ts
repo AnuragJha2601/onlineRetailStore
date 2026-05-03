@@ -46,6 +46,8 @@ async function apiRequest<T>(
                 localStorage.removeItem('auth_token');
                 window.location.href = '/login';
             }
+            // Return early so we don't fall through to !response.ok and throw
+            return { success: false, message: 'Session expired. Please log in again.', errors: [] };
         }
 
         if (!response.ok) {
