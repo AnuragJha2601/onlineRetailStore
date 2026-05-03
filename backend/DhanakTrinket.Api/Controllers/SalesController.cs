@@ -41,23 +41,6 @@ public class SalesController : ControllerBase
                 return NotFound(ApiResponse<SaleDto>.ErrorResponse("Product not found."));
         }
 
-        WholesaleDeal? deal = null;
-
-        // For wholesale: create a deal record
-        if (request.SaleType == SaleType.Wholesale)
-        {
-            deal = new WholesaleDeal
-            {
-                BuyerName = request.BuyerName,
-                BuyerPhone = request.BuyerPhone,
-                DealDate = request.SaleDate,
-                CreatedAt = DateTime.UtcNow,
-                Notes = request.Notes
-            };
-            _db.WholesaleDeals.Add(deal);
-            await _db.SaveChangesAsync(); // get deal Id
-        }
-
         var sale = new Sale
         {
             ProductId = request.ProductId,
@@ -70,8 +53,9 @@ public class SalesController : ControllerBase
             CustomerName = request.CustomerName,
             CustomerPhone = request.CustomerPhone,
             SaleChannel = request.SaleChannel,
+            BuyerName = request.BuyerName,
+            BuyerPhone = request.BuyerPhone,
             Notes = request.Notes,
-            WholesaleDealId = deal?.Id,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -85,10 +69,6 @@ public class SalesController : ControllerBase
                 product.IsInStock = false;
             product.UpdatedAt = DateTime.UtcNow;
         }
-
-        // Update wholesale deal total
-        if (deal != null)
-            deal.TotalAmount = sale.TotalAmount;
 
         await _db.SaveChangesAsync();
 
@@ -183,8 +163,9 @@ public class SalesController : ControllerBase
         CustomerName = s.CustomerName,
         CustomerPhone = s.CustomerPhone,
         SaleChannel = s.SaleChannel,
+        BuyerName = s.BuyerName,
+        BuyerPhone = s.BuyerPhone,
         Notes = s.Notes,
-        WholesaleDealId = s.WholesaleDealId,
         CreatedAt = s.CreatedAt
     };
 }

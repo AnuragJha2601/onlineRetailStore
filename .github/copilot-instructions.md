@@ -179,7 +179,21 @@ frontend/
 
 ## Future Features (Planned)
 - **P&L dashboard**: Monthly revenue-vs-expenses chart and summary table
-- **Wholesale line-item breakdown**: Replace single description with structured item list (quantity, unit price per SKU)
+### Wholesale Line-Item Breakdown (future — do NOT build yet)
+Currently a wholesale sale is a **single `Sale` row** with:
+- `SaleType = Wholesale`
+- `BuyerName` / `BuyerPhone` directly on `Sale`
+- Item description in `Notes`, total in `SellingPrice`
+
+When multi-line wholesale is built, the intended design is:
+```
+WholesaleOrder  { Id, BuyerName, BuyerPhone, OrderDate, TotalAmount, Notes, CreatedAt }
+Sale            { ..., WholesaleOrderId? FK → WholesaleOrder }
+```
+Each `Sale` row becomes a line item (one SKU + qty + unit price). The `WholesaleOrder`
+is the header. This requires a new migration and UI redesign — **do not add a
+`WholesaleOrders` table or `WholesaleOrderId` FK to Sales until that feature is
+explicitly requested**.
 - **Product image upload from UI**: Currently requires direct Azure Blob upload; build an upload widget in the admin Add Product tab
 - **Customer management / CRM**: Link sales to customer profiles, view purchase history
 - **Export to CSV**: Download sales and expense data for accounting

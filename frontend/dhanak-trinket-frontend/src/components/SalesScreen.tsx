@@ -140,13 +140,12 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
             <div className="grid grid-cols-2 gap-2">
                 {([SaleType.Retail, SaleType.Wholesale] as const).map(t => (
                     <button key={t} type="button" onClick={() => setSaleType(t)}
-                        className={`py-2.5 rounded-lg border-2 text-sm font-medium transition-colors ${
-                            saleType === t
+                        className={`py-2.5 rounded-lg border-2 text-sm font-medium transition-colors ${saleType === t
                                 ? t === SaleType.Retail
                                     ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
                                     : 'border-amber-500 bg-amber-50 text-amber-700'
                                 : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                        }`}>
+                            }`}>
                         {t === SaleType.Retail ? '🛍️ Retail' : '📦 Wholesale'}
                         <p className="text-xs font-normal mt-0.5 opacity-70">
                             {t === SaleType.Retail ? 'Single / regular sale' : 'Bulk deal'}
@@ -330,11 +329,10 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
                     Cancel
                 </button>
                 <button type="submit" disabled={isSubmitting}
-                    className={`flex-1 py-2.5 text-white rounded-lg text-sm font-medium disabled:opacity-60 transition-colors ${
-                        saleType === SaleType.Retail
+                    className={`flex-1 py-2.5 text-white rounded-lg text-sm font-medium disabled:opacity-60 transition-colors ${saleType === SaleType.Retail
                             ? 'bg-indigo-600 hover:bg-indigo-700'
                             : 'bg-amber-600 hover:bg-amber-700'
-                    }`}>
+                        }`}>
                     {isSubmitting ? 'Saving…' : 'Record Sale'}
                 </button>
             </div>
@@ -406,11 +404,10 @@ export default function SalesScreen() {
         <div className="space-y-4">
             {/* Toast */}
             {toast && (
-                <div className={`rounded-lg px-4 py-3 text-sm flex items-start gap-3 ${
-                    toast.type === 'success'
+                <div className={`rounded-lg px-4 py-3 text-sm flex items-start gap-3 ${toast.type === 'success'
                         ? 'bg-green-50 border border-green-200 text-green-800'
                         : 'bg-red-50 border border-red-200 text-red-700'
-                }`}>
+                    }`}>
                     <span className="flex-1">{toast.text}</span>
                     <button onClick={() => setToast(null)} className="opacity-60 hover:opacity-100">✕</button>
                 </div>
@@ -476,11 +473,10 @@ export default function SalesScreen() {
                                         )}
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                                            s.saleType === 'Wholesale'
+                                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${s.saleType === 'Wholesale'
                                                 ? 'bg-amber-50 text-amber-700'
                                                 : 'bg-indigo-50 text-indigo-700'
-                                        }`}>
+                                            }`}>
                                             {s.saleType}
                                         </span>
                                     </td>
@@ -490,7 +486,10 @@ export default function SalesScreen() {
                                         {formatPrice(s.totalAmount)}
                                     </td>
                                     <td className="px-4 py-3 text-gray-500 text-xs">
-                                        {s.saleChannel || s.customerName || '—'}
+                                        {s.saleType === 'Wholesale'
+                                            ? (s.buyerName || s.buyerPhone || '—')
+                                            : (s.saleChannel || s.customerName || '—')
+                                        }
                                     </td>
                                     <td className="px-4 py-3 text-right">
                                         <button onClick={() => handleDelete(s.id)}

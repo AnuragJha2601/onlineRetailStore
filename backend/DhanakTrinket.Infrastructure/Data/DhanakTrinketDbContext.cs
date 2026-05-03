@@ -13,7 +13,6 @@ public class DhanakTrinketDbContext : DbContext
     public DbSet<Product> Products { get; set; }
     public DbSet<ProductImage> ProductImages { get; set; }
     public DbSet<Sale> Sales { get; set; }
-    public DbSet<WholesaleDeal> WholesaleDeals { get; set; }
     public DbSet<Expense> Expenses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -73,7 +72,9 @@ public class DhanakTrinketDbContext : DbContext
             entity.Property(e => e.CustomerName).HasMaxLength(255);
             entity.Property(e => e.CustomerPhone).HasMaxLength(20);
             entity.Property(e => e.SaleChannel).HasMaxLength(100);
-            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.Property(e => e.BuyerName).HasMaxLength(255);
+            entity.Property(e => e.BuyerPhone).HasMaxLength(20);
+            entity.Property(e => e.Notes).HasMaxLength(1000);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
 
             entity.HasOne(e => e.Product)
@@ -81,26 +82,9 @@ public class DhanakTrinketDbContext : DbContext
                   .HasForeignKey(e => e.ProductId)
                   .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasOne(e => e.WholesaleDeal)
-                  .WithMany(d => d.Sales)
-                  .HasForeignKey(e => e.WholesaleDealId)
-                  .OnDelete(DeleteBehavior.SetNull);
-
             entity.HasIndex(e => e.SaleDate);
             entity.HasIndex(e => e.SaleType);
             entity.HasIndex(e => e.ProductId);
-        });
-
-        // WholesaleDeal configuration
-        modelBuilder.Entity<WholesaleDeal>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.BuyerName).HasMaxLength(255);
-            entity.Property(e => e.BuyerPhone).HasMaxLength(20);
-            entity.Property(e => e.TotalAmount).HasColumnType("decimal(10,2)");
-            entity.Property(e => e.Notes).HasMaxLength(500);
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-            entity.HasIndex(e => e.DealDate);
         });
 
         // Expense configuration

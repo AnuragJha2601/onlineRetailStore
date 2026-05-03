@@ -3,6 +3,7 @@ using System;
 using DhanakTrinket.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DhanakTrinket.Infrastructure.Migrations
 {
     [DbContext(typeof(DhanakTrinketDbContext))]
-    partial class DhanakTrinketDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260503151147_FlattenWholesaleIntoSales")]
+    partial class FlattenWholesaleIntoSales
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.15");

@@ -90,8 +90,18 @@
 - Monthly revenue (Sales) vs expenses chart + summary table
 - `Profit = SUM(Sales.TotalAmount) − SUM(Expenses.Amount)` per month
 
-### Wholesale Line-Item Breakdown
-- Replace single description field with structured line items (SKU, quantity, unit price)
+### Wholesale Line-Item Breakdown (future — do NOT build yet)
+Currently a wholesale sale is a **single `Sale` row** — `BuyerName`/`BuyerPhone` on
+`Sale`, item description in `Notes`, deal total in `SellingPrice`.
+
+When multi-line wholesale is needed, the planned design is:
+```
+WholesaleOrder  { Id, BuyerName, BuyerPhone, OrderDate, TotalAmount, Notes, CreatedAt }
+Sale            { ..., WholesaleOrderId? FK → WholesaleOrder }  ← becomes a line item
+```
+Each `Sale` row = one SKU + qty + unit price. `WholesaleOrder` = header.
+Requires new migration, new controller endpoint, and UI redesign. **Do not add
+`WholesaleOrders` table or FK until this feature is explicitly requested.**
 
 ### Customer Management / CRM
 - Link sales to customer profiles; view purchase history per customer

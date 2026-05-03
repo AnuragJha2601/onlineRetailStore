@@ -118,8 +118,9 @@ export interface SaleDto {
     customerName?: string;
     customerPhone?: string;
     saleChannel?: string;
+    buyerName?: string;
+    buyerPhone?: string;
     notes?: string;
-    wholesaleDealId?: number;
     createdAt: string;
 }
 
