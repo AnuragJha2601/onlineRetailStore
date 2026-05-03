@@ -99,24 +99,43 @@ public class ProductFilterRequest
 
 // ─── Sales DTOs ──────────────────────────────────────────────────────────────
 
+public class BulkSaleItemRequest
+{
+    public string Description { get; set; } = string.Empty;
+    public int Quantity { get; set; } = 1;
+    public decimal UnitPrice { get; set; }
+}
+
 public class RecordSaleRequest
 {
-    public int? ProductId { get; set; }          // null for custom items / wholesale
+    public int? ProductId { get; set; }          // null for custom items / bulk sales
     public string ProductName { get; set; } = string.Empty;
     public SaleType SaleType { get; set; } = SaleType.Retail;
     public int QuantitySold { get; set; } = 1;
-    public decimal SellingPrice { get; set; }
+    public decimal SellingPrice { get; set; }    // ignored when Items has values
     public DateTime SaleDate { get; set; } = DateTime.UtcNow;
 
-    // Wholesale only
+    // Bulk sale only
     public string? BuyerName { get; set; }
     public string? BuyerPhone { get; set; }
 
-    // Optional
+    // Optional line items for bulk sales (if omitted → summary mode, uses SellingPrice)
+    public List<BulkSaleItemRequest>? Items { get; set; }
+
+    // Optional retail
     public string? CustomerName { get; set; }
     public string? CustomerPhone { get; set; }
     public string? SaleChannel { get; set; }
     public string? Notes { get; set; }
+}
+
+public class BulkSaleItemDto
+{
+    public int Id { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal TotalPrice { get; set; }
 }
 
 public class SaleDto
@@ -136,6 +155,7 @@ public class SaleDto
     public string? BuyerPhone { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; }
+    public List<BulkSaleItemDto> Items { get; set; } = new();
 }
 
 public class SalesSummaryDto
@@ -146,7 +166,7 @@ public class SalesSummaryDto
     public decimal TotalRevenue { get; set; }
     public int TotalItemsSold { get; set; }
     public int RetailCount { get; set; }
-    public int WholesaleCount { get; set; }
+    public int BulkSaleCount { get; set; }
     public List<SaleDto> Sales { get; set; } = new();
 }
 

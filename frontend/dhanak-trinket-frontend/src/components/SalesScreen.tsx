@@ -5,6 +5,7 @@ import {
     Product,
     SaleType,
     SaleDto,
+    BulkSaleItemRequest,
     RecordSaleRequest,
     SALE_CHANNELS,
 } from '@/types/product';
@@ -13,6 +14,14 @@ import { formatPrice, formatDate } from '@/services/productApi';
 
 function todayISO() {
     return new Date().toISOString().split('T')[0];
+}
+
+// ─── Line item row state (frontend-only) ────────────────────────────────────
+interface LineItemRow {
+    key: number;  // local key for React
+    description: string;
+    quantity: number;
+    unitPrice: string;
 }
 
 // ─── Sale Form Panel ──────────────────────────────────────────────────────────
@@ -37,16 +46,23 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
     const [customerPhone, setCustomerPhone] = useState('');
     const [notes, setNotes] = useState('');
 
-    // Wholesale-only fields
-    const [wholesaleDescription, setWholesaleDescription] = useState('');
-    const [wholesaleTotal, setWholesaleTotal] = useState('');
+    // Bulk sale — line-items mode (default) vs summary mode
+    const [bulkSummaryMode, setBulkSummaryMode] = useState(false);
+    const [lineItems, setLineItems] = useState<LineItemRow[]>([
+        { key: 1, description: '', quantity: 1, unitPrice: '' },
+    ]);
+    const [bulkDescription, setBulkDescription] = useState('');
+    const [bulkTotal, setBulkTotal] = useState('');
+    // shared bulk fields
     const [buyerName, setBuyerName] = useState('');
     const [buyerPhone, setBuyerPhone] = useState('');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
 
-    // Auto-fill price when product changes
+    // ── helpers ──────────────────────────────────────────────────────────────
+    const handleSaleTypeChange = (t: SaleType) => { setSaleType(t); setError(''); };
+
     const handleProductChange = (value: string) => {
         if (value === 'custom') {
             setSelectedProductId('custom');
@@ -60,17 +76,30 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
         setQty(1);
     };
 
+    const addLineItem = () =>
+        setLineItems(prev => [...prev, { key: Date.now(), description: '', quantity: 1, unitPrice: '' }]);
+
+    const removeLineItem = (key: number) =>
+        setLineItems(prev => prev.filter(i => i.key !== key));
+
+    const updateLineItem = (key: number, field: keyof Omit<LineItemRow, 'key'>, value: string | number) =>
+        setLineItems(prev => prev.map(i => i.key === key ? { ...i, [field]: value } : i));
+
     const selectedProduct = selectedProductId === 'custom'
         ? null
         : products.find(p => p.id === selectedProductId) ?? null;
 
     const maxQty = selectedProduct ? selectedProduct.stockQuantity : 999;
     const priceNum = parseFloat(price) || 0;
-    const wholesaleTotalNum = parseFloat(wholesaleTotal) || 0;
+    const bulkTotalNum = parseFloat(bulkTotal) || 0;
+    const lineItemsTotal = lineItems.reduce((sum, i) => sum + (i.quantity * (parseFloat(i.unitPrice) || 0)), 0);
 
+    // ── submit ────────────────────────────────────────────────────────────────
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+
+        let req: RecordSaleRequest;
 
         if (saleType === SaleType.Retail) {
             if (selectedProductId === 'custom' && !customName.trim()) {
@@ -79,39 +108,63 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
             }
             if (qty < 1) { setError('Quantity must be at least 1.'); return; }
             if (priceNum <= 0) { setError('Enter a valid selling price.'); return; }
+            req = {
+                productId: selectedProductId === 'custom' ? undefined : selectedProductId,
+                productName: selectedProduct?.name ?? customName.trim(),
+                saleType,
+                quantitySold: qty,
+                sellingPrice: priceNum,
+                saleDate: new Date(saleDate + 'T00:00:00').toISOString(),
+                saleChannel: channel || undefined,
+                customerName: customerName.trim() || undefined,
+                customerPhone: customerPhone.trim() || undefined,
+                notes: notes.trim() || undefined,
+            };
         } else {
-            if (!wholesaleDescription.trim()) { setError('Description of items sold is required.'); return; }
-            if (wholesaleTotalNum <= 0) { setError('Enter a valid total amount.'); return; }
+            // Bulk Sale
+            if (!bulkSummaryMode) {
+                if (lineItems.length === 0) { setError('Add at least one item.'); return; }
+                if (lineItems.some(i => !i.description.trim())) { setError('All items need a description.'); return; }
+                if (lineItems.some(i => i.quantity < 1)) { setError('All quantities must be at least 1.'); return; }
+                if (lineItems.some(i => (parseFloat(i.unitPrice) || 0) <= 0)) {
+                    setError('All item prices must be greater than zero.');
+                    return;
+                }
+                req = {
+                    productId: undefined,
+                    productName: 'Bulk Sale',
+                    saleType: SaleType.BulkSale,
+                    quantitySold: 1,
+                    sellingPrice: 0,
+                    saleDate: new Date(saleDate + 'T00:00:00').toISOString(),
+                    buyerName: buyerName.trim() || undefined,
+                    buyerPhone: buyerPhone.trim() || undefined,
+                    notes: notes.trim() || undefined,
+                    items: lineItems.map(i => ({
+                        description: i.description.trim(),
+                        quantity: i.quantity,
+                        unitPrice: parseFloat(i.unitPrice),
+                    } satisfies BulkSaleItemRequest)),
+                };
+            } else {
+                if (!bulkDescription.trim()) { setError('Description of items sold is required.'); return; }
+                if (bulkTotalNum <= 0) { setError('Enter a valid total amount.'); return; }
+                req = {
+                    productId: undefined,
+                    productName: 'Bulk Sale',
+                    saleType: SaleType.BulkSale,
+                    quantitySold: 1,
+                    sellingPrice: bulkTotalNum,
+                    saleDate: new Date(saleDate + 'T00:00:00').toISOString(),
+                    buyerName: buyerName.trim() || undefined,
+                    buyerPhone: buyerPhone.trim() || undefined,
+                    notes: bulkDescription.trim() + (notes.trim() ? '\n' + notes.trim() : ''),
+                };
+            }
         }
 
         setIsSubmitting(true);
         try {
-            const req: RecordSaleRequest =
-                saleType === SaleType.Retail
-                    ? {
-                        productId: selectedProductId === 'custom' ? undefined : selectedProductId,
-                        productName: selectedProduct?.name ?? customName.trim(),
-                        saleType,
-                        quantitySold: qty,
-                        sellingPrice: priceNum,
-                        saleDate: new Date(saleDate + 'T00:00:00').toISOString(),
-                        saleChannel: channel || undefined,
-                        customerName: customerName.trim() || undefined,
-                        customerPhone: customerPhone.trim() || undefined,
-                        notes: notes.trim() || undefined,
-                    }
-                    : {
-                        productId: undefined,
-                        productName: 'Wholesale Deal',
-                        saleType,
-                        quantitySold: 1,
-                        sellingPrice: wholesaleTotalNum,
-                        saleDate: new Date(saleDate + 'T00:00:00').toISOString(),
-                        buyerName: buyerName.trim() || undefined,
-                        buyerPhone: buyerPhone.trim() || undefined,
-                        notes: wholesaleDescription.trim() + (notes.trim() ? '\n' + notes.trim() : ''),
-                    };
-
             const res = await productApi.recordSale(req);
             if (!res.success || !res.data) {
                 setError(res.message || 'Failed to record sale.');
@@ -123,6 +176,7 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
         }
     };
 
+    // ── render ────────────────────────────────────────────────────────────────
     return (
         <form onSubmit={handleSubmit}
             className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-5">
@@ -138,17 +192,18 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
 
             {/* Sale Type toggle */}
             <div className="grid grid-cols-2 gap-2">
-                {([SaleType.Retail, SaleType.Wholesale] as const).map(t => (
-                    <button key={t} type="button" onClick={() => setSaleType(t)}
-                        className={`py-2.5 rounded-lg border-2 text-sm font-medium transition-colors ${saleType === t
+                {([SaleType.Retail, SaleType.BulkSale] as const).map(t => (
+                    <button key={t} type="button" onClick={() => handleSaleTypeChange(t)}
+                        className={`py-2.5 rounded-lg border-2 text-sm font-medium transition-colors ${
+                            saleType === t
                                 ? t === SaleType.Retail
                                     ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
                                     : 'border-amber-500 bg-amber-50 text-amber-700'
                                 : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                            }`}>
-                        {t === SaleType.Retail ? '🛍️ Retail' : '📦 Wholesale'}
+                        }`}>
+                        {t === SaleType.Retail ? '🛍️ Retail' : '📦 Bulk Sale'}
                         <p className="text-xs font-normal mt-0.5 opacity-70">
-                            {t === SaleType.Retail ? 'Single / regular sale' : 'Bulk deal'}
+                            {t === SaleType.Retail ? 'Single / regular sale' : 'Multiple items, one deal'}
                         </p>
                     </button>
                 ))}
@@ -165,7 +220,6 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
             {/* ── RETAIL fields ── */}
             {saleType === SaleType.Retail && (
                 <>
-                    {/* Product selector */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Product *</label>
                         <select
@@ -181,7 +235,6 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
                         </select>
                     </div>
 
-                    {/* Custom product name */}
                     {selectedProductId === 'custom' && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
@@ -192,7 +245,6 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
                         </div>
                     )}
 
-                    {/* Qty + Price */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Qty Sold *</label>
@@ -214,15 +266,11 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
                         </div>
                     </div>
 
-                    {/* Total preview */}
                     <div className="bg-gray-50 rounded-lg px-4 py-3 flex justify-between items-center">
                         <span className="text-sm text-gray-600">Total</span>
-                        <span className="text-lg font-semibold text-gray-900">
-                            {formatPrice(qty * priceNum)}
-                        </span>
+                        <span className="text-lg font-semibold text-gray-900">{formatPrice(qty * priceNum)}</span>
                     </div>
 
-                    {/* Channel */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Sale Channel <span className="text-gray-400 font-normal">(optional)</span>
@@ -234,7 +282,6 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
                         </select>
                     </div>
 
-                    {/* Customer */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -254,7 +301,6 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
                         </div>
                     </div>
 
-                    {/* Notes */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Notes <span className="text-gray-400 font-normal">(optional)</span>
@@ -265,35 +311,110 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
                 </>
             )}
 
-            {/* ── WHOLESALE fields ── */}
-            {saleType === SaleType.Wholesale && (
+            {/* ── BULK SALE fields ── */}
+            {saleType === SaleType.BulkSale && (
                 <>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Items Sold (description) *
-                        </label>
-                        <textarea value={wholesaleDescription}
-                            onChange={e => setWholesaleDescription(e.target.value)}
-                            rows={3} required
-                            placeholder="e.g. 10 bangle sets, 20 jhumka pairs, 5 choker necklaces"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-400 focus:outline-none resize-none" />
+                    {/* Line-items / Summary toggle */}
+                    <div className="flex items-center gap-2">
+                        <button type="button" onClick={() => setBulkSummaryMode(false)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                                !bulkSummaryMode
+                                    ? 'border-amber-500 bg-amber-50 text-amber-700'
+                                    : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                            }`}>
+                            Line items
+                        </button>
+                        <button type="button" onClick={() => setBulkSummaryMode(true)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                                bulkSummaryMode
+                                    ? 'border-amber-500 bg-amber-50 text-amber-700'
+                                    : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                            }`}>
+                            Summary only
+                        </button>
+                        <span className="text-xs text-gray-400">
+                            {bulkSummaryMode ? 'Enter a total — no per-item breakdown' : 'List each item with qty & price'}
+                        </span>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Total Amount (₹) *</label>
-                        <input type="number" value={wholesaleTotal}
-                            onChange={e => setWholesaleTotal(e.target.value)}
-                            min={0.01} step={0.01} required placeholder="Overall deal amount"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-400 focus:outline-none" />
-                    </div>
+                    {!bulkSummaryMode ? (
+                        /* ── Line items ─── */
+                        <div className="space-y-2">
+                            <div className="grid grid-cols-[1fr_56px_96px_28px] gap-1.5 text-xs text-gray-400 px-1">
+                                <span>Description</span>
+                                <span className="text-center">Qty</span>
+                                <span className="text-right">Unit Price (₹)</span>
+                                <span />
+                            </div>
 
-                    {wholesaleTotalNum > 0 && (
-                        <div className="bg-amber-50 rounded-lg px-4 py-3 flex justify-between items-center">
-                            <span className="text-sm text-amber-700">Deal Total</span>
-                            <span className="text-lg font-semibold text-amber-900">{formatPrice(wholesaleTotalNum)}</span>
+                            {lineItems.map((item, idx) => (
+                                <div key={item.key}
+                                    className="grid grid-cols-[1fr_56px_96px_28px] gap-1.5 items-center">
+                                    <input
+                                        type="text"
+                                        value={item.description}
+                                        onChange={e => updateLineItem(item.key, 'description', e.target.value)}
+                                        placeholder={`Item ${idx + 1}`}
+                                        className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-amber-400 focus:outline-none" />
+                                    <input
+                                        type="number" min={1} value={item.quantity}
+                                        onChange={e => updateLineItem(item.key, 'quantity', Number(e.target.value))}
+                                        className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-amber-400 focus:outline-none" />
+                                    <input
+                                        type="number" min={0.01} step={0.01} value={item.unitPrice}
+                                        onChange={e => updateLineItem(item.key, 'unitPrice', e.target.value)}
+                                        placeholder="0.00"
+                                        className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-right focus:ring-2 focus:ring-amber-400 focus:outline-none" />
+                                    <button type="button" onClick={() => removeLineItem(item.key)}
+                                        disabled={lineItems.length === 1}
+                                        className="text-gray-400 hover:text-red-500 disabled:opacity-30 text-base leading-none text-center">
+                                        ✕
+                                    </button>
+                                </div>
+                            ))}
+
+                            <button type="button" onClick={addLineItem}
+                                className="text-sm text-amber-600 hover:text-amber-700 font-medium px-1">
+                                + Add item
+                            </button>
+
+                            {lineItemsTotal > 0 && (
+                                <div className="bg-amber-50 rounded-lg px-4 py-3 flex justify-between items-center">
+                                    <span className="text-sm text-amber-700">Deal Total</span>
+                                    <span className="text-lg font-semibold text-amber-900">{formatPrice(lineItemsTotal)}</span>
+                                </div>
+                            )}
                         </div>
+                    ) : (
+                        /* ── Summary mode ─── */
+                        <>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Items Sold (description) *
+                                </label>
+                                <textarea value={bulkDescription}
+                                    onChange={e => setBulkDescription(e.target.value)}
+                                    rows={3} required
+                                    placeholder="e.g. 10 bangle sets, 20 jhumka pairs, 5 choker necklaces"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-400 focus:outline-none resize-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Total Amount (₹) *</label>
+                                <input type="number" value={bulkTotal}
+                                    onChange={e => setBulkTotal(e.target.value)}
+                                    min={0.01} step={0.01} required placeholder="Overall deal amount"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-400 focus:outline-none" />
+                            </div>
+                            {bulkTotalNum > 0 && (
+                                <div className="bg-amber-50 rounded-lg px-4 py-3 flex justify-between items-center">
+                                    <span className="text-sm text-amber-700">Deal Total</span>
+                                    <span className="text-lg font-semibold text-amber-900">{formatPrice(bulkTotalNum)}</span>
+                                </div>
+                            )}
+                        </>
                     )}
 
+                    {/* Buyer info */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -329,10 +450,11 @@ function SaleFormPanel({ products, onSaved, onCancel }: SaleFormPanelProps) {
                     Cancel
                 </button>
                 <button type="submit" disabled={isSubmitting}
-                    className={`flex-1 py-2.5 text-white rounded-lg text-sm font-medium disabled:opacity-60 transition-colors ${saleType === SaleType.Retail
+                    className={`flex-1 py-2.5 text-white rounded-lg text-sm font-medium disabled:opacity-60 transition-colors ${
+                        saleType === SaleType.Retail
                             ? 'bg-indigo-600 hover:bg-indigo-700'
                             : 'bg-amber-600 hover:bg-amber-700'
-                        }`}>
+                    }`}>
                     {isSubmitting ? 'Saving…' : 'Record Sale'}
                 </button>
             </div>
@@ -405,8 +527,8 @@ export default function SalesScreen() {
             {/* Toast */}
             {toast && (
                 <div className={`rounded-lg px-4 py-3 text-sm flex items-start gap-3 ${toast.type === 'success'
-                        ? 'bg-green-50 border border-green-200 text-green-800'
-                        : 'bg-red-50 border border-red-200 text-red-700'
+                    ? 'bg-green-50 border border-green-200 text-green-800'
+                    : 'bg-red-50 border border-red-200 text-red-700'
                     }`}>
                     <span className="flex-1">{toast.text}</span>
                     <button onClick={() => setToast(null)} className="opacity-60 hover:opacity-100">✕</button>
@@ -417,7 +539,7 @@ export default function SalesScreen() {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-lg font-semibold text-gray-900">Sales</h2>
-                    <p className="text-sm text-gray-500">Record retail or wholesale sales — catalog or custom items.</p>
+                    <p className="text-sm text-gray-500">Record retail or bulk sales — catalog or custom items.</p>
                 </div>
                 {!showForm && (
                     <button onClick={() => setShowForm(true)}
@@ -464,29 +586,41 @@ export default function SalesScreen() {
                                     <td className="px-4 py-3 whitespace-nowrap text-gray-600">
                                         {formatDate(s.saleDate)}
                                     </td>
-                                    <td className="px-4 py-3 text-gray-800 max-w-[180px]">
-                                        <span className="font-medium">{s.productName}</span>
-                                        {s.notes && (
-                                            <p className="text-xs text-gray-400 truncate mt-0.5" title={s.notes}>
-                                                {s.notes}
-                                            </p>
-                                        )}
+                                    <td className="px-4 py-3 text-gray-800 max-w-[200px]">
+                                        <span className="font-medium">
+                                            {s.saleType === 'BulkSale' && s.items.length > 0
+                                                ? `Bulk Sale · ${s.items.length} item${s.items.length !== 1 ? 's' : ''}`
+                                                : s.productName}
+                                        </span>
+                                        {s.saleType === 'BulkSale' && s.items.length > 0
+                                            ? <p className="text-xs text-gray-400 truncate mt-0.5" title={s.items.map(i => i.description).join(', ')}>
+                                                {s.items.map(i => i.description).join(', ')}
+                                              </p>
+                                            : s.notes && (
+                                                <p className="text-xs text-gray-400 truncate mt-0.5" title={s.notes}>
+                                                    {s.notes}
+                                                </p>
+                                            )
+                                        }
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${s.saleType === 'Wholesale'
+                                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                                            s.saleType === 'BulkSale'
                                                 ? 'bg-amber-50 text-amber-700'
                                                 : 'bg-indigo-50 text-indigo-700'
-                                            }`}>
-                                            {s.saleType}
+                                        }`}>
+                                            {s.saleType === 'BulkSale' ? 'Bulk Sale' : s.saleType}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-center text-gray-700">{s.quantitySold}</td>
-                                    <td className="px-4 py-3 text-right text-gray-600">{formatPrice(s.sellingPrice)}</td>
+                                    <td className="px-4 py-3 text-right text-gray-600">
+                                        {s.saleType === 'BulkSale' && s.items.length > 0 ? '—' : formatPrice(s.sellingPrice)}
+                                    </td>
                                     <td className="px-4 py-3 text-right font-semibold text-gray-900">
                                         {formatPrice(s.totalAmount)}
                                     </td>
                                     <td className="px-4 py-3 text-gray-500 text-xs">
-                                        {s.saleType === 'Wholesale'
+                                        {s.saleType === 'BulkSale'
                                             ? (s.buyerName || s.buyerPhone || '—')
                                             : (s.saleChannel || s.customerName || '—')
                                         }

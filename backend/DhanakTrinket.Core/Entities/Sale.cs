@@ -3,16 +3,10 @@ using System.ComponentModel.DataAnnotations;
 namespace DhanakTrinket.Core.Entities;
 
 /// <summary>
-/// Records a retail or wholesale sale.
-///
-/// WHOLESALE DESIGN NOTE (future):
-/// Currently a wholesale deal is a single Sale row with SaleType=Wholesale,
-/// a description in Notes, and BuyerName/BuyerPhone here.
-/// When multi-line-item wholesale is built, introduce a WholesaleOrder header
-/// table and rename/repurpose this entity as a line item:
-///   WholesaleOrder  { Id, BuyerName, BuyerPhone, OrderDate, TotalAmount, Notes }
-///   Sale            { ..., WholesaleOrderId? (FK to WholesaleOrder) }
-/// Until then, keeping it flat avoids a useless join table.
+/// Records a retail or bulk sale.
+/// For bulk sales, optional line items are stored in <see cref="BulkSaleItems"/>.
+/// If no line items are provided the sale is recorded in summary mode
+/// (total amount + description in Notes — the original flat behaviour).
 /// </summary>
 public class Sale
 {
@@ -63,10 +57,11 @@ public class Sale
 
     // Navigation
     public virtual Product? Product { get; set; }
+    public virtual ICollection<BulkSaleItem> BulkSaleItems { get; set; } = new List<BulkSaleItem>();
 }
 
 public enum SaleType
 {
     Retail = 1,    // Single item / regular sale
-    Wholesale = 2  // Bulk deal — items described in Notes
+    BulkSale = 2   // Bulk deal — line items in BulkSaleItems (or summary in Notes)
 }

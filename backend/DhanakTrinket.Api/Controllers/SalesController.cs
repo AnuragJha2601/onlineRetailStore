@@ -26,11 +26,25 @@ public class SalesController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.ProductName))
             return BadRequest(ApiResponse<SaleDto>.ErrorResponse("Product name is required."));
 
-        if (request.QuantitySold <= 0)
-            return BadRequest(ApiResponse<SaleDto>.ErrorResponse("Quantity must be at least 1."));
+        bool hasLineItems = request.Items is { Count: > 0 };
 
-        if (request.SellingPrice <= 0)
-            return BadRequest(ApiResponse<SaleDto>.ErrorResponse("Selling price must be greater than zero."));
+        if (request.SaleType == SaleType.Retail || !hasLineItems)
+        {
+            if (request.QuantitySold <= 0)
+                return BadRequest(ApiResponse<SaleDto>.ErrorResponse("Quantity must be at least 1."));
+            if (request.SellingPrice <= 0)
+                return BadRequest(ApiResponse<SaleDto>.ErrorResponse("Selling price must be greater than zero."));
+        }
+
+        if (hasLineItems)
+        {
+            if (request.Items!.Any(i => string.IsNullOrWhiteSpace(i.Description)))
+                return BadRequest(ApiResponse<SaleDto>.ErrorResponse("Each line item must have a description."));
+            if (request.Items.Any(i => i.Quantity <= 0))
+                return BadRequest(ApiResponse<SaleDto>.ErrorResponse("Each item quantity must be at least 1."));
+            if (request.Items.Any(i => i.UnitPrice <= 0))
+                return BadRequest(ApiResponse<SaleDto>.ErrorResponse("Each item unit price must be greater than zero."));
+        }
 
         // Look up the catalog product only when ProductId is provided
         DhanakTrinket.Core.Entities.Product? product = null;
@@ -41,14 +55,32 @@ public class SalesController : ControllerBase
                 return NotFound(ApiResponse<SaleDto>.ErrorResponse("Product not found."));
         }
 
+        // Compute totals
+        int quantitySold;
+        decimal sellingPrice;
+        decimal totalAmount;
+
+        if (hasLineItems)
+        {
+            quantitySold = request.Items!.Sum(i => i.Quantity);
+            totalAmount = request.Items.Sum(i => i.Quantity * i.UnitPrice);
+            sellingPrice = 0; // no single unit price for multi-item bulk sale
+        }
+        else
+        {
+            quantitySold = request.QuantitySold;
+            sellingPrice = request.SellingPrice;
+            totalAmount = request.QuantitySold * request.SellingPrice;
+        }
+
         var sale = new Sale
         {
             ProductId = request.ProductId,
             ProductName = product?.Name ?? request.ProductName,
             SaleType = request.SaleType,
-            QuantitySold = request.QuantitySold,
-            SellingPrice = request.SellingPrice,
-            TotalAmount = request.QuantitySold * request.SellingPrice,
+            QuantitySold = quantitySold,
+            SellingPrice = sellingPrice,
+            TotalAmount = totalAmount,
             SaleDate = request.SaleDate,
             CustomerName = request.CustomerName,
             CustomerPhone = request.CustomerPhone,
@@ -59,12 +91,23 @@ public class SalesController : ControllerBase
             CreatedAt = DateTime.UtcNow
         };
 
+        if (hasLineItems)
+        {
+            sale.BulkSaleItems = request.Items!.Select(i => new BulkSaleItem
+            {
+                Description = i.Description.Trim(),
+                Quantity = i.Quantity,
+                UnitPrice = i.UnitPrice,
+                TotalPrice = i.Quantity * i.UnitPrice
+            }).ToList();
+        }
+
         _db.Sales.Add(sale);
 
         // Reduce stock only for catalog products
         if (product != null)
         {
-            product.StockQuantity = Math.Max(0, product.StockQuantity - request.QuantitySold);
+            product.StockQuantity = Math.Max(0, product.StockQuantity - quantitySold);
             if (product.StockQuantity == 0)
                 product.IsInStock = false;
             product.UpdatedAt = DateTime.UtcNow;
@@ -83,7 +126,7 @@ public class SalesController : ControllerBase
         [FromQuery] int? month,
         [FromQuery] SaleType? saleType)
     {
-        var query = _db.Sales.AsQueryable();
+        var query = _db.Sales.Include(s => s.BulkSaleItems).AsQueryable();
 
         if (year.HasValue)
             query = query.Where(s => s.SaleDate.Year == year.Value);
@@ -118,7 +161,7 @@ public class SalesController : ControllerBase
                 TotalRevenue = g.Sum(s => s.TotalAmount),
                 TotalItemsSold = g.Sum(s => s.QuantitySold),
                 RetailCount = g.Count(s => s.SaleType == SaleType.Retail),
-                WholesaleCount = g.Count(s => s.SaleType == SaleType.Wholesale),
+                BulkSaleCount = g.Count(s => s.SaleType == SaleType.BulkSale),
                 Sales = g.OrderByDescending(s => s.SaleDate).Select(MapToDto).ToList()
             })
             .OrderBy(s => s.Month)
@@ -132,7 +175,7 @@ public class SalesController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ApiResponse<object>>> DeleteSale(int id)
     {
-        var sale = await _db.Sales.Include(s => s.Product).FirstOrDefaultAsync(s => s.Id == id);
+        var sale = await _db.Sales.Include(s => s.Product).Include(s => s.BulkSaleItems).FirstOrDefaultAsync(s => s.Id == id);
         if (sale == null)
             return NotFound(ApiResponse<object>.ErrorResponse("Sale not found."));
 
@@ -166,6 +209,14 @@ public class SalesController : ControllerBase
         BuyerName = s.BuyerName,
         BuyerPhone = s.BuyerPhone,
         Notes = s.Notes,
-        CreatedAt = s.CreatedAt
+        CreatedAt = s.CreatedAt,
+        Items = s.BulkSaleItems.Select(i => new BulkSaleItemDto
+        {
+            Id = i.Id,
+            Description = i.Description,
+            Quantity = i.Quantity,
+            UnitPrice = i.UnitPrice,
+            TotalPrice = i.TotalPrice
+        }).ToList()
     };
 }

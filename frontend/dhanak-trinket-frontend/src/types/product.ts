@@ -88,22 +88,37 @@ export const getCategoryDisplayName = (category: ProductCategory): string => {
 
 export enum SaleType {
     Retail = 1,
-    Wholesale = 2
+    BulkSale = 2
+}
+
+export interface BulkSaleItemRequest {
+    description: string;
+    quantity: number;
+    unitPrice: number;
 }
 
 export interface RecordSaleRequest {
-    productId?: number;        // omit for custom items / wholesale deals
+    productId?: number;        // omit for custom items / bulk sales
     productName: string;
     saleType: SaleType;
     quantitySold: number;
-    sellingPrice: number;
-    saleDate: string; // ISO string
+    sellingPrice: number;      // ignored by backend when items are provided
+    saleDate: string;          // ISO string
     buyerName?: string;
     buyerPhone?: string;
     customerName?: string;
     customerPhone?: string;
     saleChannel?: string;
     notes?: string;
+    items?: BulkSaleItemRequest[];  // line items for bulk sales (optional)
+}
+
+export interface BulkSaleItemDto {
+    id: number;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
 }
 
 export interface SaleDto {
@@ -122,6 +137,7 @@ export interface SaleDto {
     buyerPhone?: string;
     notes?: string;
     createdAt: string;
+    items: BulkSaleItemDto[];
 }
 
 export const SALE_CHANNELS = ['Website', 'WhatsApp', 'Instagram', 'In-Person', 'Other'] as const;
@@ -133,7 +149,7 @@ export interface SalesSummaryDto {
     totalRevenue: number;
     totalItemsSold: number;
     retailCount: number;
-    wholesaleCount: number;
+    bulkSaleCount: number;
     sales: SaleDto[];
 }
 

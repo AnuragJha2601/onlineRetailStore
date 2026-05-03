@@ -13,6 +13,7 @@ public class DhanakTrinketDbContext : DbContext
     public DbSet<Product> Products { get; set; }
     public DbSet<ProductImage> ProductImages { get; set; }
     public DbSet<Sale> Sales { get; set; }
+    public DbSet<BulkSaleItem> BulkSaleItems { get; set; }
     public DbSet<Expense> Expenses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -85,6 +86,22 @@ public class DhanakTrinketDbContext : DbContext
             entity.HasIndex(e => e.SaleDate);
             entity.HasIndex(e => e.SaleType);
             entity.HasIndex(e => e.ProductId);
+        });
+
+        // BulkSaleItem configuration
+        modelBuilder.Entity<BulkSaleItem>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Description).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.UnitPrice).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.TotalPrice).HasColumnType("decimal(10,2)");
+
+            entity.HasOne(e => e.Sale)
+                  .WithMany(s => s.BulkSaleItems)
+                  .HasForeignKey(e => e.SaleId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.SaleId);
         });
 
         // Expense configuration

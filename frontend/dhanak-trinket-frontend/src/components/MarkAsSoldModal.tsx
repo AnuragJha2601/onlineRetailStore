@@ -107,13 +107,13 @@ export default function MarkAsSoldModal({ product, onClose, onSaleRecorded, onEr
                             </button>
                             <button
                                 type="button"
-                                onClick={() => setSaleType(SaleType.Wholesale)}
-                                className={`py-2.5 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${saleType === SaleType.Wholesale
+                                onClick={() => setSaleType(SaleType.BulkSale)}
+                                className={`py-2.5 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${saleType === SaleType.BulkSale
                                     ? 'border-amber-500 bg-amber-50 text-amber-700'
                                     : 'border-gray-200 text-gray-600 hover:border-gray-300'
                                     }`}
                             >
-                                📦 Wholesale
+                                📦 Bulk Sale
                                 <p className="text-xs font-normal mt-0.5 opacity-70">Bulk deal</p>
                             </button>
                         </div>
@@ -207,8 +207,8 @@ export default function MarkAsSoldModal({ product, onClose, onSaleRecorded, onEr
                         </div>
                     )}
 
-                    {/* Wholesale: buyer info */}
-                    {saleType === SaleType.Wholesale && (
+                    {/* Bulk Sale: buyer info */}
+                    {saleType === SaleType.BulkSale && (
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Buyer Name</label>
