@@ -66,11 +66,14 @@ builder.Services.AddCors(options =>
         else
         {
             var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+            var origins = new List<string>
+            {
+                "https://blue-ocean-089852300.7.azurestaticapps.net",
+                "https://api-dhanak-trinket-2026.azurewebsites.net"
+            };
+            origins.AddRange(allowedOrigins);
             policy
-                .SetIsOriginAllowed(origin =>
-                    origin.EndsWith(".azurestaticapps.net") ||
-                    origin.EndsWith(".azurewebsites.net") ||
-                    allowedOrigins.Contains(origin))
+                .WithOrigins(origins.ToArray())
                 .AllowAnyMethod()
                 .AllowAnyHeader();
         }

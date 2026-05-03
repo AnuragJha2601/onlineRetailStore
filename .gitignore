@@ -3,4 +3,7 @@ webapp_logs/
 webapp_logs*/
 app_logs_new/
 app_logs*/
+webapp_recent_logs/
+webapp_recent*/
+*.zip
 *.zip
