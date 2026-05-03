@@ -24,8 +24,8 @@ Your Dhanak Trinket application is now configured for Azure deployment with the 
 ## 🎯 DEPLOYMENT COMPLETED! ✅
 
 ### ✅ LIVE URLS:
-- **🌟 Customer Store**: https://blue-ocean-009852300.7.azurestaticapps.net
-- **⚙️ Admin Panel**: https://blue-ocean-009852300.7.azurestaticapps.net/admin
+- **🌟 Customer Store**: https://blue-ocean-089852300.7.azurestaticapps.net
+- **⚙️ Admin Panel**: https://blue-ocean-089852300.7.azurestaticapps.net/admin
 - **🔌 Backend API**: https://api-dhanak-trinket-2026.azurewebsites.net
 
 ### ✅ DEPLOYED SERVICES:
@@ -37,10 +37,13 @@ Your Dhanak Trinket application is now configured for Azure deployment with the 
 ### ✅ WORKING FEATURES:
 - 💎 Browse jewelry catalog (Bangles, Necklaces, Earrings, Rings, etc.)
 - 🔍 Search and filter products
-- ❤️ Like functionality  
+- ❤️ Like functionality
 - 📱 Mobile responsive design
-- 👨‍💼 Admin product upload with image support
-- 💰 Sample products: Elegant Pearl Necklace (₹1,299), Traditional Gold Bangles Set (₹899)
+- 🔐 Admin login (JWT, BCrypt, `dhanakadmin`)
+- 📦 Inventory management — Mark as Sold (retail + wholesale)
+- 💰 Sales tracking — retail catalog/custom items + wholesale deals
+- 🧾 Expenses tracking — categories + optional bill image upload
+- 🖼️ Add Product with image upload to Azure Blob Storage
 
 ### ✅ SECURITY CONFIGURATION:
 - 🔐 Azure Managed Identity for database access

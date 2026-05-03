@@ -1,25 +1,25 @@
 # Development Context Document
 
 ## Project Overview
-**Jewelry Haven** - Online retail store for bangles, necklaces, and imitation jewelry built with .NET Core backend and Next.js frontend.
+**Dhanak Trinket** - E-commerce platform for ethnic finds: bangles, necklaces, imitation jewelry, and future ethnic wear. Built with ASP.NET Core 9.0 backend and Next.js 16 frontend, live on Azure.
 
 ---
 
 ## Quick Context Summary
 
 ### Business Context
-- **Owners**: Husband-wife team exploring jewelry retail business
-- **Product Source**: Wholesale bangles and imitation jewelry samples
-- **Current Status**: Starting with catalog viewing website
+- **Owner**: Running jewelry retail business
+- **Product Source**: Wholesale bangles and imitation jewelry
+- **Current Status**: Live in production — catalog + admin operations dashboard
 - **Future Goals**: Full e-commerce with payment integration
-- **Target Market**: Online jewelry customers, mobile-first approach
+- **Target Market**: Mobile-first Indian market
 
 ### Technical Decisions Made
-- **Frontend**: Next.js 14+ with TypeScript (SEO-friendly, image optimization)
-- **Backend**: ASP.NET Core 8.0 Web API (owner is C# expert)
-- **Database**: Azure SQL Database + Cosmos DB for flexibility
-- **Cloud**: Azure ecosystem (existing subscription available)
-- **Deployment**: Azure Static Web Apps (frontend) + Azure App Service (backend)
+- **Frontend**: Next.js 16 with TypeScript (static export, SEO-friendly, image optimization)
+- **Backend**: ASP.NET Core 9.0 Web API (owner is C# expert)
+- **Database**: Azure SQL Database (EF Core code-first; SQLite for local dev)
+- **Cloud**: Azure ecosystem (App Service, Static Web Apps, Blob Storage)
+- **Auth**: JWT Bearer, BCrypt.Net-Next, single `dhanakadmin` user
 
 ---
 
@@ -28,303 +28,135 @@
 ### Repository Organization
 ```
 onlineRetailStore/
-├── README.md                     # Public-facing documentation
-├── TECHNICAL_ARCHITECTURE.md     # Detailed technical specs
-├── DEVELOPMENT_CONTEXT.md        # This file - AI context
-├── OPEN_ISSUES.md                # Current challenges/todos
-├── frontend/                     # Next.js application (TBD)
-├── backend/                      # ASP.NET Core Web API (TBD)  
-├── database/                     # SQL scripts and migrations (TBD)
-├── docs/                         # Additional documentation (TBD)
-└── .github/                      # CI/CD workflows (TBD)
+├── README.md
+├── PROJECT_STATUS.md
+├── DEPLOYMENT_STATUS.md
+├── docs/
+│   ├── TECHNICAL_ARCHITECTURE.md
+│   ├── DEVELOPMENT_CONTEXT.md      # This file
+│   └── OPEN_ISSUES.md
+├── .ai/
+│   └── instructions.md             # AI assistant quick context
+├── .github/
+│   ├── copilot-instructions.md     # GitHub Copilot context
+│   └── workflows/                  # GitHub Actions (frontend auto-deploy)
+├── backend/
+│   ├── DhanakTrinket.Api/          # ASP.NET Core Web API
+│   ├── DhanakTrinket.Core/         # Domain models, DTOs, interfaces
+│   └── DhanakTrinket.Infrastructure/ # EF Core DbContext, migrations, blob service
+└── frontend/
+    └── dhanak-trinket-frontend/    # Next.js 16 TypeScript app
+        └── src/
+            ├── app/                # App Router pages (/, /admin, /login)
+            ├── components/         # UI components (InventoryScreen, SalesScreen, ExpensesScreen...)
+            ├── services/           # productApi.ts — all API calls + formatPrice/formatDate
+            ├── types/              # product.ts — all TypeScript types
+            └── contexts/           # AuthContext.tsx
 ```
+
+---
+
+## Live Deployment
+
+| Resource | Value |
+|---|---|
+| Customer Store | `https://blue-ocean-089852300.7.azurestaticapps.net` |
+| Admin Panel | `https://blue-ocean-089852300.7.azurestaticapps.net/admin` |
+| Backend API | `https://api-dhanak-trinket-2026.azurewebsites.net` |
+| Azure SQL | `db-dhanak-trinket` on `sql-dhanak-trinket-prod` |
+| Blob Storage | `stdhanak2026prod` — `product-images` container |
+
+### Deployment Commands
+```bash
+# Backend (manual)
+dotnet publish DhanakTrinket.Api -c Release -o ./publish
+Compress-Archive ./publish/* deploy.zip -Force
+az webapp deploy --resource-group rg-dhanak-trinket-prod --name api-dhanak-trinket-2026 --src-path deploy.zip --type zip
+
+# Frontend — auto-deploys on git push to main via GitHub Actions
+git push origin main
+```
+
+---
+
+## What's Live
+
+### Admin Features (all behind `/admin`, JWT-protected)
+1. **Inventory tab** — Product list with "Mark as Sold" per row (Retail/Wholesale modal)
+2. **Expenses tab** — Expense list + inline add form, optional bill image upload to Blob
+3. **Sales tab** — Sales list + inline form (retail: catalog dropdown or custom item; wholesale: description + total)
+4. **Add Product tab** — Upload new jewelry product with images
+
+### Customer Catalog (public)
+- Browse products by category, search, filter in-stock
+- Product likes counter
 
 ---
 
 ## Development Priorities
 
-### Phase 1 - MVP (Current Focus)
-1. **Product Catalog Display**
-   - Grid/list view of jewelry products
-   - Category filtering (Bangles, Necklaces, Earrings, etc.)
-   - Product detail pages with image gallery
-   - Search functionality
+### Current (May 2026)
+- Edit/delete products in admin panel
+- Product detail page for catalog items
+- P&L dashboard — monthly revenue vs expenses
 
-2. **Core Features**
-   - Product likes counter (no user authentication needed)
-   - Stock status indicator (In Stock / Sold Out)
-   - Mobile-responsive design
-   - Fast image loading with optimization
-
-3. **Admin Features (Simple)**
-   - Add/edit products via API
-   - Upload product images
-   - Update stock status
-   - View product statistics
-
-### Phase 2 - E-commerce Features
-- Shopping cart and checkout
-- User authentication (Azure AD B2C)
-- Payment integration (Stripe/Razorpay for Indian market)
-- Order management
-- Email notifications
+### Phase 2 — Planned
+- Wholesale line-item breakdown (structured items vs single description)
+- Customer CRM — link sales to customer profiles
+- Export to CSV (sales / expenses)
+- Google OAuth admin login
+- Inventory low-stock alerts
+- Shopping cart + checkout + Razorpay/Stripe
 
 ---
 
-## Technical Implementation Notes
+## Key Environment Variables (Azure App Service)
 
-### Database Design
-```sql
--- Core entities for Phase 1
-Products (Id, Name, Description, Category, Price, IsInStock, StockQuantity, LikesCount, CreatedAt, UpdatedAt)
-ProductImages (Id, ProductId, ImageUrl, BlobPath, IsPrimary, DisplayOrder)
-Categories (Id, Name, Description, DisplayOrder)
-ProductCategories (ProductId, CategoryId) -- Many-to-many relationship
 ```
-
-### API Endpoints (Phase 1)
-```
-GET /api/products?category=&search=&page=&limit=
-GET /api/products/{id}
-POST /api/products/{id}/like
-GET /api/categories
-POST /api/admin/products (future)
-PUT /api/admin/products/{id} (future)
-```
-
-### Frontend Components Structure
-```
-components/
-├── layout/
-│   ├── Header.tsx
-│   ├── Footer.tsx  
-│   └── Navigation.tsx
-├── product/
-│   ├── ProductGrid.tsx
-│   ├── ProductCard.tsx
-│   ├── ProductDetail.tsx
-│   └── ProductImageGallery.tsx
-├── ui/
-│   ├── Button.tsx
-│   ├── Modal.tsx
-│   └── LoadingSpinner.tsx
-└── filters/
-    ├── CategoryFilter.tsx
-    └── SearchBox.tsx
+Jwt__Secret               — JWT signing key
+AdminAuth__Username       — dhanakadmin
+AdminAuth__PasswordHash   — BCrypt hash
+ConnectionStrings__DefaultConnection — Azure SQL connection string
+AzureStorage__ConnectionString       — Blob Storage connection string
+AzureStorage__ContainerName          — product-images
 ```
 
 ---
 
-## Development Environment Setup
+## Known Gotchas
 
-### Prerequisites
-- .NET 8.0 SDK
-- Node.js 18+ and npm
-- Visual Studio 2022 or VS Code with C# extension
-- Azure CLI (for deployment)
-- Git for version control
+- `apiRequest` spread order: `...options` first, then `headers` override — prevents Content-Type from being overwritten
+- FormData uploads: never set `Content-Type`; browser must set multipart boundary
+- `PendingModelChangesWarning`: suppressed in `Program.cs` with `ConfigureWarnings`
+- Azure SQL: `TEXT` columns cannot have `DEFAULT` constraint — use `nvarchar`
+- Provider-aware migrations: use `migrationBuilder.ActiveProvider == "Microsoft.EntityFrameworkCore.SqlServer"` to branch SQL Server vs SQLite DDL
+- localStorage key: always `dhanak_admin_token` in both `AuthContext.tsx` and `productApi.ts`
 
-### Azure Resources Required
-- Azure App Service (Backend API)
-- Azure Static Web Apps (Frontend)
-- Azure SQL Database (Product data)
-- Azure Blob Storage (Product images)
-- Azure Application Insights (Monitoring)
+├── frontend/                     # Next.js application (TBD)
 
-### Environment Variables
-```bash
-# Backend (.NET)
-AZURE_SQL_CONNECTION_STRING="Server=..."
-AZURE_BLOB_STORAGE_CONNECTION_STRING="..."
-AZURE_APPLICATION_INSIGHTS_KEY="..."
+- Inventory low-stock alerts
+- Shopping cart + checkout + Razorpay/Stripe
 
-# Frontend (Next.js)
-NEXT_PUBLIC_API_BASE_URL="https://api.jewelryhaven.com"
-NEXT_PUBLIC_AZURE_CDN_BASE_URL="https://cdn.jewelryhaven.com"
+---
+
+## Key Environment Variables (Azure App Service)
+
+```
+Jwt__Secret               — JWT signing key
+AdminAuth__Username       — dhanakadmin
+AdminAuth__PasswordHash   — BCrypt hash
+ConnectionStrings__DefaultConnection — Azure SQL connection string
+AzureStorage__ConnectionString       — Blob Storage connection string
+AzureStorage__ContainerName          — product-images
 ```
 
 ---
 
-## Coding Standards & Conventions
+## Known Gotchas
 
-### Backend (.NET)
-- **Architecture**: Clean Architecture with separate layers
-- **Patterns**: Repository pattern, Dependency Injection, MediatR for CQRS
-- **Validation**: FluentValidation for request validation
-- **Error Handling**: Global exception middleware
-- **Logging**: Serilog with structured logging
-- **Testing**: xUnit for unit tests, integration tests for APIs
-
-### Frontend (Next.js)
-- **TypeScript**: Strict mode enabled
-- **Styling**: Tailwind CSS with custom design system
-- **State Management**: Zustand for client state
-- **Forms**: React Hook Form with Zod validation
-- **Testing**: Jest + Testing Library
-- **Code Style**: ESLint + Prettier
-
-### Database
-- **Naming**: PascalCase for tables/columns
-- **Migrations**: Entity Framework Core migrations
-- **Indexing**: Strategic indexes on search/filter columns
-- **Data Seeding**: Sample jewelry data for development
-
----
-
-## Performance Considerations
-
-### Current Optimizations
-- Next.js Image component for automatic image optimization
-- Azure CDN for static asset delivery
-- Database query optimization with EF Core
-- Lazy loading for product images
-- Pagination for product listings
-
-### Future Optimizations  
-- Redis caching for frequently accessed data
-- Search indexing with Azure Cognitive Search
-- Image compression and multiple sizes
-- Progressive Web App (PWA) features
-- Server-side rendering for SEO
-
----
-
-## Security Implementation
-
-### Current Security Measures
-- HTTPS enforcement
-- CORS policy configuration  
-- SQL injection prevention (parameterized queries)
-- Input validation and sanitization
-- Azure Key Vault for sensitive configuration
-
-### Future Security Enhancements
-- Azure AD B2C for user authentication
-- JWT token-based API authentication
-- Rate limiting and abuse prevention
-- OWASP security best practices
-- Regular security audits
-
----
-
-## Deployment Strategy
-
-### Development Workflow
-1. **Feature Branch**: Create feature branch from main
-2. **Development**: Code and test locally
-3. **Pull Request**: Code review and automated testing
-4. **Staging**: Deploy to staging environment
-5. **Production**: Deploy to production after approval
-
-### CI/CD Pipeline (GitHub Actions)
-```yaml
-# Planned workflow
-- Build and test backend (.NET)
-- Build and test frontend (Next.js)
-- Run integration tests
-- Deploy to staging
-- Manual approval gate
-- Deploy to production
-- Run smoke tests
-```
-
----
-
-## Known Limitations & Technical Debt
-
-### Current Limitations
-- No user authentication system yet
-- Limited admin interface (API-only)
-- Basic error handling and logging
-- No automated testing setup
-- Manual deployment process
-
-### Planned Improvements
-- Implement comprehensive logging
-- Add unit and integration test suites  
-- Create admin dashboard UI
-- Set up automated CI/CD pipeline
-- Add monitoring and alerting
-
----
-
-## Business Logic Notes
-
-### Product Categories
-- **Bangles**: Traditional Indian bangles, modern bracelets
-- **Necklaces**: Short chains, long necklaces, chokers, pendants
-- **Earrings**: Studs, hoops, danglers, chandbali
-- **Sets**: Coordinated jewelry sets (necklace + earrings)
-- **Bracelets**: Wrist chains, charm bracelets
-- **Rings**: Fashion rings, adjustable rings
-
-### Pricing Strategy
-- Competitive pricing for wholesale-sourced items
-- Clear pricing display (₹ symbol for Indian market)
-- Future: Dynamic pricing, discount system
-- Payment integration: Razorpay (Indian payments), Stripe (international)
-
-### Inventory Management
-- Real-time stock tracking
-- Low stock warnings
-- Sold out indicators
-- Future: Automatic reorder points
-
----
-
-## Integration Points
-
-### Current Integrations
-- Azure Blob Storage for image management
-- Azure Application Insights for telemetry
-- GitHub for source control
-
-### Planned Integrations
-- Payment gateways (Razorpay/Stripe)  
-- Email service (SendGrid/Azure Communication Services)
-- SMS notifications for orders
-- Social media integration for marketing
-- Google Analytics for user behavior
-
----
-
-## Testing Strategy
-
-### Unit Testing
-- Backend: Business logic, services, controllers
-- Frontend: Components, utilities, hooks
-- Database: Repository patterns, data access
-
-### Integration Testing
-- API endpoints with real database
-- Frontend-backend integration
-- Payment gateway integration (when implemented)
-
-### E2E Testing  
-- Critical user journeys (browse, like products)
-- Mobile responsiveness
-- Performance testing
-
----
-
-## Monitoring & Analytics
-
-### Application Monitoring
-- Azure Application Insights for performance
-- Custom business metrics (product views, likes)
-- Error tracking and alerting
-- User session analytics
-
-### Business Metrics
-- Most liked products
-- Category preferences  
-- Search terms analysis
-- Mobile vs desktop usage
-- Geographic distribution of users
-
----
-
-*This document should be referenced by AI assistants to understand the full project context, technical decisions, and development priorities.*
-
-**Last Updated**: May 2, 2026  
-**Document Version**: 1.0
+- `apiRequest` spread order: `...options` first, then `headers` override — prevents Content-Type from being overwritten
+- FormData uploads: never set `Content-Type`; browser must set multipart boundary
+- `PendingModelChangesWarning`: suppressed in `Program.cs` with `ConfigureWarnings`
+- Azure SQL: `TEXT` columns cannot have `DEFAULT` constraint — use `nvarchar`
+- Provider-aware migrations: use `migrationBuilder.ActiveProvider == "Microsoft.EntityFrameworkCore.SqlServer"` to branch SQL Server vs SQLite DDL
+- localStorage key: always `dhanak_admin_token` in both `AuthContext.tsx` and `productApi.ts`

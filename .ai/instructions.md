@@ -19,21 +19,25 @@ This is Dhanak Trinket - an ethnic finds e-commerce platform (bangles, necklaces
 ```
 
 ## Development Priorities
-1. **Phase 1**: Product catalog with likes, search, mobile-first design
-2. **Phase 2**: Shopping cart, user auth, payments (Razorpay/Stripe)
-3. **Phase 3**: Advanced features (reviews, recommendations, admin dashboard)
+1. **Operational dashboard** (live): Inventory, Expenses, Sales tabs in admin
+2. **P&L dashboard**: Monthly revenue vs expenses chart/table
+3. **Edit/delete products**: Admin panel gap
+4. **Product detail page**: Catalog item click-through
+5. **E-commerce**: Cart, checkout, Razorpay/Stripe (Phase 2)
 
 ## Technology Choices Made
-- **Backend**: .NET Core 8.0 (owner is C# expert)
-- **Frontend**: Next.js 14+ (SEO, image optimization)
-- **Database**: Azure SQL + Cosmos DB for flexibility
+- **Backend**: .NET Core 9.0 (owner is C# expert)
+- **Frontend**: Next.js 16 (static export, SEO, image optimization)
+- **Database**: Azure SQL (EF Core code-first; SQLite for local dev)
 - **Cloud**: Azure ecosystem (App Service, Static Web Apps, Blob Storage)
+- **Auth**: JWT Bearer, BCrypt.Net-Next, single `dhanakadmin` admin user
 
 ## Business Context
-- **Owners**: Husband-wife team starting jewelry retail business
+- **Owner**: Running jewelry retail business
 - **Products**: Wholesale bangles, necklaces, imitation jewelry
-- **Target**: Mobile-first Indian market with international expansion plans
-- **Current**: Catalog viewing site → Future: Full e-commerce
+- **Target**: Mobile-first Indian market
+- **Current**: Live in production — catalog + admin operations dashboard
+- **Future**: Full e-commerce with payment integration
 
 ## Code Standards
 - **C#**: Clean Architecture, async/await, FluentValidation, Repository pattern

@@ -1,28 +1,27 @@
 # 🎉 Dhanak Trinket - LIVE & PRODUCTION READY!
 
 ## 🌟 LIVE DEPLOYMENT STATUS
-- **Customer Store**: https://blue-ocean-009852300.7.azurestaticapps.net
-- **Admin Panel**: https://blue-ocean-009852300.7.azurestaticapps.net/admin
+- **Customer Store**: https://blue-ocean-089852300.7.azurestaticapps.net
+- **Admin Panel**: https://blue-ocean-089852300.7.azurestaticapps.net/admin
 - **Backend API**: https://api-dhanak-trinket-2026.azurewebsites.net
 
 ## ✅ COMPLETED FEATURES
 
-### Backend API (100% Complete)
-- ✅ **Clean Architecture**: Core/Infrastructure/API layers implemented
-- ✅ **Product Management**: Full CRUD operations for products
-- ✅ **Image Upload**: Azure Blob Storage integration
-- ✅ **Database**: EF Core with proper relationships and seeding
-- ✅ **API Endpoints**: All REST endpoints for admin and customer features
-- ✅ **Validation**: FluentValidation for all requests
-- ✅ **Error Handling**: Standardized API responses with proper error codes
+### Backend API (Complete)
+- ✅ **Clean Architecture**: Core/Infrastructure/API layers
+- ✅ **Product Management**: Full CRUD, image upload to Azure Blob
+- ✅ **Admin Auth**: JWT, BCrypt, single `dhanakadmin` user, 8-hour tokens
+- ✅ **Sales Tracking**: Retail + Wholesale, stock decrement, undo delete
+- ✅ **Expenses Tracking**: Categories, optional bill image upload to Blob
+- ✅ **EF Core**: Provider-aware migrations (Azure SQL + SQLite)
 
-### Frontend Application (100% Complete)
-- ✅ **Admin Screen**: Complete product upload form with image handling
-- ✅ **Customer Catalog**: Product grid with search, filtering, and likes
-- ✅ **Responsive Design**: Mobile-first approach with Tailwind CSS
-- ✅ **TypeScript Integration**: Full type safety with backend DTOs
-- ✅ **Error Handling**: User-friendly error messages and loading states
-- ✅ **Navigation**: Simple header navigation between admin and catalog
+### Frontend Application (Complete)
+- ✅ **Admin Dashboard**: 4 tabs — Inventory | Expenses | Sales | Add Product
+- ✅ **Inventory Tab**: Product list, Mark as Sold modal
+- ✅ **Expenses Tab**: Expense list, inline add form, bill upload
+- ✅ **Sales Tab**: Retail/Wholesale form, product dropdown, custom item option
+- ✅ **Customer Catalog**: Product grid, search, category filter, likes
+- ✅ **Auth**: Login page, JWT stored in localStorage, protected routes
 
 ### Key Components Built
 1. **ProductUploadForm.tsx** - Admin product creation with:

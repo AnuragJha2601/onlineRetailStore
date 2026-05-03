@@ -29,25 +29,25 @@ A modern, scalable e-commerce platform specializing in jewelry and imitation acc
 ## Technology Stack
 
 ### Frontend
-- **Framework**: Next.js 14+ with TypeScript
-- **Styling**: Tailwind CSS + Headless UI
+- **Framework**: Next.js 16 with TypeScript (static export)
+- **Styling**: Tailwind CSS
 - **Image Optimization**: Next.js Image component
-- **State Management**: Zustand (lightweight alternative to Redux)
-- **HTTP Client**: Axios with custom interceptors
+- **State Management**: React `useState` / `useContext` (no external state library)
+- **HTTP Client**: Native `fetch` wrapped in `apiRequest` helper
 
 ### Backend
-- **Framework**: ASP.NET Core 8.0 Web API
-- **Language**: C# 12
-- **Authentication**: Azure AD B2C (future implementation)
+- **Framework**: ASP.NET Core 9.0 Web API
+- **Language**: C# 13
+- **Authentication**: JWT Bearer tokens, BCrypt.Net-Next password hashing
 - **Validation**: FluentValidation
 - **Mapping**: AutoMapper
-- **Documentation**: Swagger/OpenAPI 3.0
+- **ORM**: Entity Framework Core 9 (code-first, SQLite for dev / Azure SQL for prod)
 
 ### Database & Storage
-- **Primary Database**: Azure SQL Database (structured data)
-- **Document Storage**: Azure Cosmos DB (product metadata, reviews)
-- **Image Storage**: Azure Blob Storage with CDN
-- **Caching**: Azure Redis Cache (future optimization)
+- **Primary Database**: Azure SQL Database (Azure SQL `db-dhanak-trinket`)
+- **Image Storage**: Azure Blob Storage (`stdhanak2026prod`, `product-images` container)
+- **Bill Storage**: Azure Blob Storage (`expenses/YYYY/MM/DD/` prefix)
+- **Caching**: None currently (future: Azure Redis Cache)
 
 ### Infrastructure & DevOps
 - **Hosting**: 
@@ -83,20 +83,52 @@ public class JewelryProduct
 public enum ProductCategory
 {
     Bangles,
-    Necklaces, 
+    Necklaces,
     Earrings,
     Bracelets,
     Rings,
     Sets
+}
+
+// Sale entity
+public class Sale
+{
+    public int Id { get; set; }
+    public int? ProductId { get; set; }     // null for custom/wholesale items
+    public string ProductName { get; set; }
+    public SaleType SaleType { get; set; }  // Retail | Wholesale
+    public int QuantitySold { get; set; }
+    public decimal SellingPrice { get; set; }
+    public decimal TotalAmount { get; set; }
+    public DateTime SaleDate { get; set; }
+    public string? CustomerName { get; set; }
+    public string? SaleChannel { get; set; }
+    public string? Notes { get; set; }
+    public int? WholesaleDealId { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+// Expense entity
+public class Expense
+{
+    public int Id { get; set; }
+    public DateTime ExpenseDate { get; set; }
+    public string Description { get; set; }
+    public decimal Amount { get; set; }
+    public ExpenseCategory Category { get; set; }  // InventoryPurchase | Packaging | Shipping | Marketing | Other
+    public string? VendorName { get; set; }
+    public string? BillImagePath { get; set; }     // Azure Blob path
+    public string? Notes { get; set; }
+    public DateTime CreatedAt { get; set; }
 }
 ```
 
 ### Database Schema (Azure SQL)
 - **Products** table: Core product information
 - **ProductImages** table: Image metadata and blob references
-- **ProductLikes** table: User interactions (future user system)
-- **Categories** table: Product categorization
-- **Inventory** table: Stock management
+- **Sales** table: Retail and wholesale sale records
+- **WholesaleDeals** table: Bulk deal grouping with buyer info
+- **Expenses** table: Business expense records with optional bill image
 
 ---
 
@@ -104,12 +136,30 @@ public enum ProductCategory
 
 ### RESTful Endpoints
 ```
-GET    /api/products              - Get all products (with filters)
-GET    /api/products/{id}         - Get specific product
-POST   /api/products/{id}/like    - Increment product likes
-GET    /api/categories            - Get all categories
-GET    /api/products/featured     - Get featured products
-GET    /api/products/search?q=    - Search products
+# Products (public)
+GET    /api/products                       - Get products (filters: category, inStockOnly, search, page)
+GET    /api/products/{id}                  - Get specific product with images
+POST   /api/products/{id}/like             - Increment product likes
+
+# Products (admin)
+POST   /api/products                       - Create product
+POST   /api/products/{id}/images           - Upload product image to Blob Storage
+PATCH  /api/products/{id}/stock            - Update stock quantity / in-stock flag
+
+# Admin auth
+POST   /api/auth/login                     - Authenticate and receive JWT (8-hour expiry)
+
+# Sales (admin)
+POST   /api/sales                          - Record a sale (decrements stock if ProductId given)
+GET    /api/sales?year=&month=&saleType=   - List sales with optional filters
+GET    /api/sales/summary?year=            - Monthly revenue summary grouped by month
+DELETE /api/sales/{id}                     - Delete sale and restore stock
+
+# Expenses (admin)
+POST   /api/expenses                       - Create expense record
+POST   /api/expenses/{id}/bill             - Upload bill image (multipart)
+GET    /api/expenses?year=&month=&category= - List expenses with optional filters
+DELETE /api/expenses/{id}                  - Delete expense record
 ```
 
 ### Response Format
@@ -137,9 +187,13 @@ GET    /api/products/search?q=    - Search products
 - **Input Validation**: Server-side validation on all endpoints
 - **SQL Injection Prevention**: Entity Framework parameterized queries
 
+### Current Auth Implementation
+- **JWT Bearer**: Single `dhanakadmin` user, credentials stored in Azure App Service env vars
+- **BCrypt hashing**: `BCrypt.Net-Next` for password hash comparison
+- **Token storage**: Frontend stores JWT in `localStorage` key `dhanak_admin_token` (8-hour expiry)
+- **Route protection**: All admin endpoints use `[Authorize(Roles = "Admin")]`
+
 ### Future Implementation
-- **Authentication**: Azure AD B2C integration
-- **Authorization**: Role-based access control (Admin, Customer)
 - **Rate Limiting**: API throttling for abuse prevention
 - **Data Protection**: GDPR compliance for customer data
 
@@ -164,11 +218,11 @@ GET    /api/products/search?q=    - Search products
 ## Development Environment
 
 ### Prerequisites
-- .NET 8.0 SDK
-- Node.js 18+ and npm/yarn
+- .NET 9.0 SDK
+- Node.js 20+ and npm
 - Visual Studio 2022 or VS Code
 - Azure CLI
-- SQL Server Management Studio (optional)
+- SQL Server Management Studio or Azure Data Studio (optional)
 
 ### Local Development Setup
 1. Clone repository

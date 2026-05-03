@@ -10,144 +10,104 @@
 
 ### Infrastructure
 - [x] Azure App Service (`api-dhanak-trinket-2026`)
-- [x] Azure Static Web Apps (customer catalog + admin)
+- [x] Azure Static Web Apps `blue-ocean-089852300.7.azurestaticapps.net`
 - [x] Azure SQL Database (`db-dhanak-trinket`)
-- [x] Azure Blob Storage (`stdhanak2026prod`, `product-images` container)
+- [x] Azure Blob Storage (`stdhanak2026prod`, `product-images` container; bills at `expenses/YYYY/MM/DD/`)
 
 ### Backend
 - [x] ASP.NET Core 9.0 Web API — Clean Architecture (Core/Infrastructure/Api)
-- [x] EF Core with Azure SQL (Managed Identity auth)
+- [x] EF Core with Azure SQL (Managed Identity auth); provider-aware migrations (SQL Server / SQLite)
 - [x] Full CRUD for products + image upload
-- [x] CORS configured for `*.azurestaticapps.net`
+- [x] CORS configured — explicit `WithOrigins` list for Static Web App URL
 - [x] Image upload: private blob container, SAS URLs generated on read
 - [x] Standardized `ApiResponse<T>` wrapper
+- [x] `PendingModelChangesWarning` suppressed in Program.cs
 
 ### Frontend
-- [x] Next.js static export deployed to Azure Static Web Apps
+- [x] Next.js 16 static export deployed to Azure Static Web Apps
 - [x] Customer catalog with search and category filter
-- [x] Admin panel — add products + upload images
 - [x] Production API URL baked in via GitHub Actions env var
 - [x] SPA routing via `staticwebapp.config.json`
 
-### Auth (completed in previous session)
-- [x] JWT Bearer auth — single admin via env vars (`ADMIN_USERNAME` / `ADMIN_PASSWORD_HASH`)
-- [x] BCrypt.Net-Next password hashing
-- [x] Login page at `/login` → stores JWT in localStorage
+### Admin Auth
+- [x] JWT Bearer auth — single `dhanakadmin` user, credentials in App Service env vars
+- [x] BCrypt.Net-Next password hashing (8-hour tokens)
+- [x] Login page at `/login` → stores JWT in localStorage key `dhanak_admin_token`
 - [x] `AuthContext` + `useAuth` hook
 - [x] Admin page protected — redirects to `/login` when not authenticated
 
-### Sales Tracking (completed May 3, 2026)
-- [x] `Sale` + `WholesaleDeal` entities in `DhanakTrinket.Core/Entities/Sale.cs`
-- [x] `SaleType` enum: `Retail = 1`, `Wholesale = 2`
-- [x] `SalesController` with endpoints:
-  - `POST /api/sales` — record sale, decrement stock, auto-mark OOS at 0 (Admin)
-  - `GET /api/sales?year=&month=&saleType=` — list with filters (Admin)
-  - `GET /api/sales/summary?year=` — monthly P&L summary grouped by month (Admin)
-  - `DELETE /api/sales/{id}` — undo a sale, restores stock (Admin)
-- [x] DTOs: `RecordSaleRequest`, `SaleDto`, `SalesSummaryDto`
-- [x] Frontend TypeScript types in `src/types/product.ts`
-- [x] `productApi.recordSale()`, `getSales()`, `getSalesSummary()` added
-- [x] `MarkAsSoldModal` component — Retail/Wholesale toggle, date, qty, price, channel, optional customer/buyer details
-- [x] Admin inventory table — shows all products with "Mark as Sold" button per row
+### Admin Dashboard — Tabbed UI
+- [x] 4 tabs: **Inventory** | **Expenses** | **Sales** | **Add Product**
+- [x] Each tab manages its own state independently
+
+### Inventory Management
+- [x] Products table with "Mark as Sold" button per row
+- [x] `MarkAsSoldModal` — Retail/Wholesale toggle, date, qty, price, channel, customer/buyer details
+- [x] Client-side stock decrement on successful sale
+
+### Expenses Tracking (May 3, 2026)
+- [x] `Expense` entity: `ExpenseDate`, `Description`, `Amount`, `Category` (enum), `VendorName?`, `BillImagePath?`, `Notes?`
+- [x] `ExpenseCategory` enum: `InventoryPurchase`, `Packaging`, `Shipping`, `Marketing`, `Other`
+- [x] `ExpensesController`: `POST /api/expenses`, `POST /api/expenses/{id}/bill`, `GET /api/expenses`, `DELETE /api/expenses/{id}`
+- [x] Bill image upload to Azure Blob Storage (`expenses/YYYY/MM/DD/` prefix), SAS URL returned
+- [x] EF migration for Expenses table — provider-aware (SQL Server uses raw SQL DDL; SQLite uses EF methods)
+- [x] `ExpensesScreen` frontend — list-first, inline add form, "View bill" link per row
+
+### Sales Tracking (May 3, 2026)
+- [x] `Sale` + `WholesaleDeal` entities
+- [x] `SalesController`: `POST /api/sales`, `GET /api/sales`, `GET /api/sales/summary`, `DELETE /api/sales/{id}`
+- [x] `RecordSaleRequest.ProductId` is `int?` — supports custom items and wholesale deals without a catalog product
+- [x] Stock decremented only when `ProductId` is provided; restored on DELETE
+- [x] `SalesScreen` frontend — Retail/Wholesale toggle, catalog product dropdown (auto-fills price), custom item option, client-side list update
+- [x] `productApi.recordSale()`, `getSales()`, `getSalesSummary()`, `deleteSale()` added
+
+### Bug Fixes (May 3, 2026)
+- [x] `apiRequest` spread order fixed — `...options` first, then `headers` override (was silently overwriting Content-Type)
+- [x] FormData uploads skip `Content-Type` default so browser sets multipart boundary
+- [x] localStorage key mismatch fixed — `dhanak_admin_token` used consistently in both `AuthContext` and `productApi`
+- [x] Azure SQL `TEXT DEFAULT` error — provider-aware migration uses `nvarchar` for SQL Server
 
 ---
 
 ## 🚧 Open / Pending
 
-### Deployment Required (Sales Tracking is complete locally — needs deployment)
-- [ ] **EF Migration** — create + apply migration for `Sales` and `WholesaleDeals` tables to Azure SQL
-  - Dev: `dotnet ef migrations add AddSalesTables` → `dotnet ef database update`
-  - Prod: push migration bundle or run against Azure SQL via App Service
-- [ ] **Deploy backend** with new SalesController
-- [ ] **Deploy frontend** with updated admin page + modal (either `git push` → GitHub Actions, or manual zip deploy)
-
 ### Immediate
 - [ ] Move blob connection string from `appsettings.Production.json` to Azure App Service environment variables
 - [ ] Remove base64 fallback in `UploadProductImage` — blob storage works, fallback is no longer needed
 - [ ] Re-seed products with real photos (current seed data has no images)
+- [ ] Edit/delete products in admin panel
 
 ### Features Missing
-- [ ] Edit/delete products in admin panel
 - [ ] Product detail page (clicking a catalog item does nothing)
 - [ ] Like functionality wired up end-to-end (field exists, no UI)
-- [ ] **Expenses tracking** — `Expense` entity: date, amount, category (Inventory/Packaging/Shipping/Other), vendor, notes; admin form + list view
-- [ ] **P&L dashboard** (`/admin/dashboard`) — Revenue − Expenses by month, month-over-month view
-
-### CI/CD
 - [ ] GitHub Actions workflow for backend deploy (currently manual `az webapp deploy`)
 
 ---
 
-## 📅 Phase 2 — Planned Features
+## 📅 Planned Features
 
-### Expenses & P&L Console (next up)
-Business operations features to track full profit picture:
-- `Expense` entity: `Date`, `Amount`, `Category` (enum), `VendorName`, `Description`, `CreatedAt`
-- `ExpensesController` (Admin-only CRUD)
-- Admin expenses form — quick-add purchase/packaging/shipping costs
-- P&L dashboard: `Revenue = SUM(Sales.TotalAmount)`, `Cost = SUM(Expenses.Amount)`, `Profit = Revenue − Cost` per month
+### P&L Dashboard
+- Monthly revenue (Sales) vs expenses chart + summary table
+- `Profit = SUM(Sales.TotalAmount) − SUM(Expenses.Amount)` per month
+
+### Wholesale Line-Item Breakdown
+- Replace single description field with structured line items (SKU, quantity, unit price)
+
+### Customer Management / CRM
+- Link sales to customer profiles; view purchase history per customer
 
 ### Dual Pricing (Cost Price + Selling Price)
-- [ ] **Backend** — add `CostPrice` (decimal, admin-only) and `SellingPrice` (decimal, public) fields to `Product` entity + EF migration
-- [ ] **Selling price default** — auto-calculate as `CostPrice × 1.35` (35% markup) but overridable by admin
-- [ ] **Admin form** — show both fields; `SellingPrice` pre-fills at +35% when `CostPrice` is entered, editable
-- [ ] **Customer catalog** — show `SellingPrice` only; `CostPrice` never exposed in public API responses (`ProductDto`)
+- Add `CostPrice` (admin-only) and `SellingPrice` (public) to Product
+- Auto-suggest selling price at +35% markup, overridable
 
-### E-commerce
-- [ ] Shopping cart and checkout
-- [ ] Payment gateway (Razorpay/Stripe)
-- [ ] Order management
-- [ ] Email notifications (order confirmation, dispatch)
+### Export to CSV
+- Download sales and expense data for offline accounting
 
-## 🔄 Medium Priority Items
-
-### Development Environment
-- [ ] Set up local development environment guide
-- [ ] Configure debugging for both frontend and backend
-- [ ] Create sample data seeding scripts
-- [ ] Set up code formatting and linting rules
-
----
-
-## ✅ Completed
-
-### Infrastructure
-- [x] Azure App Service (`api-dhanak-trinket-2026`)
-- [x] Azure Static Web Apps (customer catalog + admin)
-- [x] Azure SQL Database (`db-dhanak-trinket`)
-- [x] Azure Blob Storage (`stdhanak2026prod`, `product-images` container)
-
-### Backend
-- [x] ASP.NET Core 9.0 Web API — Clean Architecture (Core/Infrastructure/Api)
-- [x] EF Core with Azure SQL (Managed Identity auth)
-- [x] Full CRUD for products + image upload
-- [x] CORS configured for `*.azurestaticapps.net`
-- [x] Image upload: private blob container, SAS URLs generated on read
-- [x] Standardized `ApiResponse<T>` wrapper
-
-### Frontend
-- [x] Next.js static export deployed to Azure Static Web Apps
-- [x] Customer catalog with search and category filter
-- [x] Admin panel — add products + upload images
-- [x] Production API URL baked in via GitHub Actions env var
-- [x] SPA routing via `staticwebapp.config.json`
-
----
-
-## 🚧 Open / Pending
-
-### Immediate
-- [ ] Move blob connection string from `appsettings.Production.json` to Azure App Service environment variables
-- [ ] Remove base64 fallback in `UploadProductImage` — blob storage works, fallback is no longer needed
-- [ ] Re-seed products with real photos (current seed data has no images)
-
-### Features Missing
-- [ ] Edit/delete products in admin panel
-- [ ] Product detail page (clicking a catalog item does nothing)
-- [ ] Like functionality wired up end-to-end (field exists, no UI)
-- [ ] Stock quantity management in admin
-
-### CI/CD
+### Other
+- Google OAuth admin login (replace username/password)
+- Inventory low-stock alerts (push or email)
+- Discount / promo codes
+- Shopping cart + checkout + payment (Razorpay/Stripe) for direct purchase mode
 - [ ] GitHub Actions workflow for backend deploy (currently manual `az webapp deploy`)
 
 ---
