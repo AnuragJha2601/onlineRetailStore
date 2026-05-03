@@ -23,6 +23,7 @@ export enum ProductCategory {
 export interface ProductImage {
     id: number;
     imageUrl: string;
+    thumbnailUrl?: string;
     altText: string;
     isPrimary: boolean;
     displayOrder: number;

@@ -29,11 +29,13 @@ public class ProductProfile : Profile
             .ForMember(dest => dest.Images, opt => opt.Ignore());
 
         // ProductImage mappings
-        CreateMap<ProductImage, ProductImageDto>();
+        CreateMap<ProductImage, ProductImageDto>()
+            .ForMember(dest => dest.ThumbnailUrl, opt => opt.MapFrom(src => src.ThumbnailBlobPath));
         CreateMap<ProductImageDto, ProductImage>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.ProductId, opt => opt.Ignore())
             .ForMember(dest => dest.BlobPath, opt => opt.Ignore())
+            .ForMember(dest => dest.ThumbnailBlobPath, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.Product, opt => opt.Ignore());
     }

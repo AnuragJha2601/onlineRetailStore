@@ -88,10 +88,26 @@ export default function InventoryScreen() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 bg-white">
-                            {products.map(p => (
+                            {products.map(p => {
+                                const primaryImg = p.images.find(i => i.isPrimary) || p.images[0];
+                                const thumbSrc = primaryImg?.thumbnailUrl || primaryImg?.imageUrl;
+                                return (
                                 <tr key={p.id} className={`hover:bg-gray-50 ${!p.isInStock ? 'opacity-60' : ''}`}>
-                                    <td className="px-4 py-3 font-medium text-gray-900 max-w-[220px] truncate" title={p.name}>
-                                        {p.name}
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center gap-3">
+                                            {thumbSrc ? (
+                                                <img
+                                                    src={thumbSrc}
+                                                    alt={p.name}
+                                                    className="w-10 h-10 rounded-md object-cover flex-shrink-0 border border-gray-200"
+                                                />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0 text-gray-400 text-xs border border-gray-200">
+                                                    📷
+                                                </div>
+                                            )}
+                                            <span className="font-medium text-gray-900 truncate max-w-[170px]" title={p.name}>{p.name}</span>
+                                        </div>
                                     </td>
                                     <td className="px-4 py-3 text-gray-500">{p.category}</td>
                                     <td className="px-4 py-3 text-right text-gray-700">{formatPrice(p.price)}</td>
@@ -113,7 +129,8 @@ export default function InventoryScreen() {
                                         </button>
                                     </td>
                                 </tr>
-                            ))}
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>

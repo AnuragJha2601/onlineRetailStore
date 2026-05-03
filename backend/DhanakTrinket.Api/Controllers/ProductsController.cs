@@ -4,6 +4,9 @@ using DhanakTrinket.Core.Entities;
 using DhanakTrinket.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Processing;
 
 namespace DhanakTrinket.Api.Controllers;
 
@@ -59,10 +62,15 @@ public class ProductsController : ControllerBase
             }
 
             var productDtos = _mapper.Map<List<ProductDto>>(products.ToList());
-            // Generate fresh SAS URLs for all blob-stored images
+            // Generate fresh SAS URLs for all blob-stored images and thumbnails
             foreach (var dto in productDtos)
-                foreach (var img in dto.Images.Where(i => !i.ImageUrl.StartsWith("data:") && !i.ImageUrl.StartsWith("http")))
-                    img.ImageUrl = _blobStorageService.GenerateSasUrl(img.ImageUrl);
+                foreach (var img in dto.Images)
+                {
+                    if (!img.ImageUrl.StartsWith("data:") && !img.ImageUrl.StartsWith("http"))
+                        img.ImageUrl = _blobStorageService.GenerateSasUrl(img.ImageUrl);
+                    if (!string.IsNullOrEmpty(img.ThumbnailUrl) && !img.ThumbnailUrl.StartsWith("http"))
+                        img.ThumbnailUrl = _blobStorageService.GenerateSasUrl(img.ThumbnailUrl);
+                }
             return Ok(ApiResponse<List<ProductDto>>.SuccessResponse(productDtos, "Products retrieved successfully"));
         }
         catch (Exception ex)
@@ -87,8 +95,13 @@ public class ProductsController : ControllerBase
             }
 
             var productDto = _mapper.Map<ProductDto>(product);
-            foreach (var img in productDto.Images.Where(i => !i.ImageUrl.StartsWith("data:") && !i.ImageUrl.StartsWith("http")))
-                img.ImageUrl = _blobStorageService.GenerateSasUrl(img.ImageUrl);
+            foreach (var img in productDto.Images)
+            {
+                if (!img.ImageUrl.StartsWith("data:") && !img.ImageUrl.StartsWith("http"))
+                    img.ImageUrl = _blobStorageService.GenerateSasUrl(img.ImageUrl);
+                if (!string.IsNullOrEmpty(img.ThumbnailUrl) && !img.ThumbnailUrl.StartsWith("http"))
+                    img.ThumbnailUrl = _blobStorageService.GenerateSasUrl(img.ThumbnailUrl);
+            }
             return Ok(ApiResponse<ProductDto>.SuccessResponse(productDto, "Product retrieved successfully"));
         }
         catch (Exception ex)
@@ -162,24 +175,48 @@ public class ProductsController : ControllerBase
                 return BadRequest(ApiResponse<ProductImageDto>.ErrorResponse("File size too large. Maximum size is 5MB"));
             }
 
-            // Try blob storage, fall back to base64 data URL
+            // Read image bytes once — needed for both full upload and thumbnail generation
+            using var imageMemory = new MemoryStream();
+            await image.CopyToAsync(imageMemory);
+            imageMemory.Position = 0;
+
+            // Upload full-size image to blob storage
             string imageUrl;
             string blobPath;
             try
             {
-                using var stream = image.OpenReadStream();
-                blobPath = await _blobStorageService.UploadImageAsync(stream, image.FileName);
-                // Store blob path (durable); SAS URL generated fresh on each GET
+                blobPath = await _blobStorageService.UploadImageAsync(imageMemory, image.FileName);
                 imageUrl = blobPath;
             }
             catch (Exception blobEx)
             {
                 _logger.LogWarning(blobEx, "Blob storage unavailable, storing image as base64");
-                using var ms = new MemoryStream();
-                await image.CopyToAsync(ms);
-                var base64 = Convert.ToBase64String(ms.ToArray());
+                imageMemory.Position = 0;
+                var base64 = Convert.ToBase64String(imageMemory.ToArray());
                 imageUrl = $"data:{image.ContentType};base64,{base64}";
                 blobPath = $"base64/{Guid.NewGuid()}";
+            }
+
+            // Generate and upload thumbnail (300×300 max, quality 75)
+            string? thumbnailBlobPath = null;
+            try
+            {
+                imageMemory.Position = 0;
+                using var thumbImage = await SixLabors.ImageSharp.Image.LoadAsync(imageMemory);
+                thumbImage.Mutate(x => x.Resize(new ResizeOptions
+                {
+                    Size = new SixLabors.ImageSharp.Size(300, 300),
+                    Mode = ResizeMode.Max
+                }));
+                using var thumbStream = new MemoryStream();
+                await thumbImage.SaveAsJpegAsync(thumbStream, new JpegEncoder { Quality = 75 });
+                thumbStream.Position = 0;
+                var thumbFileName = "thumb_" + Path.GetFileNameWithoutExtension(image.FileName) + ".jpg";
+                thumbnailBlobPath = await _blobStorageService.UploadImageAsync(thumbStream, thumbFileName);
+            }
+            catch (Exception thumbEx)
+            {
+                _logger.LogWarning(thumbEx, "Thumbnail generation failed for product {ProductId}", id);
             }
 
             // Save image record to database
@@ -188,6 +225,7 @@ public class ProductsController : ControllerBase
                 ProductId = id,
                 ImageUrl = imageUrl,
                 BlobPath = blobPath,
+                ThumbnailBlobPath = thumbnailBlobPath,
                 AltText = $"{product.Name} image",
                 IsPrimary = !product.Images.Any(),
                 DisplayOrder = product.Images.Count,

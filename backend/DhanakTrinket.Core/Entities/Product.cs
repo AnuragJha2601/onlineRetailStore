@@ -69,6 +69,9 @@ public class ProductImage
 
     public int DisplayOrder { get; set; } = 0;
 
+    [MaxLength(500)]
+    public string? ThumbnailBlobPath { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     // Navigation property

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Product, ProductCategory, getCategoryDisplayName, ProductFilterRequest } from '@/types/product';
 import { productApi, formatPrice } from '@/services/productApi';
+import ProductDetailModal from '@/components/ProductDetailModal';
 
 interface ProductCatalogProps {
     onError?: (message: string) => void;
@@ -15,6 +16,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<ProductCategory | 'all'>('all');
     const [showInStockOnly, setShowInStockOnly] = useState(true);
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
     useEffect(() => {
         loadProducts();
@@ -165,6 +167,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
                         key={product.id}
                         product={product}
                         onLike={() => handleLike(product.id)}
+                        onOpen={() => setSelectedProduct(product)}
                     />
                 ))}
             </div>
@@ -188,6 +191,14 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
                     Showing {filteredProducts.length} of {products.length} products
                 </div>
             )}
+
+            {/* Product detail modal */}
+            {selectedProduct && (
+                <ProductDetailModal
+                    product={selectedProduct}
+                    onClose={() => setSelectedProduct(null)}
+                />
+            )}
         </div>
     );
 }
@@ -196,19 +207,27 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
 interface ProductCardProps {
     product: Product;
     onLike: () => void;
+    onOpen: () => void;
 }
 
-function ProductCard({ product, onLike }: ProductCardProps) {
+function ProductCard({ product, onLike, onOpen }: ProductCardProps) {
     const primaryImage = product.images.find(img => img.isPrimary) || product.images[0];
+    // Use thumbnail for the card; fall back to full image if no thumbnail yet
+    const cardImageSrc = primaryImage?.thumbnailUrl || primaryImage?.imageUrl;
 
     return (
         <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
-            {/* Product Image */}
-            <div className="relative aspect-square bg-gray-200">
-                {primaryImage ? (
+            {/* Product Image — clickable to open detail modal */}
+            <button
+                type="button"
+                onClick={onOpen}
+                className="block w-full relative aspect-square bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                aria-label={`View ${product.name}`}
+            >
+                {cardImageSrc ? (
                     <img
-                        src={primaryImage.imageUrl}
-                        alt={primaryImage.altText || product.name}
+                        src={cardImageSrc}
+                        alt={primaryImage?.altText || product.name}
                         className="w-full h-full object-cover"
                     />
                 ) : (
@@ -226,7 +245,7 @@ function ProductCard({ product, onLike }: ProductCardProps) {
                         Sold Out
                     </div>
                 )}
-            </div>
+            </button>
 
             {/* Product Info */}
             <div className="p-4">
