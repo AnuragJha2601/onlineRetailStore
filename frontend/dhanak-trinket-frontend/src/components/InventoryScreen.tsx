@@ -48,11 +48,10 @@ export default function InventoryScreen() {
         <div className="space-y-4">
             {/* Toast */}
             {toast && (
-                <div className={`rounded-lg px-4 py-3 text-sm flex items-start gap-3 ${
-                    toast.type === 'success'
+                <div className={`rounded-lg px-4 py-3 text-sm flex items-start gap-3 ${toast.type === 'success'
                         ? 'bg-green-50 border border-green-200 text-green-800'
                         : 'bg-red-50 border border-red-200 text-red-700'
-                }`}>
+                    }`}>
                     <span className="flex-1">{toast.text}</span>
                     <button onClick={() => setToast(null)} className="text-current opacity-60 hover:opacity-100">✕</button>
                 </div>

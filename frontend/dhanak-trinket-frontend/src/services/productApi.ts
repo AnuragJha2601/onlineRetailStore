@@ -17,9 +17,11 @@ import {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
 
 // Get stored JWT token for admin requests
+const TOKEN_KEY = 'dhanak_admin_token'; // must match AuthContext.tsx
+
 function getAuthToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('auth_token');
+    return localStorage.getItem(TOKEN_KEY);
 }
 
 // Build Authorization header for admin endpoints
@@ -46,7 +48,7 @@ async function apiRequest<T>(
         if (response.status === 401) {
             // Token expired or invalid — redirect to login
             if (typeof window !== 'undefined') {
-                localStorage.removeItem('auth_token');
+                localStorage.removeItem(TOKEN_KEY);
                 window.location.href = '/login';
             }
             // Return early so we don't fall through to !response.ok and throw
