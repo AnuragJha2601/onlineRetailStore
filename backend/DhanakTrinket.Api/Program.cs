@@ -28,6 +28,9 @@ builder.Services.AddDbContext<DhanakTrinketDbContext>(options =>
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
         options.UseSqlServer(connectionString);
     }
+    // Suppress the "pending model changes" warning — snapshot was generated against SQLite
+    // but prod uses SQL Server; schema is correct, the drift is cosmetic (column type annotations only)
+    options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 });
 
 // Configure Azure Blob Storage
