@@ -7,11 +7,12 @@ import { productApi } from '@/services/productApi';
 interface MarkAsSoldModalProps {
     product: Product;
     onClose: () => void;
-    onSuccess: (message: string) => void;
+    /** Called with the recorded SaleDto after the user clicks Done */
+    onSaleRecorded: (sale: SaleDto) => void;
     onError: (message: string) => void;
 }
 
-export default function MarkAsSoldModal({ product, onClose, onSuccess, onError }: MarkAsSoldModalProps) {
+export default function MarkAsSoldModal({ product, onClose, onSaleRecorded, onError }: MarkAsSoldModalProps) {
     const today = new Date().toISOString().split('T')[0];
 
     const [saleType, setSaleType] = useState<SaleType>(SaleType.Retail);
@@ -67,7 +68,7 @@ export default function MarkAsSoldModal({ product, onClose, onSuccess, onError }
 
     const handleDone = () => {
         if (recordedSale) {
-            onSuccess(`Sale #${recordedSale.id} recorded — ${recordedSale.productName} × ${recordedSale.quantitySold} = ₹${recordedSale.totalAmount.toFixed(0)}`);
+            onSaleRecorded(recordedSale);
         }
         onClose();
     };
