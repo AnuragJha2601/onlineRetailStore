@@ -44,9 +44,10 @@ A modern, scalable e-commerce platform specializing in jewelry and imitation acc
 - **ORM**: Entity Framework Core 9 (code-first, SQLite for dev / Azure SQL for prod)
 
 ### Database & Storage
-- **Primary Database**: Azure SQL Database (Azure SQL `db-dhanak-trinket`)
-- **Image Storage**: Azure Blob Storage (`stdhanak2026prod`, `product-images` container)
-- **Bill Storage**: Azure Blob Storage (`expenses/YYYY/MM/DD/` prefix)
+- **Primary Database**: Azure SQL Database (`db-dhanak-trinket`)
+- **Full-size image storage**: Azure Blob Storage (`stdhanak2026prod`, **private** `product-images` container) — SAS URL generated lazily on detail fetch
+- **Thumbnail storage**: Azure Blob Storage (`stdhanak2026prod`, **public** `product-thumbnails` container) — plain HTTPS URL, no expiry, CDN-cacheable
+- **Bill storage**: Azure Blob Storage (`expenses/YYYY/MM/DD/` prefix in `product-images` container)
 - **Caching**: None currently (future: Azure Redis Cache)
 
 ### Infrastructure & DevOps
@@ -63,34 +64,35 @@ A modern, scalable e-commerce platform specializing in jewelry and imitation acc
 
 ### Core Entities
 ```csharp
-// Product Entity
-public class JewelryProduct
+public class Product
 {
     public int Id { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
-    public ProductCategory Category { get; set; } // Bangles, Necklaces, Earrings
+    public ProductCategory Category { get; set; }  // Bangles | Necklaces | Earrings | Bracelets | Rings | Sets | Anklets | HairAccessories | Pendants | Chains
     public decimal Price { get; set; }
     public bool IsInStock { get; set; }
     public int StockQuantity { get; set; }
     public int LikesCount { get; set; }
+    public bool IsDeleted { get; set; }   // soft delete
     public List<ProductImage> Images { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
 
-// Product Categories
-public enum ProductCategory
+public class ProductImage
 {
-    Bangles,
-    Necklaces,
-    Earrings,
-    Bracelets,
-    Rings,
-    Sets
+    public int Id { get; set; }
+    public int ProductId { get; set; }
+    public string ImageUrl { get; set; }       // blob path for private full-size image
+    public string BlobPath { get; set; }       // same as ImageUrl (legacy field name)
+    public string? ThumbnailUrl { get; set; }  // plain https:// URL in public container
+    public string AltText { get; set; }
+    public bool IsPrimary { get; set; }
+    public int DisplayOrder { get; set; }
+    public DateTime CreatedAt { get; set; }
 }
 
-// Sale entity
 public class Sale
 {
     public int Id { get; set; }
@@ -101,14 +103,26 @@ public class Sale
     public decimal SellingPrice { get; set; }
     public decimal TotalAmount { get; set; }
     public DateTime SaleDate { get; set; }
-    public string? CustomerName { get; set; }
+    public string? BuyerName { get; set; }   // wholesale buyer
+    public string? BuyerPhone { get; set; }
+    public string? CustomerName { get; set; } // retail customer
+    public string? CustomerPhone { get; set; }
     public string? SaleChannel { get; set; }
     public string? Notes { get; set; }
-    public int? WholesaleDealId { get; set; }
     public DateTime CreatedAt { get; set; }
+    public List<BulkSaleItem> BulkSaleItems { get; set; }
 }
 
-// Expense entity
+public class BulkSaleItem
+{
+    public int Id { get; set; }
+    public int SaleId { get; set; }
+    public string Description { get; set; }
+    public int Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal TotalPrice { get; set; }
+}
+
 public class Expense
 {
     public int Id { get; set; }
@@ -123,12 +137,12 @@ public class Expense
 }
 ```
 
-### Database Schema (Azure SQL)
-- **Products** table: Core product information
-- **ProductImages** table: Image metadata and blob references
-- **Sales** table: Retail and wholesale sale records
-- **WholesaleDeals** table: Bulk deal grouping with buyer info
-- **Expenses** table: Business expense records with optional bill image
+### Database Schema (Azure SQL) — Current Tables
+- **Products** — core product info (soft-delete via `IsDeleted`)
+- **ProductImages** — image metadata, blob paths, thumbnail URL
+- **Sales** — retail and wholesale sale records (WholesaleDeals table removed; buyer info flattened onto Sale)
+- **BulkSaleItems** — line items for wholesale sales
+- **Expenses** — business expense records with optional bill image
 
 ---
 
@@ -137,29 +151,30 @@ public class Expense
 ### RESTful Endpoints
 ```
 # Products (public)
-GET    /api/products                       - Get products (filters: category, inStockOnly, search, page)
-GET    /api/products/{id}                  - Get specific product with images
-POST   /api/products/{id}/like             - Increment product likes
+GET    /api/products                        - Get products (filters: category, inStockOnly, search, page)
+                                             └─ Returns ThumbnailUrl (plain HTTPS); NO full-image SAS here
+GET    /api/products/{id}                   - Get product + fresh SAS URL for full image (called on modal open)
+POST   /api/products/{id}/like              - Increment product likes
 
 # Products (admin)
-POST   /api/products                       - Create product
-POST   /api/products/{id}/images           - Upload product image to Blob Storage
-PATCH  /api/products/{id}/stock            - Update stock quantity / in-stock flag
+POST   /api/products                        - Create product
+POST   /api/products/{id}/images            - Upload image; generates 300x300 thumbnail; stores both in blob
+PATCH  /api/products/{id}/stock             - Update stock quantity / in-stock flag
 
 # Admin auth
-POST   /api/auth/login                     - Authenticate and receive JWT (8-hour expiry)
+POST   /api/auth/login                      - Authenticate and receive JWT (8-hour expiry)
 
 # Sales (admin)
-POST   /api/sales                          - Record a sale (decrements stock if ProductId given)
-GET    /api/sales?year=&month=&saleType=   - List sales with optional filters
-GET    /api/sales/summary?year=            - Monthly revenue summary grouped by month
-DELETE /api/sales/{id}                     - Delete sale and restore stock
+POST   /api/sales                           - Record a sale (decrements stock if ProductId given)
+GET    /api/sales?year=&month=&saleType=    - List sales with optional filters
+GET    /api/sales/summary?year=             - Monthly revenue summary grouped by month
+DELETE /api/sales/{id}                      - Delete sale and restore stock
 
 # Expenses (admin)
-POST   /api/expenses                       - Create expense record
-POST   /api/expenses/{id}/bill             - Upload bill image (multipart)
+POST   /api/expenses                        - Create expense record
+POST   /api/expenses/{id}/bill              - Upload bill image (multipart)
 GET    /api/expenses?year=&month=&category= - List expenses with optional filters
-DELETE /api/expenses/{id}                  - Delete expense record
+DELETE /api/expenses/{id}                   - Delete expense record
 ```
 
 ### Response Format

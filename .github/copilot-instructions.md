@@ -158,24 +158,39 @@ frontend/
 - **DTO mapping** with AutoMapper between layers
 
 ## Implemented Features (as of May 2026)
-- Product catalog with images (Azure Blob Storage + CDN)
+- Product catalog with images (Azure Blob Storage, public thumbnails + private full images)
 - Admin authentication (JWT, BCrypt, single `dhanakadmin` user, 8-hour tokens)
-- Inventory management: add product, mark as sold, stock tracking
+- Inventory management: add product (multi-image upload), mark as sold, stock tracking, thumbnail per row
 - Expenses tracking: create expense with category + optional bill image upload
 - Sales recording: retail (catalog or custom item) + wholesale (description + total)
 - Admin dashboard: tabbed UI — Inventory | Expenses | Sales | Add Product
+- Logo shown in catalog header, admin header, and login page
+- Clickable product cards: thumbnail in catalog grid → `ProductDetailModal` with lazy full-image load
+- `InStockOnly` filter defaults to `null` — public catalog returns all products by default
+
+## Image Architecture
+- **Upload**: `POST /api/products/{id}/images` generates a 300×300 JPEG thumbnail (SixLabors.ImageSharp v3.1.7) and uploads both full image and thumbnail to separate blob containers
+- **Full image**: private `product-images` container; `BlobPath` stored in `ProductImage`; SAS URL generated on `GET /api/products/{id}` only
+- **Thumbnail**: public `product-thumbnails` container; plain `https://` URL stored in `ProductImage.ThumbnailUrl`; returned as-is from list API — **zero blob SDK calls on list**
+- **Azure prerequisite**: storage account must have "Allow Blob anonymous access" = Enabled
 
 ## Deployment
 - **Backend**: Azure App Service `api-dhanak-trinket-2026`, manually `dotnet publish → zip → az webapp deploy`
+  - Must kill VS Code dotnet process before publishing: `Get-Process dotnet | Stop-Process -Force`
+  - Delete `obj/Release` folders in all three projects before publish
+  - Use `/p:UseSharedCompilation=false`, output to `C:\temp\` (not inside repo)
 - **Frontend**: Azure Static Web Apps `blue-ocean-089852300.7.azurestaticapps.net`, auto-deploys on `git push` via GitHub Actions
 - **Database**: Azure SQL `db-dhanak-trinket`. EF migrations run on startup. Provider-aware migration branching required (`ActiveProvider == "Microsoft.EntityFrameworkCore.SqlServer"` for raw SQL DDL vs EF methods for SQLite).
 - **Auth localStorage key**: `dhanak_admin_token` — must be consistent in both `AuthContext.tsx` and `productApi.ts`
+- **Resource group**: `rg-dhanak-trinket-prod`
 
 ## Known Gotchas
 - `apiRequest` spread order: always put `...options` **first**, then override `headers` — otherwise the headers object is overwritten
 - FormData uploads: do NOT set `Content-Type` header; let the browser set the multipart boundary automatically
 - `PendingModelChangesWarning`: suppress with `options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning))` in Program.cs
 - Azure SQL `TEXT` column: cannot have a `DEFAULT` constraint — use `nvarchar` instead
+- MSBuild file locking: VS Code Roslyn locks DLLs during publish — always kill `dotnet` processes and clear `obj/Release` first
+- Public thumbnail container: requires "Allow Blob anonymous access" = Enabled on `stdhanak2026prod` storage account
 
 ## Future Features (Planned)
 - **P&L dashboard**: Monthly revenue-vs-expenses chart and summary table
@@ -194,7 +209,8 @@ Each `Sale` row becomes a line item (one SKU + qty + unit price). The `Wholesale
 is the header. This requires a new migration and UI redesign — **do not add a
 `WholesaleOrders` table or `WholesaleOrderId` FK to Sales until that feature is
 explicitly requested**.
-- **Product image upload from UI**: Currently requires direct Azure Blob upload; build an upload widget in the admin Add Product tab
+- **Like button UI**: Backend + API ready (`POST /api/products/{id}/like`); frontend UI trigger not yet wired
+- **Edit/delete products**: No admin UI for this yet
 - **Customer management / CRM**: Link sales to customer profiles, view purchase history
 - **Export to CSV**: Download sales and expense data for accounting
 - **Google OAuth admin login**: Replace username/password with Google SSO for the admin account
