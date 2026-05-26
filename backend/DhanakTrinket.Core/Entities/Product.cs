@@ -25,7 +25,7 @@ public class Product
     public decimal Price { get; set; }
 
     /// <summary>Pari channel price.</summary>
-    public decimal? PariPrice { get; set; }
+    public decimal? PariFestPrice { get; set; }
 
     /// <summary>Wholesale price.</summary>
     public decimal? WholesalePrice { get; set; }

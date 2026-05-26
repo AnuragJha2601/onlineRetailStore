@@ -89,10 +89,11 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
                             ? { ...product, likesCount: product.likesCount + 1 }
                             : product
                     )
-                );                const updated = new Set(likedProductIds);
+                ); const updated = new Set(likedProductIds);
                 updated.add(productId);
                 setLikedProductIds(updated);
-                try { localStorage.setItem('dhanak_liked_products', JSON.stringify([...updated])); } catch { /* ignore */ }            }
+                try { localStorage.setItem('dhanak_liked_products', JSON.stringify([...updated])); } catch { /* ignore */ }
+            }
         } catch (error) {
             onError?.(error instanceof Error ? error.message : 'Failed to like product');
         }
@@ -291,11 +292,10 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                         onClick={onLike}
                         disabled={isLiked}
                         title={isLiked ? 'Already liked' : 'Like this product'}
-                        className={`flex items-center space-x-1 transition-colors ${
-                            isLiked
+                        className={`flex items-center space-x-1 transition-colors ${isLiked
                                 ? 'text-red-500 cursor-default'
                                 : 'text-gray-400 hover:text-red-500'
-                        }`}
+                            }`}
                     >
                         <span className="text-lg">{isLiked ? '❤️' : '🤍'}</span>
                         <span className="text-sm">{product.likesCount}</span>

@@ -73,7 +73,7 @@ public class ProductService : IProductService
         existingProduct.Category = product.Category;
         existingProduct.ProductCode = product.ProductCode;
         existingProduct.Price = product.Price;
-        existingProduct.PariPrice = product.PariPrice;
+        existingProduct.PariFestPrice = product.PariFestPrice;
         existingProduct.WholesalePrice = product.WholesalePrice;
         existingProduct.IsInStock = product.IsInStock;
         existingProduct.StockQuantity = product.StockQuantity;

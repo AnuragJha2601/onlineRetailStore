@@ -118,56 +118,6 @@ public class DhanakTrinketDbContext : DbContext
             entity.HasIndex(e => e.ExpenseDate);
             entity.HasIndex(e => e.Category);
         });
-
-        // Seed initial data for development
-        SeedData(modelBuilder);
-    }
-
-    private static void SeedData(ModelBuilder modelBuilder)
-    {
-        // Seed some sample products for development — use static dates to avoid EF migration churn
-        var seedDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        modelBuilder.Entity<Product>().HasData(
-            new Product
-            {
-                Id = 1,
-                Name = "Traditional Gold Bangles Set",
-                Description = "Beautiful set of 6 traditional gold-plated bangles perfect for festive occasions",
-                Category = ProductCategory.Bangles,
-                Price = 899.00m,
-                IsInStock = true,
-                StockQuantity = 10,
-                LikesCount = 0,
-                CreatedAt = seedDate,
-                UpdatedAt = seedDate
-            },
-            new Product
-            {
-                Id = 2,
-                Name = "Elegant Pearl Necklace",
-                Description = "Stunning pearl necklace with delicate chain work, perfect for special occasions",
-                Category = ProductCategory.Necklaces,
-                Price = 1299.00m,
-                IsInStock = true,
-                StockQuantity = 5,
-                LikesCount = 0,
-                CreatedAt = seedDate,
-                UpdatedAt = seedDate
-            },
-            new Product
-            {
-                Id = 3,
-                Name = "Chandbali Earrings",
-                Description = "Traditional chandbali earrings with intricate design and comfortable fit",
-                Category = ProductCategory.Earrings,
-                Price = 599.00m,
-                IsInStock = false,
-                StockQuantity = 0,
-                LikesCount = 0,
-                CreatedAt = seedDate,
-                UpdatedAt = seedDate
-            }
-        );
     }
 
     public override int SaveChanges()

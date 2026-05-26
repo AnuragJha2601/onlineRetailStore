@@ -110,7 +110,7 @@ export default function InventoryScreen() {
                                 <th className="px-4 py-3 text-left">Code</th>
                                 <th className="px-4 py-3 text-left">Category</th>
                                 <th className="px-4 py-3 text-right">MRP</th>
-                                <th className="px-4 py-3 text-right">Pari</th>
+                                <th className="px-4 py-3 text-right">PariFest</th>
                                 <th className="px-4 py-3 text-right">Wholesale</th>
                                 <th className="px-4 py-3 text-center">Stock</th>
                                 <th className="px-4 py-3 text-center">Status</th>
@@ -143,7 +143,7 @@ export default function InventoryScreen() {
                                         </td>
                                         <td className="px-4 py-3 text-gray-500">{p.category}</td>
                                         <td className="px-4 py-3 text-right font-medium text-gray-800">{formatPrice(p.price)}</td>
-                                        <td className="px-4 py-3 text-right text-gray-600">{p.pariPrice ? formatPrice(p.pariPrice) : <span className="text-gray-300">—</span>}</td>
+                                        <td className="px-4 py-3 text-right text-gray-600">{p.pariFestPrice ? formatPrice(p.pariFestPrice) : <span className="text-gray-300">—</span>}</td>
                                         <td className="px-4 py-3 text-right text-gray-600">{p.wholesalePrice ? formatPrice(p.wholesalePrice) : <span className="text-gray-300">—</span>}</td>
                                         <td className="px-4 py-3 text-center text-gray-700 font-medium">{p.stockQuantity}</td>
                                         <td className="px-4 py-3 text-center">

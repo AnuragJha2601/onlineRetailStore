@@ -43,9 +43,9 @@ export interface Product {
     images: ProductImage[];
 }
 
-/** Admin-only: includes channel prices (Pari, Wholesale). Returned by GET /api/products/admin. */
+/** Admin-only: includes channel prices (PariFest, Wholesale). Returned by GET /api/products/admin. */
 export interface AdminProduct extends Product {
-    pariPrice?: number;
+    pariFestPrice?: number;
     wholesalePrice?: number;
 }
 
@@ -55,7 +55,7 @@ export interface CreateProductRequest {
     description: string;
     category: ProductCategory;
     price: number;
-    pariPrice?: number;
+    pariFestPrice?: number;
     wholesalePrice?: number;
     stockQuantity?: number;
     isInStock?: boolean;
@@ -67,7 +67,7 @@ export interface UpdateProductRequest {
     description: string;
     category: ProductCategory;
     price: number;
-    pariPrice?: number;
+    pariFestPrice?: number;
     wholesalePrice?: number;
     stockQuantity: number;
     isInStock: boolean;

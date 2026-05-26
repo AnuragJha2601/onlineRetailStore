@@ -21,7 +21,7 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
         description: product.description,
         category: CATEGORY_OPTIONS.find(c => c.label === product.category)?.value ?? ProductCategory.Bangles,
         price: product.price,
-        pariPrice: product.pariPrice ?? undefined,
+        pariFestPrice: product.pariFestPrice ?? undefined,
         wholesalePrice: product.wholesalePrice ?? undefined,
         stockQuantity: product.stockQuantity,
         isInStock: product.isInStock,
@@ -38,8 +38,8 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                 ...prev,
                 [name]: type === 'checkbox' ? checked
                     : type === 'number' ? (value === '' ? undefined : Number(value))
-                    : name === 'category' ? Number(value)
-                    : value,
+                        : name === 'category' ? Number(value)
+                            : value,
             };
             return updated;
         });
@@ -55,7 +55,7 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
             // Merge returned base product with admin pricing fields we sent
             const updated: AdminProduct = {
                 ...(res.data!),
-                pariPrice: form.pariPrice,
+                pariFestPrice: form.pariFestPrice,
                 wholesalePrice: form.wholesalePrice,
             };
             onSaved(updated);
@@ -125,8 +125,8 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                                     className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400" />
                             </div>
                             <div>
-                                <label className="block text-xs text-gray-500 mb-1">Pari Price (₹)</label>
-                                <input type="number" name="pariPrice" value={form.pariPrice ?? ''} onChange={handleChange}
+                                <label className="block text-xs text-gray-500 mb-1">PariFest Price (₹)</label>
+                                <input type="number" name="pariFestPrice" value={form.pariFestPrice ?? ''} onChange={handleChange}
                                     min="0.01" step="0.01" placeholder="—"
                                     className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400" />
                             </div>

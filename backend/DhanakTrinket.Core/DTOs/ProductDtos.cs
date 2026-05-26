@@ -59,10 +59,10 @@ public class ProductDto
     public List<ProductImageDto> Images { get; set; } = new();
 }
 
-/// <summary>Admin-only DTO — includes channel prices (Pari, Wholesale) not shown publicly.</summary>
+/// <summary>Admin-only DTO — includes channel prices (PariFest, Wholesale) not shown publicly.</summary>
 public class AdminProductDto : ProductDto
 {
-    public decimal? PariPrice { get; set; }
+    public decimal? PariFestPrice { get; set; }
     public decimal? WholesalePrice { get; set; }
 }
 
@@ -73,7 +73,7 @@ public class CreateProductDto
     public string Description { get; set; } = string.Empty;
     public ProductCategory Category { get; set; }
     public decimal Price { get; set; }           // MRP shown on website
-    public decimal? PariPrice { get; set; }
+    public decimal? PariFestPrice { get; set; }
     public decimal? WholesalePrice { get; set; }
     public int StockQuantity { get; set; } = 1;
     public bool IsInStock { get; set; } = true;
@@ -86,7 +86,7 @@ public class UpdateProductDto
     public string Description { get; set; } = string.Empty;
     public ProductCategory Category { get; set; }
     public decimal Price { get; set; }
-    public decimal? PariPrice { get; set; }
+    public decimal? PariFestPrice { get; set; }
     public decimal? WholesalePrice { get; set; }
     public int StockQuantity { get; set; }
     public bool IsInStock { get; set; }

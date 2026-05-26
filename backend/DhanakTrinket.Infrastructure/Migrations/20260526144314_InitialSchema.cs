@@ -3,8 +3,6 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
-
 namespace DhanakTrinket.Infrastructure.Migrations
 {
     /// <inheritdoc />
@@ -17,16 +15,17 @@ namespace DhanakTrinket.Infrastructure.Migrations
                 name: "Expenses",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1")
                         .Annotation("Sqlite:Autoincrement", true),
-                    ExpenseDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    ExpenseDate = table.Column<DateTime>(nullable: false),
+                    Description = table.Column<string>(maxLength: 1000, nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    Category = table.Column<int>(type: "INTEGER", nullable: false),
-                    VendorName = table.Column<string>(type: "TEXT", maxLength: 255, nullable: true),
-                    BillImagePath = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
-                    Notes = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    Category = table.Column<int>(nullable: false),
+                    VendorName = table.Column<string>(maxLength: 255, nullable: true),
+                    BillImagePath = table.Column<string>(maxLength: 500, nullable: true),
+                    Notes = table.Column<string>(maxLength: 1000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(nullable: false, defaultValueSql: "GETUTCDATE()")
                 },
                 constraints: table =>
                 {
@@ -37,21 +36,22 @@ namespace DhanakTrinket.Infrastructure.Migrations
                 name: "Products",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1")
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
-                    Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
-                    Category = table.Column<int>(type: "INTEGER", nullable: false),
-                    ProductCode = table.Column<string>(type: "TEXT", maxLength: 5, nullable: true),
+                    Name = table.Column<string>(maxLength: 255, nullable: false),
+                    Description = table.Column<string>(maxLength: 2000, nullable: false),
+                    Category = table.Column<int>(nullable: false),
+                    ProductCode = table.Column<string>(maxLength: 5, nullable: true),
                     Price = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    PariPrice = table.Column<decimal>(type: "TEXT", nullable: true),
-                    WholesalePrice = table.Column<decimal>(type: "TEXT", nullable: true),
-                    IsInStock = table.Column<bool>(type: "INTEGER", nullable: false),
-                    StockQuantity = table.Column<int>(type: "INTEGER", nullable: false),
-                    LikesCount = table.Column<int>(type: "INTEGER", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    IsDeleted = table.Column<bool>(type: "INTEGER", nullable: false)
+                    PariFestPrice = table.Column<decimal>(type: "decimal(10,2)", nullable: true),
+                    WholesalePrice = table.Column<decimal>(type: "decimal(10,2)", nullable: true),
+                    IsInStock = table.Column<bool>(nullable: false),
+                    StockQuantity = table.Column<int>(nullable: false),
+                    LikesCount = table.Column<int>(nullable: false),
+                    CreatedAt = table.Column<DateTime>(nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    UpdatedAt = table.Column<DateTime>(nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    IsDeleted = table.Column<bool>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -62,16 +62,17 @@ namespace DhanakTrinket.Infrastructure.Migrations
                 name: "ProductImages",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1")
                         .Annotation("Sqlite:Autoincrement", true),
-                    ProductId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ImageUrl = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
-                    BlobPath = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
-                    AltText = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
-                    IsPrimary = table.Column<bool>(type: "INTEGER", nullable: false),
-                    DisplayOrder = table.Column<int>(type: "INTEGER", nullable: false),
-                    ThumbnailUrl = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    ProductId = table.Column<int>(nullable: false),
+                    ImageUrl = table.Column<string>(maxLength: 500, nullable: false),
+                    BlobPath = table.Column<string>(maxLength: 500, nullable: false),
+                    AltText = table.Column<string>(maxLength: 255, nullable: false),
+                    IsPrimary = table.Column<bool>(nullable: false),
+                    DisplayOrder = table.Column<int>(nullable: false),
+                    ThumbnailUrl = table.Column<string>(maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(nullable: false, defaultValueSql: "GETUTCDATE()")
                 },
                 constraints: table =>
                 {
@@ -88,22 +89,23 @@ namespace DhanakTrinket.Infrastructure.Migrations
                 name: "Sales",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1")
                         .Annotation("Sqlite:Autoincrement", true),
-                    ProductId = table.Column<int>(type: "INTEGER", nullable: true),
-                    ProductName = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
-                    SaleType = table.Column<int>(type: "INTEGER", nullable: false),
-                    QuantitySold = table.Column<int>(type: "INTEGER", nullable: false),
+                    ProductId = table.Column<int>(nullable: true),
+                    ProductName = table.Column<string>(maxLength: 255, nullable: false),
+                    SaleType = table.Column<int>(nullable: false),
+                    QuantitySold = table.Column<int>(nullable: false),
                     SellingPrice = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
                     TotalAmount = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    SaleDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CustomerName = table.Column<string>(type: "TEXT", maxLength: 255, nullable: true),
-                    CustomerPhone = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
-                    SaleChannel = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
-                    BuyerName = table.Column<string>(type: "TEXT", maxLength: 255, nullable: true),
-                    BuyerPhone = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
-                    Notes = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    SaleDate = table.Column<DateTime>(nullable: false),
+                    CustomerName = table.Column<string>(maxLength: 255, nullable: true),
+                    CustomerPhone = table.Column<string>(maxLength: 20, nullable: true),
+                    SaleChannel = table.Column<string>(maxLength: 100, nullable: true),
+                    BuyerName = table.Column<string>(maxLength: 255, nullable: true),
+                    BuyerPhone = table.Column<string>(maxLength: 20, nullable: true),
+                    Notes = table.Column<string>(maxLength: 1000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(nullable: false, defaultValueSql: "GETUTCDATE()")
                 },
                 constraints: table =>
                 {
@@ -120,11 +122,12 @@ namespace DhanakTrinket.Infrastructure.Migrations
                 name: "BulkSaleItems",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1")
                         .Annotation("Sqlite:Autoincrement", true),
-                    SaleId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
-                    Quantity = table.Column<int>(type: "INTEGER", nullable: false),
+                    SaleId = table.Column<int>(nullable: false),
+                    Description = table.Column<string>(maxLength: 500, nullable: false),
+                    Quantity = table.Column<int>(nullable: false),
                     UnitPrice = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
                     TotalPrice = table.Column<decimal>(type: "decimal(10,2)", nullable: false)
                 },
@@ -137,16 +140,6 @@ namespace DhanakTrinket.Infrastructure.Migrations
                         principalTable: "Sales",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.InsertData(
-                table: "Products",
-                columns: new[] { "Id", "Category", "CreatedAt", "Description", "IsDeleted", "IsInStock", "LikesCount", "Name", "PariPrice", "Price", "ProductCode", "StockQuantity", "UpdatedAt", "WholesalePrice" },
-                values: new object[,]
-                {
-                    { 1, 1, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Beautiful set of 6 traditional gold-plated bangles perfect for festive occasions", false, true, 0, "Traditional Gold Bangles Set", null, 899.00m, null, 10, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null },
-                    { 2, 2, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Stunning pearl necklace with delicate chain work, perfect for special occasions", false, true, 0, "Elegant Pearl Necklace", null, 1299.00m, null, 5, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null },
-                    { 3, 3, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Traditional chandbali earrings with intricate design and comfortable fit", false, false, 0, "Chandbali Earrings", null, 599.00m, null, 0, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null }
                 });
 
             migrationBuilder.CreateIndex(

@@ -20,7 +20,7 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
         description: '',
         category: ProductCategory.Bangles,
         price: 0,
-        pariPrice: undefined,
+        pariFestPrice: undefined,
         wholesalePrice: undefined,
         stockQuantity: 1,
         isInStock: true,
@@ -111,7 +111,7 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
                 description: '',
                 category: ProductCategory.Bangles,
                 price: 0,
-                pariPrice: undefined,
+                pariFestPrice: undefined,
                 wholesalePrice: undefined,
                 stockQuantity: 1,
                 isInStock: true,
@@ -238,16 +238,16 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
                             />
                         </div>
                         <div>
-                            <label htmlFor="pariPrice" className="block text-sm font-medium text-gray-700 mb-1">
-                                Pari Price (₹)
+                            <label htmlFor="pariFestPrice" className="block text-sm font-medium text-gray-700 mb-1">
+                                PariFest Price (₹)
                             </label>
                             <input
                                 type="number"
-                                id="pariPrice"
-                                name="pariPrice"
+                                id="pariFestPrice"
+                                name="pariFestPrice"
                                 min="0.01"
                                 step="0.01"
-                                value={formData.pariPrice ?? ''}
+                                value={formData.pariFestPrice ?? ''}
                                 onChange={handleInputChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                 placeholder="120"

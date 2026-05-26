@@ -20,19 +20,15 @@ namespace DhanakTrinket.Infrastructure.Migrations
             modelBuilder.Entity("DhanakTrinket.Core.Entities.BulkSaleItem", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .ValueGeneratedOnAdd();
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(500);
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("Quantity");
 
-                    b.Property<int>("SaleId")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("SaleId");
 
                     b.Property<decimal>("TotalPrice")
                         .HasColumnType("decimal(10,2)");
@@ -50,39 +46,31 @@ namespace DhanakTrinket.Infrastructure.Migrations
             modelBuilder.Entity("DhanakTrinket.Core.Entities.Expense", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .ValueGeneratedOnAdd();
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<string>("BillImagePath")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(500);
 
-                    b.Property<int>("Category")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("Category");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT")
                         .HasDefaultValueSql("GETUTCDATE()");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(1000);
 
-                    b.Property<DateTime>("ExpenseDate")
-                        .HasColumnType("TEXT");
+                    b.Property<DateTime>("ExpenseDate");
 
                     b.Property<string>("Notes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(1000);
 
                     b.Property<string>("VendorName")
-                        .HasMaxLength(255)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255);
 
                     b.HasKey("Id");
 
@@ -96,56 +84,45 @@ namespace DhanakTrinket.Infrastructure.Migrations
             modelBuilder.Entity("DhanakTrinket.Core.Entities.Product", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .ValueGeneratedOnAdd();
 
-                    b.Property<int>("Category")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("Category");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT")
                         .HasDefaultValueSql("GETUTCDATE()");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(2000);
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("INTEGER");
+                    b.Property<bool>("IsDeleted");
 
-                    b.Property<bool>("IsInStock")
-                        .HasColumnType("INTEGER");
+                    b.Property<bool>("IsInStock");
 
-                    b.Property<int>("LikesCount")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("LikesCount");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255);
 
-                    b.Property<decimal?>("PariPrice")
-                        .HasColumnType("TEXT");
+                    b.Property<decimal?>("PariFestPrice")
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<string>("ProductCode")
-                        .HasMaxLength(5)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(5);
 
-                    b.Property<int>("StockQuantity")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("StockQuantity");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT")
                         .HasDefaultValueSql("GETUTCDATE()");
 
                     b.Property<decimal?>("WholesalePrice")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("decimal(10,2)");
 
                     b.HasKey("Id");
 
@@ -156,90 +133,37 @@ namespace DhanakTrinket.Infrastructure.Migrations
                     b.HasIndex("IsInStock");
 
                     b.ToTable("Products");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Category = 1,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Beautiful set of 6 traditional gold-plated bangles perfect for festive occasions",
-                            IsDeleted = false,
-                            IsInStock = true,
-                            LikesCount = 0,
-                            Name = "Traditional Gold Bangles Set",
-                            Price = 899.00m,
-                            StockQuantity = 10,
-                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Category = 2,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Stunning pearl necklace with delicate chain work, perfect for special occasions",
-                            IsDeleted = false,
-                            IsInStock = true,
-                            LikesCount = 0,
-                            Name = "Elegant Pearl Necklace",
-                            Price = 1299.00m,
-                            StockQuantity = 5,
-                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Category = 3,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Traditional chandbali earrings with intricate design and comfortable fit",
-                            IsDeleted = false,
-                            IsInStock = false,
-                            LikesCount = 0,
-                            Name = "Chandbali Earrings",
-                            Price = 599.00m,
-                            StockQuantity = 0,
-                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                        });
                 });
 
             modelBuilder.Entity("DhanakTrinket.Core.Entities.ProductImage", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .ValueGeneratedOnAdd();
 
                     b.Property<string>("AltText")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255);
 
                     b.Property<string>("BlobPath")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(500);
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT")
                         .HasDefaultValueSql("GETUTCDATE()");
 
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("DisplayOrder");
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(500);
 
-                    b.Property<bool>("IsPrimary")
-                        .HasColumnType("INTEGER");
+                    b.Property<bool>("IsPrimary");
 
-                    b.Property<int>("ProductId")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("ProductId");
 
                     b.Property<string>("ThumbnailUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(500);
 
                     b.HasKey("Id");
 
@@ -253,54 +177,41 @@ namespace DhanakTrinket.Infrastructure.Migrations
             modelBuilder.Entity("DhanakTrinket.Core.Entities.Sale", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .ValueGeneratedOnAdd();
 
                     b.Property<string>("BuyerName")
-                        .HasMaxLength(255)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255);
 
                     b.Property<string>("BuyerPhone")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(20);
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT")
                         .HasDefaultValueSql("GETUTCDATE()");
 
                     b.Property<string>("CustomerName")
-                        .HasMaxLength(255)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255);
 
                     b.Property<string>("CustomerPhone")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(20);
 
                     b.Property<string>("Notes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(1000);
 
-                    b.Property<int?>("ProductId")
-                        .HasColumnType("INTEGER");
+                    b.Property<int?>("ProductId");
 
                     b.Property<string>("ProductName")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255);
 
-                    b.Property<int>("QuantitySold")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("QuantitySold");
 
                     b.Property<string>("SaleChannel")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(100);
 
-                    b.Property<DateTime>("SaleDate")
-                        .HasColumnType("TEXT");
+                    b.Property<DateTime>("SaleDate");
 
-                    b.Property<int>("SaleType")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("SaleType");
 
                     b.Property<decimal>("SellingPrice")
                         .HasColumnType("decimal(10,2)");
