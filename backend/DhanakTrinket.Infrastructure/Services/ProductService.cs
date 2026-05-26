@@ -22,6 +22,11 @@ public class ProductService : IProductService
         return await _productRepository.GetByIdAsync(id);
     }
 
+    public async Task<Product?> GetProductByCodeAsync(string productCode)
+    {
+        return await _productRepository.GetByCodeAsync(productCode);
+    }
+
     public async Task<IEnumerable<Product>> GetProductsByCategoryAsync(ProductCategory category)
     {
         return await _productRepository.GetByCategoryAsync(category);
@@ -66,7 +71,10 @@ public class ProductService : IProductService
         existingProduct.Name = product.Name;
         existingProduct.Description = product.Description;
         existingProduct.Category = product.Category;
+        existingProduct.ProductCode = product.ProductCode;
         existingProduct.Price = product.Price;
+        existingProduct.PariPrice = product.PariPrice;
+        existingProduct.WholesalePrice = product.WholesalePrice;
         existingProduct.IsInStock = product.IsInStock;
         existingProduct.StockQuantity = product.StockQuantity;
 

@@ -167,6 +167,10 @@ frontend/
 - Logo shown in catalog header, admin header, and login page
 - Clickable product cards: thumbnail in catalog grid → `ProductDetailModal` with lazy full-image load
 - `InStockOnly` filter defaults to `null` — public catalog returns all products by default
+- **Product pricing & code** (May 2026): `ProductCode` (auto-generated short code), `Price` (MRP), `PariPrice?`, `WholesalePrice?` on every product. Admin inventory shows all pricing columns; public catalog shows MRP only.
+- **Separate admin products endpoint**: `GET /api/products/admin` returns `AdminProductDto` (adds `PariPrice`/`WholesalePrice`); public `GET /api/products` returns `ProductDto` (MRP only).
+- **`EditProductModal`**: admin can edit all product fields including channel prices.
+- **Like button localStorage deduplication**: heart button disabled/filled after first click per browser; liked IDs stored in `dhanak_liked_products` localStorage key.
 
 ## Image Architecture
 - **Upload**: `POST /api/products/{id}/images` generates a 300×300 JPEG thumbnail (SixLabors.ImageSharp v3.1.7) and uploads both full image and thumbnail to separate blob containers
@@ -209,13 +213,14 @@ Each `Sale` row becomes a line item (one SKU + qty + unit price). The `Wholesale
 is the header. This requires a new migration and UI redesign — **do not add a
 `WholesaleOrders` table or `WholesaleOrderId` FK to Sales until that feature is
 explicitly requested**.
-- **Like button UI**: Backend + API ready (`POST /api/products/{id}/like`); frontend UI trigger not yet wired
-- **Edit/delete products**: No admin UI for this yet
+- **Like button**: Backend + API + localStorage deduplication done; heart fills and disables after first like per browser
+- **Edit/delete products**: Edit modal done (May 2026); delete not yet implemented
 - **Customer management / CRM**: Link sales to customer profiles, view purchase history
 - **Export to CSV**: Download sales and expense data for accounting
 - **Google OAuth admin login**: Replace username/password with Google SSO for the admin account
 - **Inventory alerts**: Low-stock notifications (push or email) when stock drops below a threshold
 - **Discount / promo codes**: Apply percentage or flat discounts at checkout for future e-commerce mode
 - **Order management**: Cart → checkout → order tracking when direct purchase is enabled
+- **Per-product cost price**: Removed (May 2026) for security — cost data must not appear on the wire. P&L tracked at invoice level via Expenses tab. Future re-introduction must be server-side only, never returned by any endpoint.
 
 Remember: This is a jewelry e-commerce platform focusing on user experience, mobile responsiveness, and beautiful product presentation. Always consider the business context when making technical suggestions.

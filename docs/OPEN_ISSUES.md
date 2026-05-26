@@ -97,7 +97,7 @@
 - [ ] Edit/delete products in admin panel
 
 ### Features Missing
-- [ ] Like functionality wired up end-to-end (field exists in DB + API, no UI trigger)
+- [ ] Like functionality: API + backend + localStorage deduplication done; heart button shows filled/disabled state. Needs final review.
 - [ ] GitHub Actions workflow for backend deploy (currently manual `az webapp deploy`)
 
 ---
@@ -124,9 +124,9 @@ Requires new migration, new controller endpoint, and UI redesign. **Do not add
 ### Customer Management / CRM
 - Link sales to customer profiles; view purchase history per customer
 
-### Dual Pricing (Cost Price + Selling Price)
-- Add `CostPrice` (admin-only) and `SellingPrice` (public) to Product
-- Auto-suggest selling price at +35% markup, overridable
+### Per-Product Cost Price (future)
+- **Decision (May 2026)**: Removed for security — cost data must not appear on the wire/in logs. P&L tracked via Expenses vs Sales tabs.
+- Future: server-side only field, never returned by any API endpoint.
 
 ### Export to CSV
 - Download sales and expense data for offline accounting
@@ -239,9 +239,9 @@ Requires new migration, new controller endpoint, and UI redesign. **Do not add
 ### Customer Management / CRM
 - Link sales to customer profiles; view purchase history per customer
 
-### Dual Pricing (Cost Price + Selling Price)
-- Add `CostPrice` (admin-only) and `SellingPrice` (public) to Product
-- Auto-suggest selling price at +35% markup, overridable
+### Per-Product Cost Price (future)
+- **Decision (May 2026)**: Removed for security — cost data must not appear on the wire/in logs. P&L tracked via Expenses vs Sales tabs.
+- Future: server-side only field, never returned by any API endpoint.
 
 ### Export to CSV
 - Download sales and expense data for offline accounting
@@ -264,12 +264,10 @@ Requires new migration, new controller endpoint, and UI redesign. **Do not add
 - [ ] **Backend** — JWT or session auth, `[Authorize(Roles = "Admin")]` on all admin endpoints
 - [ ] **Considerations**: Keep it simple initially (single admin user, hashed password in DB or env var) before full Azure AD B2C
 
-### Dual Pricing (Cost Price + Selling Price)
-- [ ] **Backend** — add `CostPrice` (decimal, admin-only) and `SellingPrice` (decimal, public) fields to `Product` entity + EF migration
-- [ ] **Selling price default** — auto-calculate as `CostPrice × 1.35` (35% markup) but overridable by admin
-- [ ] **Admin form** — show both fields; `SellingPrice` pre-fills at +35% when `CostPrice` is entered, editable
-- [ ] **Customer catalog** — show `SellingPrice` only; `CostPrice` never exposed in public API responses (`ProductDto`)
-- [ ] **Admin DTO** — separate `AdminProductDto` that includes `CostPrice` for internal use
+### Per-Product Cost Price (future — server-side only)
+- **Decision (May 2026)**: Removed — cost data must not appear on the wire. P&L via Expenses vs Sales.
+- [ ] **Backend** — if re-introduced, store as encrypted-at-rest, never returned by any DTO/endpoint
+- [ ] **Admin form** — enter MRP directly; no auto-compute from cost
 
 ### E-commerce
 - [ ] Shopping cart and checkout

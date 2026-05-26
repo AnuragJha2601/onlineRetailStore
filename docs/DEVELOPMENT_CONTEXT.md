@@ -20,6 +20,7 @@
 - **Database**: Azure SQL Database (EF Core code-first; SQLite for local dev)
 - **Cloud**: Azure ecosystem (App Service, Static Web Apps, Blob Storage)
 - **Auth**: JWT Bearer, BCrypt.Net-Next, single `dhanakadmin` user
+- **No per-product CostPrice**: Removed in May 2026. Cost prices are sensitive business data and must not be exposed on the wire (even admin endpoints might be cached/logged). P&L is tracked via the Expenses tab (bulk purchase invoices) vs Sales tab. Per-product cost tracking is a future feature.
 
 ---
 

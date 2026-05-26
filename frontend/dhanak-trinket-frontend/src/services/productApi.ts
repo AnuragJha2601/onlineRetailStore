@@ -1,5 +1,6 @@
 import {
     Product,
+    AdminProduct,
     CreateProductRequest,
     UpdateProductRequest,
     ProductFilterRequest,
@@ -96,6 +97,21 @@ export const productApi = {
     // Get single product by ID
     async getProduct(id: number): Promise<ApiResponse<Product>> {
         return apiRequest<Product>(`/products/${id}`);
+    },
+
+    // Get admin product list with cost/pari/wholesale prices (Admin only)
+    async getAdminProducts(filters?: ProductFilterRequest): Promise<ApiResponse<AdminProduct[]>> {
+        const params = new URLSearchParams();
+        if (filters?.category) params.append('category', filters.category.toString());
+        if (filters?.searchTerm) params.append('searchTerm', filters.searchTerm);
+        if (filters?.productCode) params.append('productCode', filters.productCode);
+        if (filters?.inStockOnly !== undefined) params.append('inStockOnly', filters.inStockOnly.toString());
+        if (filters?.page) params.append('page', filters.page.toString());
+        if (filters?.pageSize) params.append('pageSize', filters.pageSize.toString());
+        const queryString = params.toString();
+        return apiRequest<AdminProduct[]>(`/products/admin${queryString ? `?${queryString}` : ''}`, {
+            headers: authHeader(),
+        });
     },
 
     // Get products by category

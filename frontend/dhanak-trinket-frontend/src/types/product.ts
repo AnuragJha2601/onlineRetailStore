@@ -34,6 +34,7 @@ export interface Product {
     name: string;
     description: string;
     category: string; // String representation of ProductCategory
+    productCode?: string;
     price: number;
     isInStock: boolean;
     stockQuantity: number;
@@ -42,20 +43,32 @@ export interface Product {
     images: ProductImage[];
 }
 
+/** Admin-only: includes channel prices (Pari, Wholesale). Returned by GET /api/products/admin. */
+export interface AdminProduct extends Product {
+    pariPrice?: number;
+    wholesalePrice?: number;
+}
+
 export interface CreateProductRequest {
+    productCode?: string;
     name: string;
     description: string;
     category: ProductCategory;
     price: number;
+    pariPrice?: number;
+    wholesalePrice?: number;
     stockQuantity?: number;
     isInStock?: boolean;
 }
 
 export interface UpdateProductRequest {
+    productCode?: string;
     name: string;
     description: string;
     category: ProductCategory;
     price: number;
+    pariPrice?: number;
+    wholesalePrice?: number;
     stockQuantity: number;
     isInStock: boolean;
 }
@@ -63,6 +76,7 @@ export interface UpdateProductRequest {
 export interface ProductFilterRequest {
     category?: ProductCategory;
     searchTerm?: string;
+    productCode?: string;
     inStockOnly?: boolean;
     page?: number;
     pageSize?: number;

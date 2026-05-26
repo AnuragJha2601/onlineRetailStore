@@ -17,6 +17,13 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
     const [selectedCategory, setSelectedCategory] = useState<ProductCategory | 'all'>('all');
     const [showInStockOnly, setShowInStockOnly] = useState(true);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [likedProductIds, setLikedProductIds] = useState<Set<number>>(() => {
+        if (typeof window === 'undefined') return new Set();
+        try {
+            const stored = localStorage.getItem('dhanak_liked_products');
+            return stored ? new Set<number>(JSON.parse(stored)) : new Set<number>();
+        } catch { return new Set<number>(); }
+    });
 
     useEffect(() => {
         loadProducts();
@@ -58,7 +65,8 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
             filtered = filtered.filter(product =>
                 product.name.toLowerCase().includes(term) ||
                 product.description.toLowerCase().includes(term) ||
-                product.category.toLowerCase().includes(term)
+                product.category.toLowerCase().includes(term) ||
+                (product.productCode?.toLowerCase().includes(term) ?? false)
             );
         }
 
@@ -71,18 +79,20 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
     };
 
     const handleLike = async (productId: number) => {
+        if (likedProductIds.has(productId)) return;   // already liked from this browser
         try {
             const response = await productApi.likeProduct(productId);
             if (response.success) {
-                // Update the likes count in the local state
                 setProducts(prevProducts =>
                     prevProducts.map(product =>
                         product.id === productId
                             ? { ...product, likesCount: product.likesCount + 1 }
                             : product
                     )
-                );
-            }
+                );                const updated = new Set(likedProductIds);
+                updated.add(productId);
+                setLikedProductIds(updated);
+                try { localStorage.setItem('dhanak_liked_products', JSON.stringify([...updated])); } catch { /* ignore */ }            }
         } catch (error) {
             onError?.(error instanceof Error ? error.message : 'Failed to like product');
         }
@@ -168,6 +178,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
                         product={product}
                         onLike={() => handleLike(product.id)}
                         onOpen={() => setSelectedProduct(product)}
+                        isLiked={likedProductIds.has(product.id)}
                     />
                 ))}
             </div>
@@ -208,9 +219,10 @@ interface ProductCardProps {
     product: Product;
     onLike: () => void;
     onOpen: () => void;
+    isLiked?: boolean;
 }
 
-function ProductCard({ product, onLike, onOpen }: ProductCardProps) {
+function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardProps) {
     const primaryImage = product.images.find(img => img.isPrimary) || product.images[0];
     // Use thumbnail for the card; fall back to full image if no thumbnail yet
     const cardImageSrc = primaryImage?.thumbnailUrl || primaryImage?.imageUrl;
@@ -250,7 +262,14 @@ function ProductCard({ product, onLike, onOpen }: ProductCardProps) {
             {/* Product Info */}
             <div className="p-4">
                 <div className="mb-2">
-                    <h3 className="font-semibold text-gray-900 line-clamp-2">{product.name}</h3>
+                    <div className="flex items-start justify-between gap-1">
+                        <h3 className="font-semibold text-gray-900 line-clamp-2">{product.name}</h3>
+                        {product.productCode && (
+                            <span className="flex-shrink-0 font-mono text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded mt-0.5">
+                                {product.productCode}
+                            </span>
+                        )}
+                    </div>
                     <p className="text-sm text-gray-600">{product.category}</p>
                 </div>
 
@@ -270,9 +289,15 @@ function ProductCard({ product, onLike, onOpen }: ProductCardProps) {
 
                     <button
                         onClick={onLike}
-                        className="flex items-center space-x-1 text-gray-600 hover:text-red-500 transition-colors"
+                        disabled={isLiked}
+                        title={isLiked ? 'Already liked' : 'Like this product'}
+                        className={`flex items-center space-x-1 transition-colors ${
+                            isLiked
+                                ? 'text-red-500 cursor-default'
+                                : 'text-gray-400 hover:text-red-500'
+                        }`}
                     >
-                        <span className="text-lg">❤️</span>
+                        <span className="text-lg">{isLiked ? '❤️' : '🤍'}</span>
                         <span className="text-sm">{product.likesCount}</span>
                     </button>
                 </div>

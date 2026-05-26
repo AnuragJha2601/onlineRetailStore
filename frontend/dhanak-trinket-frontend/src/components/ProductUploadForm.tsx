@@ -15,10 +15,13 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
     const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
 
     const [formData, setFormData] = useState<CreateProductRequest>({
+        productCode: '',
         name: '',
         description: '',
         category: ProductCategory.Bangles,
         price: 0,
+        pariPrice: undefined,
+        wholesalePrice: undefined,
         stockQuantity: 1,
         isInStock: true,
     });
@@ -26,12 +29,15 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
 
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'number' ? Number(value) :
-                type === 'checkbox' ? (e.target as HTMLInputElement).checked :
-                    name === 'category' ? Number(value) : value
-        }));
+        setFormData(prev => {
+            const updated = {
+                ...prev,
+                [name]: type === 'number' ? Number(value) :
+                    type === 'checkbox' ? (e.target as HTMLInputElement).checked :
+                        name === 'category' ? Number(value) : value
+            };
+            return updated;
+        });
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,10 +106,13 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
 
             // Reset form
             setFormData({
+                productCode: '',
                 name: '',
                 description: '',
                 category: ProductCategory.Bangles,
                 price: 0,
+                pariPrice: undefined,
+                wholesalePrice: undefined,
                 stockQuantity: 1,
                 isInStock: true,
             });
@@ -191,21 +200,75 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
                     </div>
 
                     <div>
-                        <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-                            Price (₹) *
+                        <label htmlFor="productCode" className="block text-sm font-medium text-gray-700 mb-1">
+                            Product Code
                         </label>
                         <input
-                            type="number"
-                            id="price"
-                            name="price"
-                            required
-                            min="0"
-                            step="0.01"
-                            value={formData.price}
+                            type="text"
+                            id="productCode"
+                            name="productCode"
+                            maxLength={5}
+                            value={formData.productCode ?? ''}
                             onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                            placeholder="299"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono"
+                            placeholder="e.g. B01 — leave blank to auto-assign"
                         />
+                    </div>
+                </div>
+
+                {/* Pricing */}
+                <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Pricing</p>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+                                MRP / Retail (₹) *
+                            </label>
+                            <input
+                                type="number"
+                                id="price"
+                                name="price"
+                                required
+                                min="0.01"
+                                step="0.01"
+                                value={formData.price || ''}
+                                onChange={handleInputChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="299"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="pariPrice" className="block text-sm font-medium text-gray-700 mb-1">
+                                Pari Price (₹)
+                            </label>
+                            <input
+                                type="number"
+                                id="pariPrice"
+                                name="pariPrice"
+                                min="0.01"
+                                step="0.01"
+                                value={formData.pariPrice ?? ''}
+                                onChange={handleInputChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="120"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="wholesalePrice" className="block text-sm font-medium text-gray-700 mb-1">
+                                Wholesale Price (₹)
+                            </label>
+                            <input
+                                type="number"
+                                id="wholesalePrice"
+                                name="wholesalePrice"
+                                min="0.01"
+                                step="0.01"
+                                value={formData.wholesalePrice ?? ''}
+                                onChange={handleInputChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="135"
+                            />
+                        </div>
                     </div>
                 </div>
 

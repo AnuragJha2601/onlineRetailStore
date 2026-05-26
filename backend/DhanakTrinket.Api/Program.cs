@@ -18,15 +18,15 @@ builder.Services.AddControllers();
 // Configure Entity Framework
 builder.Services.AddDbContext<DhanakTrinketDbContext>(options =>
 {
-    // Use SQLite for local development
-    if (builder.Environment.IsDevelopment())
+    // Use Azure SQL if a connection string is configured, otherwise fall back to SQLite (local dev)
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (!string.IsNullOrEmpty(connectionString) && !connectionString.StartsWith("Server=localhost"))
     {
-        options.UseSqlite("Data Source=DhanakTrinket.db");
+        options.UseSqlServer(connectionString);
     }
     else
     {
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-        options.UseSqlServer(connectionString);
+        options.UseSqlite("Data Source=DhanakTrinket.db");
     }
     // Suppress the "pending model changes" warning — snapshot was generated against SQLite
     // but prod uses SQL Server; schema is correct, the drift is cosmetic (column type annotations only)
@@ -37,6 +37,8 @@ builder.Services.AddDbContext<DhanakTrinketDbContext>(options =>
 builder.Services.AddSingleton(provider =>
 {
     var connectionString = builder.Configuration.GetConnectionString("BlobStorage");
+    if (string.IsNullOrWhiteSpace(connectionString))
+        connectionString = "UseDevelopmentStorage=true";
     return new BlobServiceClient(connectionString);
 });
 
@@ -69,7 +71,11 @@ builder.Services.AddCors(options =>
             var origins = new List<string>
             {
                 "https://blue-ocean-089852300.7.azurestaticapps.net",
-                "https://api-dhanak-trinket-2026.azurewebsites.net"
+                "https://api-dhanak-trinket-2026.azurewebsites.net",
+                "https://www.dhanaktrinket.in",
+                "https://dhanaktrinket.in",
+                "https://www.dhanaktrinket.com",
+                "https://dhanaktrinket.com"
             };
             origins.AddRange(allowedOrigins);
             policy

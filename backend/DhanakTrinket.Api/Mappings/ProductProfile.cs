@@ -12,6 +12,10 @@ public class ProductProfile : Profile
         CreateMap<Product, ProductDto>()
             .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category.ToString()));
 
+        // Admin DTO inherits ProductDto and adds pricing fields
+        CreateMap<Product, AdminProductDto>()
+            .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category.ToString()));
+
         CreateMap<CreateProductDto, Product>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.LikesCount, opt => opt.Ignore())

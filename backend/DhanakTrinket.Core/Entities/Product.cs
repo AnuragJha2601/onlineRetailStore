@@ -15,9 +15,20 @@ public class Product
 
     public ProductCategory Category { get; set; }
 
+    /// <summary>Short unique code e.g. B01, N03. Auto-generated if not provided.</summary>
+    [MaxLength(5)]
+    public string? ProductCode { get; set; }
+
+    /// <summary>Retail / MRP price shown on website.</summary>
     [Required]
     [Range(0.01, double.MaxValue)]
     public decimal Price { get; set; }
+
+    /// <summary>Pari channel price.</summary>
+    public decimal? PariPrice { get; set; }
+
+    /// <summary>Wholesale price.</summary>
+    public decimal? WholesalePrice { get; set; }
 
     public bool IsInStock { get; set; } = true;
 

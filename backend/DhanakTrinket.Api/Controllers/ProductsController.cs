@@ -32,7 +32,7 @@ public class ProductsController : ControllerBase
     }
 
     /// <summary>
-    /// Get all products with optional filtering
+    /// Get all products with optional filtering — public, returns retail price only.
     /// </summary>
     [HttpGet]
     public async Task<ActionResult<ApiResponse<List<ProductDto>>>> GetProducts(
@@ -42,7 +42,12 @@ public class ProductsController : ControllerBase
         {
             IEnumerable<Product> products;
 
-            if (request?.Category.HasValue == true)
+            if (!string.IsNullOrWhiteSpace(request?.ProductCode))
+            {
+                var match = await _productService.GetProductByCodeAsync(request.ProductCode);
+                products = match != null ? [match] : [];
+            }
+            else if (request?.Category.HasValue == true)
             {
                 products = await _productService.GetProductsByCategoryAsync(request.Category.Value);
             }
@@ -55,21 +60,60 @@ public class ProductsController : ControllerBase
                 products = await _productService.GetAllProductsAsync();
             }
 
-            // Filter by stock status if requested
             if (request?.InStockOnly == true)
-            {
                 products = products.Where(p => p.IsInStock);
-            }
 
             var productDtos = _mapper.Map<List<ProductDto>>(products.ToList());
-            // List view: ThumbnailUrl is already a plain public HTTPS URL — no blob calls needed.
-            // Full ImageUrl is intentionally omitted from list responses (SAS generated only on detail open).
             return Ok(ApiResponse<List<ProductDto>>.SuccessResponse(productDtos, "Products retrieved successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving products");
             return StatusCode(500, ApiResponse<List<ProductDto>>.ErrorResponse("An error occurred while retrieving products"));
+        }
+    }
+
+    /// <summary>
+    /// Admin product list — includes cost price, Pari price, wholesale price. Requires auth.
+    /// Used by the Inventory tab.
+    /// </summary>
+    [Authorize(Roles = "Admin")]
+    [HttpGet("admin")]
+    public async Task<ActionResult<ApiResponse<List<AdminProductDto>>>> GetAdminProducts(
+        [FromQuery] ProductFilterRequest? request = null)
+    {
+        try
+        {
+            IEnumerable<Product> products;
+
+            if (!string.IsNullOrWhiteSpace(request?.ProductCode))
+            {
+                var match = await _productService.GetProductByCodeAsync(request.ProductCode);
+                products = match != null ? [match] : [];
+            }
+            else if (request?.Category.HasValue == true)
+            {
+                products = await _productService.GetProductsByCategoryAsync(request.Category.Value);
+            }
+            else if (!string.IsNullOrWhiteSpace(request?.SearchTerm))
+            {
+                products = await _productService.SearchProductsAsync(request.SearchTerm);
+            }
+            else
+            {
+                products = await _productService.GetAllProductsAsync();
+            }
+
+            if (request?.InStockOnly == true)
+                products = products.Where(p => p.IsInStock);
+
+            var adminDtos = _mapper.Map<List<AdminProductDto>>(products.ToList());
+            return Ok(ApiResponse<List<AdminProductDto>>.SuccessResponse(adminDtos, "Products retrieved successfully"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving admin products");
+            return StatusCode(500, ApiResponse<List<AdminProductDto>>.ErrorResponse("An error occurred while retrieving products"));
         }
     }
 

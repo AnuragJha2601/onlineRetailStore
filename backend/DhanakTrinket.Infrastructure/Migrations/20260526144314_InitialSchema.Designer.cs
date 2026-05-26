@@ -11,14 +11,90 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DhanakTrinket.Infrastructure.Migrations
 {
     [DbContext(typeof(DhanakTrinketDbContext))]
-    [Migration("20260503122942_AddSalesTables")]
-    partial class AddSalesTables
+    [Migration("20260526144314_InitialSchema")]
+    partial class InitialSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.15");
+
+            modelBuilder.Entity("DhanakTrinket.Core.Entities.BulkSaleItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SaleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SaleId");
+
+                    b.ToTable("BulkSaleItems");
+                });
+
+            modelBuilder.Entity("DhanakTrinket.Core.Entities.Expense", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("BillImagePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ExpenseDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("VendorName")
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Category");
+
+                    b.HasIndex("ExpenseDate");
+
+                    b.ToTable("Expenses");
+                });
 
             modelBuilder.Entity("DhanakTrinket.Core.Entities.Product", b =>
                 {
@@ -53,8 +129,15 @@ namespace DhanakTrinket.Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
+                    b.Property<decimal?>("PariPrice")
+                        .HasColumnType("TEXT");
+
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("ProductCode")
+                        .HasMaxLength(5)
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("StockQuantity")
                         .HasColumnType("INTEGER");
@@ -63,6 +146,9 @@ namespace DhanakTrinket.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT")
                         .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<decimal?>("WholesalePrice")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -79,7 +165,7 @@ namespace DhanakTrinket.Infrastructure.Migrations
                         {
                             Id = 1,
                             Category = 1,
-                            CreatedAt = new DateTime(2026, 5, 3, 12, 29, 41, 920, DateTimeKind.Utc).AddTicks(5737),
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Beautiful set of 6 traditional gold-plated bangles perfect for festive occasions",
                             IsDeleted = false,
                             IsInStock = true,
@@ -87,13 +173,13 @@ namespace DhanakTrinket.Infrastructure.Migrations
                             Name = "Traditional Gold Bangles Set",
                             Price = 899.00m,
                             StockQuantity = 10,
-                            UpdatedAt = new DateTime(2026, 5, 3, 12, 29, 41, 920, DateTimeKind.Utc).AddTicks(5864)
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
                         new
                         {
                             Id = 2,
                             Category = 2,
-                            CreatedAt = new DateTime(2026, 5, 3, 12, 29, 41, 920, DateTimeKind.Utc).AddTicks(5977),
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Stunning pearl necklace with delicate chain work, perfect for special occasions",
                             IsDeleted = false,
                             IsInStock = true,
@@ -101,13 +187,13 @@ namespace DhanakTrinket.Infrastructure.Migrations
                             Name = "Elegant Pearl Necklace",
                             Price = 1299.00m,
                             StockQuantity = 5,
-                            UpdatedAt = new DateTime(2026, 5, 3, 12, 29, 41, 920, DateTimeKind.Utc).AddTicks(5978)
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
                         new
                         {
                             Id = 3,
                             Category = 3,
-                            CreatedAt = new DateTime(2026, 5, 3, 12, 29, 41, 920, DateTimeKind.Utc).AddTicks(5981),
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Traditional chandbali earrings with intricate design and comfortable fit",
                             IsDeleted = false,
                             IsInStock = false,
@@ -115,7 +201,7 @@ namespace DhanakTrinket.Infrastructure.Migrations
                             Name = "Chandbali Earrings",
                             Price = 599.00m,
                             StockQuantity = 0,
-                            UpdatedAt = new DateTime(2026, 5, 3, 12, 29, 41, 920, DateTimeKind.Utc).AddTicks(5981)
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         });
                 });
 
@@ -154,6 +240,10 @@ namespace DhanakTrinket.Infrastructure.Migrations
                     b.Property<int>("ProductId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("ThumbnailUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.HasIndex("IsPrimary");
@@ -169,6 +259,14 @@ namespace DhanakTrinket.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("BuyerName")
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("BuyerPhone")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT")
@@ -183,7 +281,7 @@ namespace DhanakTrinket.Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Notes")
-                        .HasMaxLength(500)
+                        .HasMaxLength(1000)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("ProductId")
@@ -213,9 +311,6 @@ namespace DhanakTrinket.Infrastructure.Migrations
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<int?>("WholesaleDealId")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ProductId");
@@ -224,45 +319,18 @@ namespace DhanakTrinket.Infrastructure.Migrations
 
                     b.HasIndex("SaleType");
 
-                    b.HasIndex("WholesaleDealId");
-
                     b.ToTable("Sales");
                 });
 
-            modelBuilder.Entity("DhanakTrinket.Core.Entities.WholesaleDeal", b =>
+            modelBuilder.Entity("DhanakTrinket.Core.Entities.BulkSaleItem", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                    b.HasOne("DhanakTrinket.Core.Entities.Sale", "Sale")
+                        .WithMany("BulkSaleItems")
+                        .HasForeignKey("SaleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Property<string>("BuyerName")
-                        .HasMaxLength(255)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("BuyerPhone")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<DateTime>("DealDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("TotalAmount")
-                        .HasColumnType("decimal(10,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DealDate");
-
-                    b.ToTable("WholesaleDeals");
+                    b.Navigation("Sale");
                 });
 
             modelBuilder.Entity("DhanakTrinket.Core.Entities.ProductImage", b =>
@@ -283,14 +351,7 @@ namespace DhanakTrinket.Infrastructure.Migrations
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("DhanakTrinket.Core.Entities.WholesaleDeal", "WholesaleDeal")
-                        .WithMany("Sales")
-                        .HasForeignKey("WholesaleDealId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Product");
-
-                    b.Navigation("WholesaleDeal");
                 });
 
             modelBuilder.Entity("DhanakTrinket.Core.Entities.Product", b =>
@@ -298,9 +359,9 @@ namespace DhanakTrinket.Infrastructure.Migrations
                     b.Navigation("Images");
                 });
 
-            modelBuilder.Entity("DhanakTrinket.Core.Entities.WholesaleDeal", b =>
+            modelBuilder.Entity("DhanakTrinket.Core.Entities.Sale", b =>
                 {
-                    b.Navigation("Sales");
+                    b.Navigation("BulkSaleItems");
                 });
 #pragma warning restore 612, 618
         }

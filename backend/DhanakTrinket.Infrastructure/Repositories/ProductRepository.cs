@@ -29,6 +29,14 @@ public class ProductRepository : IProductRepository
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
+    public async Task<Product?> GetByCodeAsync(string productCode)
+    {
+        return await _context.Products
+            .Include(p => p.Images)
+            .FirstOrDefaultAsync(p => p.ProductCode != null &&
+                p.ProductCode.ToLower() == productCode.Trim().ToLower());
+    }
+
     public async Task<IEnumerable<Product>> GetByCategoryAsync(ProductCategory category)
     {
         return await _context.Products
@@ -43,7 +51,8 @@ public class ProductRepository : IProductRepository
         return await _context.Products
             .Include(p => p.Images)
             .Where(p => p.Name.Contains(searchTerm) ||
-                       p.Description.Contains(searchTerm))
+                       p.Description.Contains(searchTerm) ||
+                       (p.ProductCode != null && p.ProductCode.Contains(searchTerm)))
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
     }
@@ -53,11 +62,44 @@ public class ProductRepository : IProductRepository
         product.CreatedAt = DateTime.UtcNow;
         product.UpdatedAt = DateTime.UtcNow;
 
+        // Auto-generate ProductCode if not provided
+        if (string.IsNullOrWhiteSpace(product.ProductCode))
+            product.ProductCode = await GenerateProductCodeAsync(product.Category);
+
         _context.Products.Add(product);
         await _context.SaveChangesAsync();
 
         // Reload with images
         return await GetByIdAsync(product.Id) ?? product;
+    }
+
+    private static readonly Dictionary<ProductCategory, string> _categoryPrefixes = new()
+    {
+        { ProductCategory.Bangles,          "B"  },
+        { ProductCategory.Necklaces,        "N"  },
+        { ProductCategory.Earrings,         "E"  },
+        { ProductCategory.Bracelets,        "BR" },
+        { ProductCategory.Rings,            "R"  },
+        { ProductCategory.Sets,             "S"  },
+        { ProductCategory.Anklets,          "A"  },
+        { ProductCategory.HairAccessories,  "H"  },
+        { ProductCategory.Pendants,         "P"  },
+        { ProductCategory.Chains,           "C"  },
+    };
+
+    private async Task<string> GenerateProductCodeAsync(ProductCategory category)
+    {
+        var prefix = _categoryPrefixes.TryGetValue(category, out var p) ? p : "X";
+        // Find highest existing sequence number for this prefix
+        var existing = await _context.Products
+            .Where(x => x.ProductCode != null && x.ProductCode.StartsWith(prefix))
+            .Select(x => x.ProductCode!)
+            .ToListAsync();
+        var max = existing
+            .Select(code => { var num = code[prefix.Length..]; return int.TryParse(num, out var n) ? n : 0; })
+            .DefaultIfEmpty(0)
+            .Max();
+        return $"{prefix}{max + 1:D2}";
     }
 
     public async Task<Product> UpdateAsync(Product product)

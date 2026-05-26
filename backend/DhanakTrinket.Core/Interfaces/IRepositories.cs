@@ -6,6 +6,7 @@ public interface IProductRepository
 {
     Task<IEnumerable<Product>> GetAllAsync();
     Task<Product?> GetByIdAsync(int id);
+    Task<Product?> GetByCodeAsync(string productCode);
     Task<IEnumerable<Product>> GetByCategoryAsync(ProductCategory category);
     Task<IEnumerable<Product>> SearchAsync(string searchTerm);
     Task<Product> CreateAsync(Product product);
@@ -20,6 +21,7 @@ public interface IProductService
 {
     Task<IEnumerable<Product>> GetAllProductsAsync();
     Task<Product?> GetProductByIdAsync(int id);
+    Task<Product?> GetProductByCodeAsync(string productCode);
     Task<IEnumerable<Product>> GetProductsByCategoryAsync(ProductCategory category);
     Task<IEnumerable<Product>> SearchProductsAsync(string searchTerm);
     Task<Product> CreateProductAsync(Product product);

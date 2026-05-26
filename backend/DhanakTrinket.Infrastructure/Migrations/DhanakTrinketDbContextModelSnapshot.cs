@@ -126,8 +126,15 @@ namespace DhanakTrinket.Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
+                    b.Property<decimal?>("PariPrice")
+                        .HasColumnType("TEXT");
+
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("ProductCode")
+                        .HasMaxLength(5)
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("StockQuantity")
                         .HasColumnType("INTEGER");
@@ -136,6 +143,9 @@ namespace DhanakTrinket.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT")
                         .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<decimal?>("WholesalePrice")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 

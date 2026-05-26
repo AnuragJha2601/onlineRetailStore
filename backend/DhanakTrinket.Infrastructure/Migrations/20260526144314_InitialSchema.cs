@@ -8,11 +8,31 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DhanakTrinket.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddSalesTables : Migration
+    public partial class InitialSchema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "Expenses",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ExpenseDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    Category = table.Column<int>(type: "INTEGER", nullable: false),
+                    VendorName = table.Column<string>(type: "TEXT", maxLength: 255, nullable: true),
+                    BillImagePath = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    Notes = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "GETUTCDATE()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Expenses", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Products",
                 columns: table => new
@@ -22,7 +42,10 @@ namespace DhanakTrinket.Infrastructure.Migrations
                     Name = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
                     Category = table.Column<int>(type: "INTEGER", nullable: false),
+                    ProductCode = table.Column<string>(type: "TEXT", maxLength: 5, nullable: true),
                     Price = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    PariPrice = table.Column<decimal>(type: "TEXT", nullable: true),
+                    WholesalePrice = table.Column<decimal>(type: "TEXT", nullable: true),
                     IsInStock = table.Column<bool>(type: "INTEGER", nullable: false),
                     StockQuantity = table.Column<int>(type: "INTEGER", nullable: false),
                     LikesCount = table.Column<int>(type: "INTEGER", nullable: false),
@@ -33,24 +56,6 @@ namespace DhanakTrinket.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Products", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "WholesaleDeals",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    BuyerName = table.Column<string>(type: "TEXT", maxLength: 255, nullable: true),
-                    BuyerPhone = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
-                    DealDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TotalAmount = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    Notes = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "GETUTCDATE()")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_WholesaleDeals", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -65,6 +70,7 @@ namespace DhanakTrinket.Infrastructure.Migrations
                     AltText = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
                     IsPrimary = table.Column<bool>(type: "INTEGER", nullable: false),
                     DisplayOrder = table.Column<int>(type: "INTEGER", nullable: false),
+                    ThumbnailUrl = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "GETUTCDATE()")
                 },
                 constraints: table =>
@@ -91,11 +97,12 @@ namespace DhanakTrinket.Infrastructure.Migrations
                     SellingPrice = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
                     TotalAmount = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
                     SaleDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    WholesaleDealId = table.Column<int>(type: "INTEGER", nullable: true),
                     CustomerName = table.Column<string>(type: "TEXT", maxLength: 255, nullable: true),
                     CustomerPhone = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
                     SaleChannel = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
-                    Notes = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    BuyerName = table.Column<string>(type: "TEXT", maxLength: 255, nullable: true),
+                    BuyerPhone = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
+                    Notes = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "GETUTCDATE()")
                 },
                 constraints: table =>
@@ -107,23 +114,55 @@ namespace DhanakTrinket.Infrastructure.Migrations
                         principalTable: "Products",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BulkSaleItems",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    SaleId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    Quantity = table.Column<int>(type: "INTEGER", nullable: false),
+                    UnitPrice = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    TotalPrice = table.Column<decimal>(type: "decimal(10,2)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BulkSaleItems", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Sales_WholesaleDeals_WholesaleDealId",
-                        column: x => x.WholesaleDealId,
-                        principalTable: "WholesaleDeals",
+                        name: "FK_BulkSaleItems_Sales_SaleId",
+                        column: x => x.SaleId,
+                        principalTable: "Sales",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.InsertData(
                 table: "Products",
-                columns: new[] { "Id", "Category", "CreatedAt", "Description", "IsDeleted", "IsInStock", "LikesCount", "Name", "Price", "StockQuantity", "UpdatedAt" },
+                columns: new[] { "Id", "Category", "CreatedAt", "Description", "IsDeleted", "IsInStock", "LikesCount", "Name", "PariPrice", "Price", "ProductCode", "StockQuantity", "UpdatedAt", "WholesalePrice" },
                 values: new object[,]
                 {
-                    { 1, 1, new DateTime(2026, 5, 3, 12, 29, 41, 920, DateTimeKind.Utc).AddTicks(5737), "Beautiful set of 6 traditional gold-plated bangles perfect for festive occasions", false, true, 0, "Traditional Gold Bangles Set", 899.00m, 10, new DateTime(2026, 5, 3, 12, 29, 41, 920, DateTimeKind.Utc).AddTicks(5864) },
-                    { 2, 2, new DateTime(2026, 5, 3, 12, 29, 41, 920, DateTimeKind.Utc).AddTicks(5977), "Stunning pearl necklace with delicate chain work, perfect for special occasions", false, true, 0, "Elegant Pearl Necklace", 1299.00m, 5, new DateTime(2026, 5, 3, 12, 29, 41, 920, DateTimeKind.Utc).AddTicks(5978) },
-                    { 3, 3, new DateTime(2026, 5, 3, 12, 29, 41, 920, DateTimeKind.Utc).AddTicks(5981), "Traditional chandbali earrings with intricate design and comfortable fit", false, false, 0, "Chandbali Earrings", 599.00m, 0, new DateTime(2026, 5, 3, 12, 29, 41, 920, DateTimeKind.Utc).AddTicks(5981) }
+                    { 1, 1, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Beautiful set of 6 traditional gold-plated bangles perfect for festive occasions", false, true, 0, "Traditional Gold Bangles Set", null, 899.00m, null, 10, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null },
+                    { 2, 2, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Stunning pearl necklace with delicate chain work, perfect for special occasions", false, true, 0, "Elegant Pearl Necklace", null, 1299.00m, null, 5, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null },
+                    { 3, 3, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Traditional chandbali earrings with intricate design and comfortable fit", false, false, 0, "Chandbali Earrings", null, 599.00m, null, 0, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null }
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BulkSaleItems_SaleId",
+                table: "BulkSaleItems",
+                column: "SaleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Expenses_Category",
+                table: "Expenses",
+                column: "Category");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Expenses_ExpenseDate",
+                table: "Expenses",
+                column: "ExpenseDate");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProductImages_IsPrimary",
@@ -164,21 +203,17 @@ namespace DhanakTrinket.Infrastructure.Migrations
                 name: "IX_Sales_SaleType",
                 table: "Sales",
                 column: "SaleType");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Sales_WholesaleDealId",
-                table: "Sales",
-                column: "WholesaleDealId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_WholesaleDeals_DealDate",
-                table: "WholesaleDeals",
-                column: "DealDate");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "BulkSaleItems");
+
+            migrationBuilder.DropTable(
+                name: "Expenses");
+
             migrationBuilder.DropTable(
                 name: "ProductImages");
 
@@ -187,9 +222,6 @@ namespace DhanakTrinket.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Products");
-
-            migrationBuilder.DropTable(
-                name: "WholesaleDeals");
         }
     }
 }
