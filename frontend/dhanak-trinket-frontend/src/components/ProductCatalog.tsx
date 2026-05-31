@@ -247,19 +247,18 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                 <button
                     onClick={(e) => { e.stopPropagation(); onLike(); }}
                     disabled={isLiked}
-                    className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-colors ${
-                        isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
-                    }`}
+                    className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-colors ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+                        }`}
                     aria-label={isLiked ? 'Already liked' : 'Like'}
                 >
                     <span className="text-sm">{isLiked ? '❤️' : '🤍'}</span>
                 </button>
             </div>
 
-            {/* Minimal info — just name + price */}
-            <div className="px-1 pt-2 pb-3">
-                <p className="text-xs sm:text-sm text-gray-900 line-clamp-1 leading-tight">{product.name}</p>
-                <p className="text-xs sm:text-sm font-semibold text-gray-900 mt-0.5">{formatPrice(product.price)}</p>
+            {/* Minimal info — name + price */}
+            <div className="px-1 pt-2.5 pb-4">
+                <p className="text-[13px] text-gray-700 line-clamp-1">{product.name}</p>
+                <p className="text-sm font-medium text-gray-900 mt-1 tracking-wide">{formatPrice(product.price)}</p>
             </div>
         </div>
     );
