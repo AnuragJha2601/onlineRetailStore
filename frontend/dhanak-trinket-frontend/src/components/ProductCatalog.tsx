@@ -218,20 +218,33 @@ interface ProductCardProps {
 
 function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardProps) {
     const primaryImage = product.images.find(img => img.isPrimary) || product.images[0];
+    const secondImage = product.images.find(img => img !== primaryImage);
     const cardImageSrc = primaryImage?.thumbnailUrl || primaryImage?.imageUrl;
+    const hoverImageSrc = secondImage?.thumbnailUrl || secondImage?.imageUrl;
 
     return (
         <div className="group cursor-pointer" onClick={onOpen}>
-            {/* Image — edge to edge, no border/shadow */}
+            {/* Image — edge to edge, with hover swap */}
             <div className="relative aspect-[3/4] bg-gray-50 overflow-hidden">
                 {cardImageSrc ? (
-                    <Image
-                        src={cardImageSrc}
-                        alt={primaryImage?.altText || product.name}
-                        fill
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    <>
+                        <Image
+                            src={cardImageSrc}
+                            alt={primaryImage?.altText || product.name}
+                            fill
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                            className={`object-cover transition-all duration-700 ease-in-out ${hoverImageSrc ? 'group-hover:opacity-0' : 'group-hover:scale-110'}`}
+                        />
+                        {hoverImageSrc && (
+                            <Image
+                                src={hoverImageSrc}
+                                alt={secondImage?.altText || product.name}
+                                fill
+                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                className="object-cover opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-in-out"
+                            />
+                        )}
+                    </>
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-300">
                         <span className="text-3xl">📷</span>
@@ -245,12 +258,13 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                     </div>
                 )}
 
-                {/* Like button — top right */}
+                {/* Like button — appears on hover */}
                 <button
                     onClick={(e) => { e.stopPropagation(); onLike(); }}
                     disabled={isLiked}
-                    className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-colors ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
-                        }`}
+                    className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-all ${
+                        isLiked ? 'text-red-500 opacity-100' : 'text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100'
+                    }`}
                     aria-label={isLiked ? 'Already liked' : 'Like'}
                 >
                     <span className="text-sm">{isLiked ? '❤️' : '🤍'}</span>
