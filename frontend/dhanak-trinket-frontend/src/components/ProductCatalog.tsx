@@ -221,10 +221,32 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
     const secondImage = product.images.find(img => img !== primaryImage);
     const cardImageSrc = primaryImage?.thumbnailUrl || primaryImage?.imageUrl;
     const hoverImageSrc = secondImage?.thumbnailUrl || secondImage?.imageUrl;
+    const [touched, setTouched] = useState(false);
+
+    const handleCardClick = (e: React.MouseEvent) => {
+        // On touch devices: first tap zooms, second tap opens
+        if ('ontouchstart' in window) {
+            if (!touched) {
+                e.preventDefault();
+                setTouched(true);
+                return;
+            }
+        }
+        onOpen();
+    };
+
+    // Reset touch state when tapping outside (blur)
+    const handleBlur = () => { setTouched(false); };
 
     return (
-        <div className="group cursor-pointer" onClick={onOpen}>
-            {/* Image — edge to edge, with hover swap */}
+        <div
+            className={`group cursor-pointer ${touched ? 'is-touched' : ''}`}
+            onClick={handleCardClick}
+            onBlur={handleBlur}
+            onMouseLeave={() => setTouched(false)}
+            tabIndex={0}
+        >
+            {/* Image — edge to edge, with hover/touch zoom + swap */}
             <div className="relative aspect-[3/4] bg-gray-50 overflow-hidden">
                 {cardImageSrc ? (
                     <>
@@ -233,7 +255,10 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                             alt={primaryImage?.altText || product.name}
                             fill
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                            className={`object-cover transition-all duration-700 ease-in-out ${hoverImageSrc ? 'group-hover:opacity-0' : 'group-hover:scale-110'}`}
+                            className={`object-cover transition-all duration-700 ease-in-out ${hoverImageSrc
+                                    ? `group-hover:opacity-0 ${touched ? 'opacity-0' : ''}`
+                                    : `group-hover:scale-110 ${touched ? 'scale-110' : ''}`
+                                }`}
                         />
                         {hoverImageSrc && (
                             <Image
@@ -241,7 +266,10 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                                 alt={secondImage?.altText || product.name}
                                 fill
                                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                className="object-cover opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-in-out"
+                                className={`object-cover transition-all duration-700 ease-in-out ${touched
+                                        ? 'opacity-100 scale-110'
+                                        : 'opacity-0 group-hover:opacity-100 group-hover:scale-110'
+                                    }`}
                             />
                         )}
                     </>
@@ -258,13 +286,14 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                     </div>
                 )}
 
-                {/* Like button — appears on hover, shows count when > 0 */}
+                {/* Like button — always visible on mobile, hover-reveal on desktop */}
                 <button
                     onClick={(e) => { e.stopPropagation(); onLike(); }}
                     disabled={isLiked}
-                    className={`absolute top-2 right-2 flex items-center gap-1 px-1.5 h-7 rounded-full bg-white/80 backdrop-blur-sm transition-all ${
-                        isLiked || product.likesCount > 0 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                    } ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                    className={`absolute top-2 right-2 flex items-center gap-1 px-1.5 h-7 rounded-full bg-white/80 backdrop-blur-sm transition-all ${isLiked || product.likesCount > 0
+                            ? 'opacity-100'
+                            : 'sm:opacity-0 sm:group-hover:opacity-100 opacity-100'
+                        } ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
                     aria-label={isLiked ? 'Already liked' : 'Like'}
                 >
                     <span className="text-sm">{isLiked ? '❤️' : '🤍'}</span>

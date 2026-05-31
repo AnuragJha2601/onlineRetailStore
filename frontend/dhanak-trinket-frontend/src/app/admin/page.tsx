@@ -48,45 +48,48 @@ export default function AdminPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             <header className="bg-white shadow-sm border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center py-2">
-                        <div className="flex items-center gap-3">
-                            <Image src="/logo.jpg" alt="Dhanak Trinket" width={48} height={48} className="rounded-full object-cover" priority />
-                            <div>
-                                <h1 className="text-xl font-bold text-gray-900">Dhanak Trinket</h1>
-                                <p className="text-xs text-gray-500">Admin Dashboard</p>
+                <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+                    {/* Top bar */}
+                    <div className="flex items-center justify-between py-2 gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <Image src="/logo.jpg" alt="Dhanak Trinket" width={36} height={36}
+                                className="rounded-full object-cover flex-shrink-0" priority />
+                            <div className="min-w-0">
+                                <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">Dhanak Trinket</h1>
+                                <p className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">Admin Dashboard</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                            {/* Maintenance mode toggle */}
+                        <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
                             <button
                                 onClick={handleToggleMaintenance}
                                 disabled={togglingMaintenance}
-                                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border transition-colors ${maintenanceMode
-                                        ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
-                                        : 'bg-green-50 text-green-700 border-green-300 hover:bg-green-100'
-                                    }`}
-                                title={maintenanceMode ? 'Site is in maintenance mode — visitors see a maintenance page' : 'Site is live — visitors can browse the catalog'}
+                                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-[11px] sm:text-sm font-medium border transition-colors ${maintenanceMode
+                                    ? 'bg-amber-50 text-amber-700 border-amber-300'
+                                    : 'bg-green-50 text-green-700 border-green-300'
+                                }`}
                             >
-                                <span className={`inline-block w-2.5 h-2.5 rounded-full ${maintenanceMode ? 'bg-amber-500' : 'bg-green-500'}`} />
-                                {togglingMaintenance ? '...' : maintenanceMode ? 'Maintenance ON' : 'Site Live'}
+                                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${maintenanceMode ? 'bg-amber-500' : 'bg-green-500'}`} />
+                                <span className="hidden sm:inline">{togglingMaintenance ? '...' : maintenanceMode ? 'Maintenance ON' : 'Site Live'}</span>
+                                <span className="sm:hidden">{togglingMaintenance ? '...' : maintenanceMode ? 'Maint' : 'Live'}</span>
                             </button>
-                            <a href="/" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-                                View Catalog
+                            <a href="/" className="text-gray-500 hover:text-gray-900 px-1.5 py-1.5 text-[11px] sm:text-sm">
+                                <span className="hidden sm:inline">View Catalog</span>
+                                <span className="sm:hidden">Catalog</span>
                             </a>
                             <button onClick={logout}
-                                className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium border border-gray-300 hover:border-red-300 transition-colors">
+                                className="text-gray-500 hover:text-red-600 px-1.5 sm:px-2 py-1 text-[11px] sm:text-sm border border-gray-300 rounded-md">
                                 Logout
                             </button>
                         </div>
                     </div>
-                    <div className="flex gap-1 -mb-px">
+                    {/* Tabs — equal width on mobile */}
+                    <div className="flex -mb-px overflow-x-auto">
                         {TABS.map(tab => (
                             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                                className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
+                                className={`flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap text-center ${activeTab === tab.id
                                     ? 'border-indigo-600 text-indigo-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    }`}>
+                                    : 'border-transparent text-gray-500'
+                                }`}>
                                 {tab.label}
                             </button>
                         ))}
@@ -94,13 +97,10 @@ export default function AdminPage() {
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
                 {activeTab === 'inventory' && <InventoryScreen />}
-
                 {activeTab === 'expenses' && <ExpensesScreen />}
-
                 {activeTab === 'sales' && <SalesScreen />}
-
                 {activeTab === 'categories' && <CategoriesScreen />}
             </main>
         </div>

@@ -420,9 +420,8 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
                             <div
                                 key={index}
                                 onClick={() => setPrimaryIndex(index)}
-                                className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-colors ${
-                                    index === primaryIndex ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200 hover:border-gray-400'
-                                }`}
+                                className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-colors ${index === primaryIndex ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200 hover:border-gray-400'
+                                    }`}
                             >
                                 <img src={url} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
                                 {index === primaryIndex && (
