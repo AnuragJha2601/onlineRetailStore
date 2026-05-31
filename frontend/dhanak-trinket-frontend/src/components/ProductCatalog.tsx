@@ -248,7 +248,7 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
             <button
                 type="button"
                 onClick={onOpen}
-                className="block w-full relative aspect-square bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                className="block w-full relative aspect-[3/4] bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                 aria-label={`View ${product.name}`}
             >
                 {cardImageSrc ? (
@@ -257,7 +257,7 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                         alt={primaryImage?.altText || product.name}
                         fill
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                        className="object-contain"
+                        className="object-cover"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">
