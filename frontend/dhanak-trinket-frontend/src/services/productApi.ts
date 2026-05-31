@@ -315,6 +315,20 @@ export const productApi = {
             headers: authHeader(),
         });
     },
+
+    // ─── Site Settings ─────────────────────────────────────────────────────────
+
+    async getMaintenanceMode(): Promise<ApiResponse<boolean>> {
+        return apiRequest<boolean>('/settings/maintenance');
+    },
+
+    async setMaintenanceMode(enabled: boolean): Promise<ApiResponse<boolean>> {
+        return apiRequest<boolean>('/settings/maintenance', {
+            method: 'PUT',
+            headers: authHeader(),
+            body: JSON.stringify({ enabled }),
+        });
+    },
 };
 
 // Helper functions

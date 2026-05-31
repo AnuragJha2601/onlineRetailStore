@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Product } from '@/types/product';
+import { Product, ProductImage } from '@/types/product';
 import { productApi, formatPrice } from '@/services/productApi';
 
 interface ProductDetailModalProps {
@@ -10,17 +10,23 @@ interface ProductDetailModalProps {
 }
 
 export default function ProductDetailModal({ product, onClose }: ProductDetailModalProps) {
-    // Full-image SAS URL fetched lazily on open (not available in list response)
-    const [fullImageUrl, setFullImageUrl] = useState<string | null>(null);
+    const [allImages, setAllImages] = useState<ProductImage[]>([]);
+    const [currentIndex, setCurrentIndex] = useState(0);
     const [imageLoading, setImageLoading] = useState(true);
 
-    // Fetch product detail on mount to get the fresh SAS URL for the full image
+    // Fetch product detail on mount to get fresh SAS URLs for all images
     useEffect(() => {
         let cancelled = false;
         productApi.getProduct(product.id).then(res => {
             if (cancelled) return;
-            const primaryImg = res.data?.images.find(i => i.isPrimary) ?? res.data?.images[0];
-            setFullImageUrl(primaryImg?.imageUrl ?? null);
+            const images = res.data?.images ?? [];
+            // Sort: primary first, then by displayOrder
+            images.sort((a, b) => {
+                if (a.isPrimary && !b.isPrimary) return -1;
+                if (!a.isPrimary && b.isPrimary) return 1;
+                return (a.displayOrder ?? 0) - (b.displayOrder ?? 0);
+            });
+            setAllImages(images);
             setImageLoading(false);
         }).catch(() => {
             if (!cancelled) setImageLoading(false);
@@ -28,16 +34,22 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         return () => { cancelled = true; };
     }, [product.id]);
 
-    // Close on Escape key
+    // Close on Escape, arrow keys for navigation
     useEffect(() => {
-        const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        const handleKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+            if (e.key === 'ArrowLeft') setCurrentIndex(i => Math.max(0, i - 1));
+            if (e.key === 'ArrowRight') setCurrentIndex(i => Math.min((allImages.length || 1) - 1, i + 1));
+        };
         document.addEventListener('keydown', handleKey);
         return () => document.removeEventListener('keydown', handleKey);
-    }, [onClose]);
+    }, [onClose, allImages.length]);
 
-    // Show thumbnail from the list data while the full image loads
+    // While loading, show thumbnail from list data
     const primaryImg = product.images.find(i => i.isPrimary) ?? product.images[0];
-    const displaySrc = fullImageUrl ?? primaryImg?.thumbnailUrl ?? primaryImg?.imageUrl;
+    const currentImage = allImages[currentIndex];
+    const displaySrc = currentImage?.imageUrl ?? primaryImg?.thumbnailUrl ?? primaryImg?.imageUrl;
+    const hasMultiple = allImages.length > 1;
 
     return (
         <div
@@ -62,7 +74,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                     {displaySrc ? (
                         <img
                             src={displaySrc}
-                            alt={primaryImg?.altText || product.name}
+                            alt={currentImage?.altText || product.name}
                             className={`w-full h-full object-contain transition-opacity duration-300 ${imageLoading ? 'opacity-60' : 'opacity-100'}`}
                         />
                     ) : (
@@ -78,6 +90,42 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                     {imageLoading && displaySrc && (
                         <div className="absolute inset-0 flex items-end justify-center pb-3 pointer-events-none">
                             <span className="text-xs text-white bg-black/40 px-2 py-0.5 rounded-full">Loading full image…</span>
+                        </div>
+                    )}
+
+                    {/* Left/Right navigation arrows */}
+                    {hasMultiple && (
+                        <>
+                            <button
+                                onClick={() => setCurrentIndex(i => Math.max(0, i - 1))}
+                                disabled={currentIndex === 0}
+                                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white disabled:opacity-30 rounded-full w-9 h-9 flex items-center justify-center shadow transition-colors"
+                                aria-label="Previous image"
+                            >
+                                ‹
+                            </button>
+                            <button
+                                onClick={() => setCurrentIndex(i => Math.min(allImages.length - 1, i + 1))}
+                                disabled={currentIndex === allImages.length - 1}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white disabled:opacity-30 rounded-full w-9 h-9 flex items-center justify-center shadow transition-colors"
+                                aria-label="Next image"
+                            >
+                                ›
+                            </button>
+                        </>
+                    )}
+
+                    {/* Dot indicators */}
+                    {hasMultiple && (
+                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                            {allImages.map((_, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setCurrentIndex(idx)}
+                                    className={`w-2 h-2 rounded-full transition-colors ${idx === currentIndex ? 'bg-indigo-600' : 'bg-white/70 hover:bg-white'}`}
+                                    aria-label={`Image ${idx + 1}`}
+                                />
+                            ))}
                         </div>
                     )}
 

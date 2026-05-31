@@ -17,6 +17,7 @@ public class DhanakTrinketDbContext : DbContext
     public DbSet<Sale> Sales { get; set; }
     public DbSet<BulkSaleItem> BulkSaleItems { get; set; }
     public DbSet<Expense> Expenses { get; set; }
+    public DbSet<SiteSetting> SiteSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -158,6 +159,15 @@ public class DhanakTrinketDbContext : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.HasIndex(e => e.ExpenseDate);
             entity.HasIndex(e => e.Category);
+        });
+
+        // SiteSetting configuration
+        modelBuilder.Entity<SiteSetting>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Key).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Value).IsRequired().HasMaxLength(500);
+            entity.HasIndex(e => e.Key).IsUnique();
         });
     }
 

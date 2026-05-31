@@ -8,6 +8,7 @@ import ExpensesScreen from '@/components/ExpensesScreen';
 import SalesScreen from '@/components/SalesScreen';
 import CategoriesScreen from '@/components/CategoriesScreen';
 import { useAuth } from '@/contexts/AuthContext';
+import { productApi } from '@/services/productApi';
 
 type Tab = 'inventory' | 'expenses' | 'sales' | 'categories' | 'add-product';
 
@@ -23,12 +24,27 @@ export default function AdminPage() {
     const { isAdmin, isLoading, logout } = useAuth();
     const [activeTab, setActiveTab] = useState<Tab>('inventory');
     const [addProductMessage, setAddProductMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [maintenanceMode, setMaintenanceMode] = useState(false);
+    const [togglingMaintenance, setTogglingMaintenance] = useState(false);
 
     useEffect(() => {
         if (!isLoading && !isAdmin) {
             window.location.href = '/login';
         }
     }, [isAdmin, isLoading]);
+
+    useEffect(() => {
+        productApi.getMaintenanceMode().then(res => {
+            if (res.success && res.data !== undefined) setMaintenanceMode(res.data);
+        });
+    }, []);
+
+    const handleToggleMaintenance = async () => {
+        setTogglingMaintenance(true);
+        const res = await productApi.setMaintenanceMode(!maintenanceMode);
+        if (res.success) setMaintenanceMode(!maintenanceMode);
+        setTogglingMaintenance(false);
+    };
 
     if (isLoading || !isAdmin) return null;
 
@@ -45,6 +61,19 @@ export default function AdminPage() {
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
+                            {/* Maintenance mode toggle */}
+                            <button
+                                onClick={handleToggleMaintenance}
+                                disabled={togglingMaintenance}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border transition-colors ${maintenanceMode
+                                        ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
+                                        : 'bg-green-50 text-green-700 border-green-300 hover:bg-green-100'
+                                    }`}
+                                title={maintenanceMode ? 'Site is in maintenance mode — visitors see a maintenance page' : 'Site is live — visitors can browse the catalog'}
+                            >
+                                <span className={`inline-block w-2.5 h-2.5 rounded-full ${maintenanceMode ? 'bg-amber-500' : 'bg-green-500'}`} />
+                                {togglingMaintenance ? '...' : maintenanceMode ? 'Maintenance ON' : 'Site Live'}
+                            </button>
                             <a href="/" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
                                 View Catalog
                             </a>
