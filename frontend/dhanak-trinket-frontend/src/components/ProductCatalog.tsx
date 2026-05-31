@@ -258,16 +258,19 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                     </div>
                 )}
 
-                {/* Like button — appears on hover */}
+                {/* Like button — appears on hover, shows count when > 0 */}
                 <button
                     onClick={(e) => { e.stopPropagation(); onLike(); }}
                     disabled={isLiked}
-                    className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-all ${
-                        isLiked ? 'text-red-500 opacity-100' : 'text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100'
-                    }`}
+                    className={`absolute top-2 right-2 flex items-center gap-1 px-1.5 h-7 rounded-full bg-white/80 backdrop-blur-sm transition-all ${
+                        isLiked || product.likesCount > 0 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                    } ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
                     aria-label={isLiked ? 'Already liked' : 'Like'}
                 >
                     <span className="text-sm">{isLiked ? '❤️' : '🤍'}</span>
+                    {product.likesCount > 0 && (
+                        <span className="text-[11px] font-medium text-gray-600">{product.likesCount}</span>
+                    )}
                 </button>
             </div>
 
