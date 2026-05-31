@@ -89,6 +89,10 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                         : (name === 'categoryId' || name === 'subCategoryId') ? Number(value)
                             : value,
             };
+            // Auto-derive isInStock from stockQuantity
+            if (name === 'stockQuantity') {
+                updated.isInStock = Number(value) > 0;
+            }
             return updated;
         });
     };
@@ -267,18 +271,12 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                     </div>
 
                     {/* Stock */}
-                    <div className="grid grid-cols-2 gap-3 items-end">
-                        <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Stock Qty *</label>
-                            <input type="number" name="stockQuantity" value={form.stockQuantity} onChange={handleChange}
-                                required min="0"
-                                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-                        </div>
-                        <div className="flex items-center gap-2 pb-1.5">
-                            <input type="checkbox" id="isInStock" name="isInStock" checked={form.isInStock} onChange={handleChange}
-                                className="h-4 w-4 text-indigo-600 border-gray-300 rounded" />
-                            <label htmlFor="isInStock" className="text-sm text-gray-700">Available for sale</label>
-                        </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Stock Qty *</label>
+                        <input type="number" name="stockQuantity" value={form.stockQuantity} onChange={handleChange}
+                            required min="1"
+                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                        <p className="text-xs text-gray-400 mt-1">To mark as sold out, use the &quot;Sold&quot; button in the inventory table.</p>
                     </div>
 
                     {/* Images */}
