@@ -50,7 +50,10 @@ public class ProductDto
     public string? ProductCode { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty;
+    public int CategoryId { get; set; }
+    public string CategoryName { get; set; } = string.Empty;
+    public int? SubCategoryId { get; set; }
+    public string? SubCategoryName { get; set; }
     public decimal Price { get; set; }          // Retail/MRP — public
     public bool IsInStock { get; set; }
     public int StockQuantity { get; set; }
@@ -71,7 +74,8 @@ public class CreateProductDto
     public string? ProductCode { get; set; }     // optional — auto-generated if blank
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public ProductCategory Category { get; set; }
+    public int CategoryId { get; set; }
+    public int? SubCategoryId { get; set; }
     public decimal Price { get; set; }           // MRP shown on website
     public decimal? PariFestPrice { get; set; }
     public decimal? WholesalePrice { get; set; }
@@ -84,7 +88,8 @@ public class UpdateProductDto
     public string? ProductCode { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public ProductCategory Category { get; set; }
+    public int CategoryId { get; set; }
+    public int? SubCategoryId { get; set; }
     public decimal Price { get; set; }
     public decimal? PariFestPrice { get; set; }
     public decimal? WholesalePrice { get; set; }
@@ -105,12 +110,41 @@ public class ProductImageDto
 // Request DTOs
 public class ProductFilterRequest
 {
-    public ProductCategory? Category { get; set; }
+    public int? CategoryId { get; set; }
+    public int? SubCategoryId { get; set; }
     public string? SearchTerm { get; set; }
     public string? ProductCode { get; set; }     // exact code lookup
     public bool? InStockOnly { get; set; }
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 20;
+}
+
+// ─── Category DTOs ───────────────────────────────────────────────────────────
+
+public class CategoryDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
+
+public class CreateCategoryDto
+{
+    public string Name { get; set; } = string.Empty;
+}
+
+// ─── SubCategory DTOs ────────────────────────────────────────────────────────
+
+public class SubCategoryDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int CategoryId { get; set; }
+}
+
+public class CreateSubCategoryDto
+{
+    public string Name { get; set; } = string.Empty;
+    public int CategoryId { get; set; }
 }
 
 // ─── Sales DTOs ──────────────────────────────────────────────────────────────

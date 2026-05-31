@@ -24,11 +24,11 @@ public class BlobStorageService : IBlobStorageService
             // PublicAccessType.Blob allows anonymous read on individual blobs
             await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
 
-            var uniqueFileName = $"{Guid.NewGuid()}.jpg";
+            var uniqueFileName = $"{Guid.NewGuid()}.webp";
             var blobPath = $"thumbnails/{DateTime.UtcNow:yyyy/MM/dd}/{uniqueFileName}";
             var blobClient = containerClient.GetBlobClient(blobPath);
 
-            var blobHttpHeaders = new BlobHttpHeaders { ContentType = "image/jpeg" };
+            var blobHttpHeaders = new BlobHttpHeaders { ContentType = "image/webp" };
             await blobClient.UploadAsync(imageStream, overwrite: true);
             await blobClient.SetHttpHeadersAsync(blobHttpHeaders);
 

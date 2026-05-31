@@ -47,6 +47,8 @@ builder.Services.AddAutoMapper(typeof(Program));
 
 // Register repositories and services
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Product, ProductCategory, getCategoryDisplayName, ProductFilterRequest } from '@/types/product';
+import Image from 'next/image';
+import { Product, Category, ProductFilterRequest } from '@/types/product';
 import { productApi, formatPrice } from '@/services/productApi';
 import ProductDetailModal from '@/components/ProductDetailModal';
 
@@ -14,7 +15,8 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState<ProductCategory | 'all'>('all');
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<number | 'all'>('all');
     const [showInStockOnly, setShowInStockOnly] = useState(true);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [likedProductIds, setLikedProductIds] = useState<Set<number>>(() => {
@@ -27,11 +29,14 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
 
     useEffect(() => {
         loadProducts();
+        productApi.getCategories().then(res => {
+            if (res.success && res.data) setCategories(res.data);
+        });
     }, []);
 
     useEffect(() => {
         filterProducts();
-    }, [products, searchTerm, selectedCategory, showInStockOnly]);
+    }, [products, searchTerm, selectedCategoryId, showInStockOnly]);
 
     const loadProducts = async () => {
         try {
@@ -54,9 +59,8 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
         let filtered = [...products];
 
         // Filter by category
-        if (selectedCategory !== 'all') {
-            const categoryName = getCategoryDisplayName(selectedCategory as ProductCategory);
-            filtered = filtered.filter(product => product.category === categoryName);
+        if (selectedCategoryId !== 'all') {
+            filtered = filtered.filter(product => product.categoryId === selectedCategoryId);
         }
 
         // Filter by search term
@@ -65,7 +69,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
             filtered = filtered.filter(product =>
                 product.name.toLowerCase().includes(term) ||
                 product.description.toLowerCase().includes(term) ||
-                product.category.toLowerCase().includes(term) ||
+                product.categoryName.toLowerCase().includes(term) ||
                 (product.productCode?.toLowerCase().includes(term) ?? false)
             );
         }
@@ -98,13 +102,6 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
             onError?.(error instanceof Error ? error.message : 'Failed to like product');
         }
     };
-
-    const categories = Object.values(ProductCategory)
-        .filter(value => typeof value === 'number')
-        .map(value => ({
-            value: value as ProductCategory,
-            label: getCategoryDisplayName(value as ProductCategory)
-        }));
 
     if (loading) {
         return (
@@ -142,15 +139,13 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
                         </label>
                         <select
                             id="category"
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value === 'all' ? 'all' : Number(e.target.value) as ProductCategory)}
+                            value={selectedCategoryId}
+                            onChange={(e) => setSelectedCategoryId(e.target.value === 'all' ? 'all' : Number(e.target.value))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         >
                             <option value="all">All Categories</option>
-                            {categories.map(({ value, label }) => (
-                                <option key={value} value={value}>
-                                    {label}
-                                </option>
+                            {categories.map(c => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
                             ))}
                         </select>
                     </div>
@@ -190,7 +185,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
                     <div className="text-gray-400 text-6xl mb-4">🔍</div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
                     <p className="text-gray-600">
-                        {searchTerm || selectedCategory !== 'all' || !showInStockOnly
+                        {searchTerm || selectedCategoryId !== 'all' || !showInStockOnly
                             ? 'Try adjusting your filters to see more products.'
                             : 'No products available at the moment.'}
                     </p>
@@ -238,10 +233,12 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                 aria-label={`View ${product.name}`}
             >
                 {cardImageSrc ? (
-                    <img
+                    <Image
                         src={cardImageSrc}
                         alt={primaryImage?.altText || product.name}
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        className="object-cover"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -271,7 +268,7 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                             </span>
                         )}
                     </div>
-                    <p className="text-sm text-gray-600">{product.category}</p>
+                    <p className="text-sm text-gray-600">{product.categoryName}</p>
                 </div>
 
                 {product.description && (
@@ -293,8 +290,8 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                         disabled={isLiked}
                         title={isLiked ? 'Already liked' : 'Like this product'}
                         className={`flex items-center space-x-1 transition-colors ${isLiked
-                                ? 'text-red-500 cursor-default'
-                                : 'text-gray-400 hover:text-red-500'
+                            ? 'text-red-500 cursor-default'
+                            : 'text-gray-400 hover:text-red-500'
                             }`}
                     >
                         <span className="text-lg">{isLiked ? '❤️' : '🤍'}</span>

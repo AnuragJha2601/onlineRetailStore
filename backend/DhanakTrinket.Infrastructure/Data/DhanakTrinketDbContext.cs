@@ -12,6 +12,8 @@ public class DhanakTrinketDbContext : DbContext
 
     public DbSet<Product> Products { get; set; }
     public DbSet<ProductImage> ProductImages { get; set; }
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<SubCategory> SubCategories { get; set; }
     public DbSet<Sale> Sales { get; set; }
     public DbSet<BulkSaleItem> BulkSaleItems { get; set; }
     public DbSet<Expense> Expenses { get; set; }
@@ -20,14 +22,25 @@ public class DhanakTrinketDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // Category configuration
+        modelBuilder.Entity<Category>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.HasIndex(e => e.Name).IsUnique();
+        });
+
         // Product configuration
         modelBuilder.Entity<Product>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Description).HasMaxLength(2000);
+            entity.Property(e => e.ProductCode).HasMaxLength(10);
             entity.Property(e => e.Price).HasColumnType("decimal(10,2)");
-            entity.Property(e => e.Category).HasConversion<int>();
+            entity.Property(e => e.PariFestPrice).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.WholesalePrice).HasColumnType("decimal(10,2)");
 
             // Audit fields
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
@@ -36,10 +49,38 @@ public class DhanakTrinketDbContext : DbContext
             // Soft delete
             entity.HasQueryFilter(e => !e.IsDeleted);
 
+            // Category FK
+            entity.HasOne(e => e.Category)
+                  .WithMany()
+                  .HasForeignKey(e => e.CategoryId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // SubCategory FK
+            entity.HasOne(e => e.SubCategory)
+                  .WithMany()
+                  .HasForeignKey(e => e.SubCategoryId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
             // Index for performance
-            entity.HasIndex(e => e.Category);
+            entity.HasIndex(e => e.CategoryId);
             entity.HasIndex(e => e.IsInStock);
             entity.HasIndex(e => e.CreatedAt);
+        });
+
+        // SubCategory configuration
+        modelBuilder.Entity<SubCategory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasOne(e => e.Category)
+                  .WithMany()
+                  .HasForeignKey(e => e.CategoryId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.CategoryId);
+            entity.HasIndex(e => new { e.CategoryId, e.Name }).IsUnique();
         });
 
         // ProductImage configuration

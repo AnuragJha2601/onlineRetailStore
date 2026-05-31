@@ -6,19 +6,29 @@ export interface ApiResponse<T> {
     errors: string[];
 }
 
-// Product related types
-export enum ProductCategory {
-    Bangles = 1,
-    Necklaces = 2,
-    Earrings = 3,
-    Bracelets = 4,
-    Rings = 5,
-    Sets = 6,
-    Anklets = 7,
-    HairAccessories = 8,
-    Pendants = 9,
-    Chains = 10
+// ─── Category & SubCategory types ────────────────────────────────────────────
+
+export interface Category {
+    id: number;
+    name: string;
 }
+
+export interface CreateCategoryRequest {
+    name: string;
+}
+
+export interface SubCategory {
+    id: number;
+    name: string;
+    categoryId: number;
+}
+
+export interface CreateSubCategoryRequest {
+    name: string;
+    categoryId: number;
+}
+
+// ─── Product types ───────────────────────────────────────────────────────────
 
 export interface ProductImage {
     id: number;
@@ -33,7 +43,10 @@ export interface Product {
     id: number;
     name: string;
     description: string;
-    category: string; // String representation of ProductCategory
+    categoryId: number;
+    categoryName: string;
+    subCategoryId?: number;
+    subCategoryName?: string;
     productCode?: string;
     price: number;
     isInStock: boolean;
@@ -53,7 +66,8 @@ export interface CreateProductRequest {
     productCode?: string;
     name: string;
     description: string;
-    category: ProductCategory;
+    categoryId: number;
+    subCategoryId?: number;
     price: number;
     pariFestPrice?: number;
     wholesalePrice?: number;
@@ -65,7 +79,8 @@ export interface UpdateProductRequest {
     productCode?: string;
     name: string;
     description: string;
-    category: ProductCategory;
+    categoryId: number;
+    subCategoryId?: number;
     price: number;
     pariFestPrice?: number;
     wholesalePrice?: number;
@@ -74,30 +89,14 @@ export interface UpdateProductRequest {
 }
 
 export interface ProductFilterRequest {
-    category?: ProductCategory;
+    categoryId?: number;
+    subCategoryId?: number;
     searchTerm?: string;
     productCode?: string;
     inStockOnly?: boolean;
     page?: number;
     pageSize?: number;
 }
-
-// Helper function to get category display name
-export const getCategoryDisplayName = (category: ProductCategory): string => {
-    const categoryNames: Record<ProductCategory, string> = {
-        [ProductCategory.Bangles]: 'Bangles',
-        [ProductCategory.Necklaces]: 'Necklaces',
-        [ProductCategory.Earrings]: 'Earrings',
-        [ProductCategory.Bracelets]: 'Bracelets',
-        [ProductCategory.Rings]: 'Rings',
-        [ProductCategory.Sets]: 'Jewelry Sets',
-        [ProductCategory.Anklets]: 'Anklets',
-        [ProductCategory.HairAccessories]: 'Hair Accessories',
-        [ProductCategory.Pendants]: 'Pendants',
-        [ProductCategory.Chains]: 'Chains'
-    };
-    return categoryNames[category] || 'Unknown';
-};
 
 // ─── Sales types ──────────────────────────────────────────────────────────────
 

@@ -141,7 +141,7 @@ export default function InventoryScreen() {
                                                 ? <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">{p.productCode}</span>
                                                 : <span className="text-gray-300">—</span>}
                                         </td>
-                                        <td className="px-4 py-3 text-gray-500">{p.category}</td>
+                                        <td className="px-4 py-3 text-gray-500">{p.categoryName}</td>
                                         <td className="px-4 py-3 text-right font-medium text-gray-800">{formatPrice(p.price)}</td>
                                         <td className="px-4 py-3 text-right text-gray-600">{p.pariFestPrice ? formatPrice(p.pariFestPrice) : <span className="text-gray-300">—</span>}</td>
                                         <td className="px-4 py-3 text-right text-gray-600">{p.wholesalePrice ? formatPrice(p.wholesalePrice) : <span className="text-gray-300">—</span>}</td>

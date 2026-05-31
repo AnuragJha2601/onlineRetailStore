@@ -4,7 +4,6 @@ import {
     CreateProductRequest,
     UpdateProductRequest,
     ProductFilterRequest,
-    ProductCategory,
     ApiResponse,
     RecordSaleRequest,
     SaleDto,
@@ -12,6 +11,10 @@ import {
     CreateExpenseRequest,
     ExpenseDto,
     ExpenseCategory,
+    Category,
+    CreateCategoryRequest,
+    SubCategory,
+    CreateSubCategoryRequest,
 } from '@/types/product';
 
 // Base API configuration
@@ -82,7 +85,7 @@ export const productApi = {
     async getProducts(filters?: ProductFilterRequest): Promise<ApiResponse<Product[]>> {
         const params = new URLSearchParams();
 
-        if (filters?.category) params.append('category', filters.category.toString());
+        if (filters?.categoryId) params.append('categoryId', filters.categoryId.toString());
         if (filters?.searchTerm) params.append('searchTerm', filters.searchTerm);
         if (filters?.inStockOnly !== undefined) params.append('inStockOnly', filters.inStockOnly.toString());
         if (filters?.page) params.append('page', filters.page.toString());
@@ -102,7 +105,7 @@ export const productApi = {
     // Get admin product list with cost/pari/wholesale prices (Admin only)
     async getAdminProducts(filters?: ProductFilterRequest): Promise<ApiResponse<AdminProduct[]>> {
         const params = new URLSearchParams();
-        if (filters?.category) params.append('category', filters.category.toString());
+        if (filters?.categoryId) params.append('categoryId', filters.categoryId.toString());
         if (filters?.searchTerm) params.append('searchTerm', filters.searchTerm);
         if (filters?.productCode) params.append('productCode', filters.productCode);
         if (filters?.inStockOnly !== undefined) params.append('inStockOnly', filters.inStockOnly.toString());
@@ -112,11 +115,6 @@ export const productApi = {
         return apiRequest<AdminProduct[]>(`/products/admin${queryString ? `?${queryString}` : ''}`, {
             headers: authHeader(),
         });
-    },
-
-    // Get products by category
-    async getProductsByCategory(category: ProductCategory): Promise<ApiResponse<Product[]>> {
-        return apiRequest<Product[]>(`/products/category/${category}`);
     },
 
     // Create new product (Admin only)
@@ -255,6 +253,64 @@ export const productApi = {
 
     async deleteSale(id: number): Promise<ApiResponse<object>> {
         return apiRequest<object>(`/sales/${id}`, {
+            method: 'DELETE',
+            headers: authHeader(),
+        });
+    },
+
+    // ─── Categories ────────────────────────────────────────────────────────────
+
+    async getCategories(): Promise<ApiResponse<Category[]>> {
+        return apiRequest<Category[]>('/categories');
+    },
+
+    async createCategory(request: CreateCategoryRequest): Promise<ApiResponse<Category>> {
+        return apiRequest<Category>('/categories', {
+            method: 'POST',
+            headers: authHeader(),
+            body: JSON.stringify(request),
+        });
+    },
+
+    async updateCategory(id: number, request: CreateCategoryRequest): Promise<ApiResponse<Category>> {
+        return apiRequest<Category>(`/categories/${id}`, {
+            method: 'PUT',
+            headers: authHeader(),
+            body: JSON.stringify(request),
+        });
+    },
+
+    async deleteCategory(id: number): Promise<ApiResponse<object>> {
+        return apiRequest<object>(`/categories/${id}`, {
+            method: 'DELETE',
+            headers: authHeader(),
+        });
+    },
+
+    // ─── SubCategories ─────────────────────────────────────────────────────────
+
+    async getSubCategories(categoryId: number): Promise<ApiResponse<SubCategory[]>> {
+        return apiRequest<SubCategory[]>(`/subcategories?categoryId=${categoryId}`);
+    },
+
+    async createSubCategory(request: CreateSubCategoryRequest): Promise<ApiResponse<SubCategory>> {
+        return apiRequest<SubCategory>('/subcategories', {
+            method: 'POST',
+            headers: authHeader(),
+            body: JSON.stringify(request),
+        });
+    },
+
+    async updateSubCategory(id: number, request: CreateSubCategoryRequest): Promise<ApiResponse<SubCategory>> {
+        return apiRequest<SubCategory>(`/subcategories/${id}`, {
+            method: 'PUT',
+            headers: authHeader(),
+            body: JSON.stringify(request),
+        });
+    },
+
+    async deleteSubCategory(id: number): Promise<ApiResponse<object>> {
+        return apiRequest<object>(`/subcategories/${id}`, {
             method: 'DELETE',
             headers: authHeader(),
         });

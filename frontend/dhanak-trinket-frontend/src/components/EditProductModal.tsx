@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { AdminProduct, ProductCategory, UpdateProductRequest, getCategoryDisplayName } from '@/types/product';
+import { useState, useEffect } from 'react';
+import { AdminProduct, UpdateProductRequest, Category, SubCategory } from '@/types/product';
 import { productApi } from '@/services/productApi';
 
 interface EditProductModalProps {
@@ -10,16 +10,20 @@ interface EditProductModalProps {
     onSaved: (updated: AdminProduct) => void;
 }
 
-const CATEGORY_OPTIONS = Object.values(ProductCategory)
-    .filter((v): v is ProductCategory => typeof v === 'number')
-    .map(v => ({ value: v, label: getCategoryDisplayName(v) }));
-
 export default function EditProductModal({ product, onClose, onSaved }: EditProductModalProps) {
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [newSubCategoryName, setNewSubCategoryName] = useState('');
+    const [showNewCategory, setShowNewCategory] = useState(false);
+    const [showNewSubCategory, setShowNewSubCategory] = useState(false);
+
     const [form, setForm] = useState<UpdateProductRequest>({
         productCode: product.productCode ?? '',
         name: product.name,
         description: product.description,
-        category: CATEGORY_OPTIONS.find(c => c.label === product.category)?.value ?? ProductCategory.Bangles,
+        categoryId: product.categoryId,
+        subCategoryId: product.subCategoryId ?? undefined,
         price: product.price,
         pariFestPrice: product.pariFestPrice ?? undefined,
         wholesalePrice: product.wholesalePrice ?? undefined,
@@ -28,6 +32,47 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
     });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Load categories on mount
+    useEffect(() => {
+        productApi.getCategories().then(res => {
+            if (res.success && res.data) setCategories(res.data);
+        });
+    }, []);
+
+    // Load sub-categories when category changes
+    useEffect(() => {
+        if (form.categoryId > 0) {
+            productApi.getSubCategories(form.categoryId).then(res => {
+                if (res.success && res.data) setSubCategories(res.data);
+                else setSubCategories([]);
+            });
+        } else {
+            setSubCategories([]);
+        }
+    }, [form.categoryId]);
+
+    const handleAddCategory = async () => {
+        if (!newCategoryName.trim()) return;
+        const res = await productApi.createCategory({ name: newCategoryName.trim() });
+        if (res.success && res.data) {
+            setCategories(prev => [...prev.filter(c => c.id !== res.data!.id), res.data!].sort((a, b) => a.name.localeCompare(b.name)));
+            setForm(prev => ({ ...prev, categoryId: res.data!.id }));
+            setNewCategoryName('');
+            setShowNewCategory(false);
+        }
+    };
+
+    const handleAddSubCategory = async () => {
+        if (!newSubCategoryName.trim() || !form.categoryId) return;
+        const res = await productApi.createSubCategory({ name: newSubCategoryName.trim(), categoryId: form.categoryId });
+        if (res.success && res.data) {
+            setSubCategories(prev => [...prev.filter(s => s.id !== res.data!.id), res.data!].sort((a, b) => a.name.localeCompare(b.name)));
+            setForm(prev => ({ ...prev, subCategoryId: res.data!.id }));
+            setNewSubCategoryName('');
+            setShowNewSubCategory(false);
+        }
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -38,7 +83,7 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                 ...prev,
                 [name]: type === 'checkbox' ? checked
                     : type === 'number' ? (value === '' ? undefined : Number(value))
-                        : name === 'category' ? Number(value)
+                        : (name === 'categoryId' || name === 'subCategoryId') ? Number(value)
                             : value,
             };
             return updated;
@@ -106,12 +151,53 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                     {/* Category */}
                     <div>
                         <label className="block text-xs font-medium text-gray-600 mb-1">Category *</label>
-                        <select name="category" value={form.category} onChange={handleChange}
-                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400">
-                            {CATEGORY_OPTIONS.map(({ value, label }) => (
-                                <option key={value} value={value}>{label}</option>
-                            ))}
-                        </select>
+                        <div className="flex gap-2">
+                            <select name="categoryId" value={form.categoryId} onChange={handleChange}
+                                className="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                                <option value={0} disabled>Select</option>
+                                {categories.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                            <button type="button" onClick={() => setShowNewCategory(!showNewCategory)}
+                                className="px-2 py-1.5 text-xs bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200">+</button>
+                        </div>
+                        {showNewCategory && (
+                            <div className="flex gap-2 mt-1">
+                                <input type="text" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)}
+                                    placeholder="New category" className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded-md" />
+                                <button type="button" onClick={handleAddCategory}
+                                    className="px-2 py-1 text-xs bg-indigo-600 text-white rounded-md">Add</button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Sub-Category */}
+                    <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Sub-Category</label>
+                        <div className="flex gap-2">
+                            <select name="subCategoryId" value={form.subCategoryId ?? ''}
+                                onChange={e => setForm(prev => ({ ...prev, subCategoryId: e.target.value ? Number(e.target.value) : undefined }))}
+                                disabled={!form.categoryId}
+                                className="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:bg-gray-100">
+                                <option value="">None</option>
+                                {subCategories.map(sc => (
+                                    <option key={sc.id} value={sc.id}>{sc.name}</option>
+                                ))}
+                            </select>
+                            {form.categoryId > 0 && (
+                                <button type="button" onClick={() => setShowNewSubCategory(!showNewSubCategory)}
+                                    className="px-2 py-1.5 text-xs bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200">+</button>
+                            )}
+                        </div>
+                        {showNewSubCategory && (
+                            <div className="flex gap-2 mt-1">
+                                <input type="text" value={newSubCategoryName} onChange={e => setNewSubCategoryName(e.target.value)}
+                                    placeholder="New sub-category" className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded-md" />
+                                <button type="button" onClick={handleAddSubCategory}
+                                    className="px-2 py-1 text-xs bg-indigo-600 text-white rounded-md">Add</button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Pricing grid */}

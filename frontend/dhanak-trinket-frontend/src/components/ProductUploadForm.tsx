@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { ProductCategory, CreateProductRequest, getCategoryDisplayName } from '@/types/product';
+import { useState, useEffect } from 'react';
+import { CreateProductRequest, Category, SubCategory } from '@/types/product';
 import { productApi } from '@/services/productApi';
 
 interface ProductUploadFormProps {
@@ -13,18 +13,68 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
     const [isLoading, setIsLoading] = useState(false);
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
     const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [newSubCategoryName, setNewSubCategoryName] = useState('');
+    const [showNewCategory, setShowNewCategory] = useState(false);
+    const [showNewSubCategory, setShowNewSubCategory] = useState(false);
 
     const [formData, setFormData] = useState<CreateProductRequest>({
         productCode: '',
         name: '',
         description: '',
-        category: ProductCategory.Bangles,
+        categoryId: 0,
+        subCategoryId: undefined,
         price: 0,
         pariFestPrice: undefined,
         wholesalePrice: undefined,
         stockQuantity: 1,
         isInStock: true,
     });
+
+    // Load categories on mount
+    useEffect(() => {
+        productApi.getCategories().then(res => {
+            if (res.success && res.data) setCategories(res.data);
+        });
+    }, []);
+
+    // Load sub-categories when category changes
+    useEffect(() => {
+        if (formData.categoryId > 0) {
+            productApi.getSubCategories(formData.categoryId).then(res => {
+                if (res.success && res.data) setSubCategories(res.data);
+                else setSubCategories([]);
+            });
+        } else {
+            setSubCategories([]);
+        }
+        setFormData(prev => ({ ...prev, subCategoryId: undefined }));
+        setShowNewSubCategory(false);
+    }, [formData.categoryId]);
+
+    const handleAddCategory = async () => {
+        if (!newCategoryName.trim()) return;
+        const res = await productApi.createCategory({ name: newCategoryName.trim() });
+        if (res.success && res.data) {
+            setCategories(prev => [...prev.filter(c => c.id !== res.data!.id), res.data!].sort((a, b) => a.name.localeCompare(b.name)));
+            setFormData(prev => ({ ...prev, categoryId: res.data!.id }));
+            setNewCategoryName('');
+            setShowNewCategory(false);
+        }
+    };
+
+    const handleAddSubCategory = async () => {
+        if (!newSubCategoryName.trim() || !formData.categoryId) return;
+        const res = await productApi.createSubCategory({ name: newSubCategoryName.trim(), categoryId: formData.categoryId });
+        if (res.success && res.data) {
+            setSubCategories(prev => [...prev.filter(s => s.id !== res.data!.id), res.data!].sort((a, b) => a.name.localeCompare(b.name)));
+            setFormData(prev => ({ ...prev, subCategoryId: res.data!.id }));
+            setNewSubCategoryName('');
+            setShowNewSubCategory(false);
+        }
+    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -34,7 +84,7 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
                 ...prev,
                 [name]: type === 'number' ? Number(value) :
                     type === 'checkbox' ? (e.target as HTMLInputElement).checked :
-                        name === 'category' ? Number(value) : value
+                        (name === 'categoryId' || name === 'subCategoryId') ? Number(value) : value
             };
             return updated;
         });
@@ -109,7 +159,8 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
                 productCode: '',
                 name: '',
                 description: '',
-                category: ProductCategory.Bangles,
+                categoryId: 0,
+                subCategoryId: undefined,
                 price: 0,
                 pariFestPrice: undefined,
                 wholesalePrice: undefined,
@@ -128,13 +179,6 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
             setIsLoading(false);
         }
     };
-
-    const categories = Object.values(ProductCategory)
-        .filter(value => typeof value === 'number')
-        .map(value => ({
-            value: value as ProductCategory,
-            label: getCategoryDisplayName(value as ProductCategory)
-        }));
 
     return (
         <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
@@ -177,43 +221,88 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
                     />
                 </div>
 
-                {/* Category and Price Row */}
+                {/* Category and Product Code Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-1">
                             Category *
                         </label>
-                        <select
-                            id="category"
-                            name="category"
-                            required
-                            value={formData.category}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                        >
-                            {categories.map(({ value, label }) => (
-                                <option key={value} value={value}>
-                                    {label}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="flex gap-2">
+                            <select
+                                id="categoryId"
+                                name="categoryId"
+                                required
+                                value={formData.categoryId}
+                                onChange={handleInputChange}
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            >
+                                <option value={0} disabled>Select category</option>
+                                {categories.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                            <button type="button" onClick={() => setShowNewCategory(!showNewCategory)}
+                                className="px-3 py-2 text-sm bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200" title="Add new category">+</button>
+                        </div>
+                        {showNewCategory && (
+                            <div className="flex gap-2 mt-2">
+                                <input type="text" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)}
+                                    placeholder="New category name" className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded-md" />
+                                <button type="button" onClick={handleAddCategory}
+                                    className="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Add</button>
+                            </div>
+                        )}
                     </div>
 
                     <div>
-                        <label htmlFor="productCode" className="block text-sm font-medium text-gray-700 mb-1">
-                            Product Code
+                        <label htmlFor="subCategoryId" className="block text-sm font-medium text-gray-700 mb-1">
+                            Sub-Category
                         </label>
-                        <input
-                            type="text"
-                            id="productCode"
-                            name="productCode"
-                            maxLength={5}
-                            value={formData.productCode ?? ''}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono"
-                            placeholder="e.g. B01 — leave blank to auto-assign"
-                        />
+                        <div className="flex gap-2">
+                            <select
+                                id="subCategoryId"
+                                name="subCategoryId"
+                                value={formData.subCategoryId ?? ''}
+                                onChange={e => setFormData(prev => ({ ...prev, subCategoryId: e.target.value ? Number(e.target.value) : undefined }))}
+                                disabled={!formData.categoryId}
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                            >
+                                <option value="">None</option>
+                                {subCategories.map(sc => (
+                                    <option key={sc.id} value={sc.id}>{sc.name}</option>
+                                ))}
+                            </select>
+                            {formData.categoryId > 0 && (
+                                <button type="button" onClick={() => setShowNewSubCategory(!showNewSubCategory)}
+                                    className="px-3 py-2 text-sm bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200" title="Add new sub-category">+</button>
+                            )}
+                        </div>
+                        {showNewSubCategory && (
+                            <div className="flex gap-2 mt-2">
+                                <input type="text" value={newSubCategoryName} onChange={e => setNewSubCategoryName(e.target.value)}
+                                    placeholder="New sub-category name" className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded-md" />
+                                <button type="button" onClick={handleAddSubCategory}
+                                    className="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Add</button>
+                            </div>
+                        )}
                     </div>
+                </div>
+
+                {/* Product Code */}
+                <div>
+                    <label htmlFor="productCode" className="block text-sm font-medium text-gray-700 mb-1">
+                        Product Code
+                    </label>
+                    <input
+                        type="text"
+                        id="productCode"
+                        name="productCode"
+                        maxLength={10}
+                        value={formData.productCode ?? ''}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono"
+                        placeholder="e.g. BA01 — leave blank to auto-assign"
+                    />
                 </div>
 
                 {/* Pricing */}

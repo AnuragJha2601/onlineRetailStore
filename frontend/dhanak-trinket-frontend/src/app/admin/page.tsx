@@ -6,14 +6,16 @@ import ProductUploadForm from '@/components/ProductUploadForm';
 import InventoryScreen from '@/components/InventoryScreen';
 import ExpensesScreen from '@/components/ExpensesScreen';
 import SalesScreen from '@/components/SalesScreen';
+import CategoriesScreen from '@/components/CategoriesScreen';
 import { useAuth } from '@/contexts/AuthContext';
 
-type Tab = 'inventory' | 'expenses' | 'sales' | 'add-product';
+type Tab = 'inventory' | 'expenses' | 'sales' | 'categories' | 'add-product';
 
 const TABS: { id: Tab; label: string }[] = [
     { id: 'inventory', label: 'Inventory' },
     { id: 'expenses', label: 'Expenses' },
     { id: 'sales', label: 'Sales' },
+    { id: 'categories', label: 'Categories' },
     { id: 'add-product', label: 'Add Product' },
 ];
 
@@ -72,6 +74,8 @@ export default function AdminPage() {
                 {activeTab === 'expenses' && <ExpensesScreen />}
 
                 {activeTab === 'sales' && <SalesScreen />}
+
+                {activeTab === 'categories' && <CategoriesScreen />}
 
                 {activeTab === 'add-product' && (
                     <div className="max-w-3xl">

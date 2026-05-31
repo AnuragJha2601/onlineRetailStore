@@ -18,6 +18,8 @@ public class ProductRepository : IProductRepository
     {
         return await _context.Products
             .Include(p => p.Images)
+            .Include(p => p.Category)
+            .Include(p => p.SubCategory)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
     }
@@ -26,6 +28,8 @@ public class ProductRepository : IProductRepository
     {
         return await _context.Products
             .Include(p => p.Images.OrderBy(i => i.DisplayOrder))
+            .Include(p => p.Category)
+            .Include(p => p.SubCategory)
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
@@ -33,15 +37,19 @@ public class ProductRepository : IProductRepository
     {
         return await _context.Products
             .Include(p => p.Images)
+            .Include(p => p.Category)
+            .Include(p => p.SubCategory)
             .FirstOrDefaultAsync(p => p.ProductCode != null &&
                 p.ProductCode.ToLower() == productCode.Trim().ToLower());
     }
 
-    public async Task<IEnumerable<Product>> GetByCategoryAsync(ProductCategory category)
+    public async Task<IEnumerable<Product>> GetByCategoryAsync(int categoryId)
     {
         return await _context.Products
             .Include(p => p.Images)
-            .Where(p => p.Category == category)
+            .Include(p => p.Category)
+            .Include(p => p.SubCategory)
+            .Where(p => p.CategoryId == categoryId)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
     }
@@ -50,6 +58,8 @@ public class ProductRepository : IProductRepository
     {
         return await _context.Products
             .Include(p => p.Images)
+            .Include(p => p.Category)
+            .Include(p => p.SubCategory)
             .Where(p => p.Name.Contains(searchTerm) ||
                        p.Description.Contains(searchTerm) ||
                        (p.ProductCode != null && p.ProductCode.Contains(searchTerm)))
@@ -64,7 +74,7 @@ public class ProductRepository : IProductRepository
 
         // Auto-generate ProductCode if not provided
         if (string.IsNullOrWhiteSpace(product.ProductCode))
-            product.ProductCode = await GenerateProductCodeAsync(product.Category);
+            product.ProductCode = await GenerateProductCodeAsync(product.CategoryId);
 
         _context.Products.Add(product);
         await _context.SaveChangesAsync();
@@ -73,23 +83,11 @@ public class ProductRepository : IProductRepository
         return await GetByIdAsync(product.Id) ?? product;
     }
 
-    private static readonly Dictionary<ProductCategory, string> _categoryPrefixes = new()
+    private async Task<string> GenerateProductCodeAsync(int categoryId)
     {
-        { ProductCategory.Bangles,          "B"  },
-        { ProductCategory.Necklaces,        "N"  },
-        { ProductCategory.Earrings,         "E"  },
-        { ProductCategory.Bracelets,        "BR" },
-        { ProductCategory.Rings,            "R"  },
-        { ProductCategory.Sets,             "S"  },
-        { ProductCategory.Anklets,          "A"  },
-        { ProductCategory.HairAccessories,  "H"  },
-        { ProductCategory.Pendants,         "P"  },
-        { ProductCategory.Chains,           "C"  },
-    };
-
-    private async Task<string> GenerateProductCodeAsync(ProductCategory category)
-    {
-        var prefix = _categoryPrefixes.TryGetValue(category, out var p) ? p : "X";
+        // Build prefix from the first 1-2 letters of the category name
+        var category = await _context.Categories.FindAsync(categoryId);
+        var prefix = category != null ? category.Name[..Math.Min(2, category.Name.Length)].ToUpper() : "X";
         // Find highest existing sequence number for this prefix
         var existing = await _context.Products
             .Where(x => x.ProductCode != null && x.ProductCode.StartsWith(prefix))

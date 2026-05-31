@@ -13,10 +13,14 @@ public class Product
     [MaxLength(2000)]
     public string Description { get; set; } = string.Empty;
 
-    public ProductCategory Category { get; set; }
+    /// <summary>FK to Categories table (was previously ProductCategory enum stored as int).</summary>
+    public int CategoryId { get; set; }
+
+    /// <summary>Optional dynamic sub-category (e.g. "AntiTarnish" under Chains).</summary>
+    public int? SubCategoryId { get; set; }
 
     /// <summary>Short unique code e.g. B01, N03. Auto-generated if not provided.</summary>
-    [MaxLength(5)]
+    [MaxLength(10)]
     public string? ProductCode { get; set; }
 
     /// <summary>Retail / MRP price shown on website.</summary>
@@ -43,21 +47,21 @@ public class Product
     public bool IsDeleted { get; set; } = false;
 
     // Navigation properties
+    public virtual Category Category { get; set; } = null!;
+    public virtual SubCategory? SubCategory { get; set; }
     public virtual ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
 }
 
-public enum ProductCategory
+/// <summary>Dynamic category (e.g. Bangles, Necklaces, Chains). Admin can add new ones.</summary>
+public class Category
 {
-    Bangles = 1,
-    Necklaces = 2,
-    Earrings = 3,
-    Bracelets = 4,
-    Rings = 5,
-    Sets = 6,
-    Anklets = 7,
-    HairAccessories = 8,
-    Pendants = 9,
-    Chains = 10
+    public int Id { get; set; }
+
+    [Required]
+    [MaxLength(100)]
+    public string Name { get; set; } = string.Empty;
+
+    public DateTime CreatedAt { get; set; }
 }
 
 public class ProductImage
@@ -87,4 +91,21 @@ public class ProductImage
 
     // Navigation property
     public virtual Product Product { get; set; } = null!;
+}
+
+/// <summary>Dynamic sub-category linked to a Category (e.g. "AntiTarnish" under Chains).</summary>
+public class SubCategory
+{
+    public int Id { get; set; }
+
+    [Required]
+    [MaxLength(100)]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Parent category FK.</summary>
+    public int CategoryId { get; set; }
+
+    public virtual Category Category { get; set; } = null!;
+
+    public DateTime CreatedAt { get; set; }
 }

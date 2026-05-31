@@ -97,7 +97,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                         </span>
                     </div>
 
-                    <p className="text-sm text-gray-500 mb-3">{product.category}</p>
+                    <p className="text-sm text-gray-500 mb-3">{product.categoryName}</p>
 
                     {product.description && (
                         <p className="text-sm text-gray-700 leading-relaxed">{product.description}</p>

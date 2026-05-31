@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DhanakTrinket.Infrastructure.Migrations
 {
     [DbContext(typeof(DhanakTrinketDbContext))]
-    [Migration("20260526144314_InitialSchema")]
-    partial class InitialSchema
+    [Migration("20260526174353_AddDynamicCategories")]
+    partial class AddDynamicCategories
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -44,6 +44,27 @@ namespace DhanakTrinket.Infrastructure.Migrations
                     b.HasIndex("SaleId");
 
                     b.ToTable("BulkSaleItems");
+                });
+
+            modelBuilder.Entity("DhanakTrinket.Core.Entities.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("DhanakTrinket.Core.Entities.Expense", b =>
@@ -89,7 +110,7 @@ namespace DhanakTrinket.Infrastructure.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<int>("Category");
+                    b.Property<int>("CategoryId");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -116,9 +137,11 @@ namespace DhanakTrinket.Infrastructure.Migrations
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<string>("ProductCode")
-                        .HasMaxLength(5);
+                        .HasMaxLength(10);
 
                     b.Property<int>("StockQuantity");
+
+                    b.Property<int?>("SubCategoryId");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
@@ -129,11 +152,13 @@ namespace DhanakTrinket.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Category");
+                    b.HasIndex("CategoryId");
 
                     b.HasIndex("CreatedAt");
 
                     b.HasIndex("IsInStock");
+
+                    b.HasIndex("SubCategoryId");
 
                     b.ToTable("Products");
                 });
@@ -233,6 +258,31 @@ namespace DhanakTrinket.Infrastructure.Migrations
                     b.ToTable("Sales");
                 });
 
+            modelBuilder.Entity("DhanakTrinket.Core.Entities.SubCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<int>("CategoryId");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("CategoryId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("SubCategories");
+                });
+
             modelBuilder.Entity("DhanakTrinket.Core.Entities.BulkSaleItem", b =>
                 {
                     b.HasOne("DhanakTrinket.Core.Entities.Sale", "Sale")
@@ -242,6 +292,24 @@ namespace DhanakTrinket.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Sale");
+                });
+
+            modelBuilder.Entity("DhanakTrinket.Core.Entities.Product", b =>
+                {
+                    b.HasOne("DhanakTrinket.Core.Entities.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DhanakTrinket.Core.Entities.SubCategory", "SubCategory")
+                        .WithMany()
+                        .HasForeignKey("SubCategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Category");
+
+                    b.Navigation("SubCategory");
                 });
 
             modelBuilder.Entity("DhanakTrinket.Core.Entities.ProductImage", b =>
@@ -263,6 +331,17 @@ namespace DhanakTrinket.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("DhanakTrinket.Core.Entities.SubCategory", b =>
+                {
+                    b.HasOne("DhanakTrinket.Core.Entities.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("DhanakTrinket.Core.Entities.Product", b =>

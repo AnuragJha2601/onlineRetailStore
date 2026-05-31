@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
 
 namespace DhanakTrinket.Api.Controllers;
@@ -47,9 +48,9 @@ public class ProductsController : ControllerBase
                 var match = await _productService.GetProductByCodeAsync(request.ProductCode);
                 products = match != null ? [match] : [];
             }
-            else if (request?.Category.HasValue == true)
+            else if (request?.CategoryId.HasValue == true)
             {
-                products = await _productService.GetProductsByCategoryAsync(request.Category.Value);
+                products = await _productService.GetProductsByCategoryAsync(request.CategoryId.Value);
             }
             else if (!string.IsNullOrWhiteSpace(request?.SearchTerm))
             {
@@ -91,9 +92,9 @@ public class ProductsController : ControllerBase
                 var match = await _productService.GetProductByCodeAsync(request.ProductCode);
                 products = match != null ? [match] : [];
             }
-            else if (request?.Category.HasValue == true)
+            else if (request?.CategoryId.HasValue == true)
             {
-                products = await _productService.GetProductsByCategoryAsync(request.Category.Value);
+                products = await _productService.GetProductsByCategoryAsync(request.CategoryId.Value);
             }
             else if (!string.IsNullOrWhiteSpace(request?.SearchTerm))
             {
@@ -232,8 +233,8 @@ public class ProductsController : ControllerBase
                 blobPath = $"base64/{Guid.NewGuid()}";
             }
 
-            // Generate and upload thumbnail to PUBLIC container (300×300, quality 75)
-            // Returns a plain https:// URL — no SAS needed for list views
+            // Generate and upload thumbnail to PUBLIC container (800×800 WebP, quality 85)
+            // Higher res for retina screens; WebP = smaller file than old 300px JPEG
             string? thumbnailUrl = null;
             try
             {
@@ -241,13 +242,13 @@ public class ProductsController : ControllerBase
                 using var thumbImage = await SixLabors.ImageSharp.Image.LoadAsync(imageMemory);
                 thumbImage.Mutate(x => x.Resize(new ResizeOptions
                 {
-                    Size = new SixLabors.ImageSharp.Size(300, 300),
+                    Size = new SixLabors.ImageSharp.Size(800, 800),
                     Mode = ResizeMode.Max
                 }));
                 using var thumbStream = new MemoryStream();
-                await thumbImage.SaveAsJpegAsync(thumbStream, new JpegEncoder { Quality = 75 });
+                await thumbImage.SaveAsWebpAsync(thumbStream, new WebpEncoder { Quality = 85 });
                 thumbStream.Position = 0;
-                var thumbFileName = "thumb_" + Path.GetFileNameWithoutExtension(image.FileName) + ".jpg";
+                var thumbFileName = "thumb_" + Path.GetFileNameWithoutExtension(image.FileName) + ".webp";
                 thumbnailUrl = await _blobStorageService.UploadThumbnailPublicAsync(thumbStream, thumbFileName);
             }
             catch (Exception thumbEx)
@@ -357,19 +358,19 @@ public class ProductsController : ControllerBase
     /// <summary>
     /// Get products by category
     /// </summary>
-    [HttpGet("category/{category}")]
-    public async Task<ActionResult<ApiResponse<List<ProductDto>>>> GetProductsByCategory(ProductCategory category)
+    [HttpGet("category/{categoryId:int}")]
+    public async Task<ActionResult<ApiResponse<List<ProductDto>>>> GetProductsByCategory(int categoryId)
     {
         try
         {
-            var products = await _productService.GetProductsByCategoryAsync(category);
+            var products = await _productService.GetProductsByCategoryAsync(categoryId);
             var productDtos = _mapper.Map<List<ProductDto>>(products.ToList());
 
-            return Ok(ApiResponse<List<ProductDto>>.SuccessResponse(productDtos, $"Products in {category} category retrieved successfully"));
+            return Ok(ApiResponse<List<ProductDto>>.SuccessResponse(productDtos, $"Products in category {categoryId} retrieved successfully"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving products for category {Category}", category);
+            _logger.LogError(ex, "Error retrieving products for category {CategoryId}", categoryId);
             return StatusCode(500, ApiResponse<List<ProductDto>>.ErrorResponse("An error occurred while retrieving products"));
         }
     }
