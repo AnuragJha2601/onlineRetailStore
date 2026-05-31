@@ -131,62 +131,39 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
     }
 
     return (
-        <div className="max-w-7xl mx-auto p-6">
-            {/* Header */}
-            {/* Filters */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {/* Search */}
-                    <div className="md:col-span-2">
-                        <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
-                            Search Products
-                        </label>
-                        <input
-                            type="text"
-                            id="search"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search by name, description..."
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                        />
-                    </div>
-
-                    {/* Category Filter */}
-                    <div>
-                        <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-                            Category
-                        </label>
-                        <select
-                            id="category"
-                            value={selectedCategoryId}
-                            onChange={(e) => setSelectedCategoryId(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                        >
-                            <option value="all">All Categories</option>
-                            {categories.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Stock Filter */}
-                    <div className="flex items-center">
-                        <input
-                            type="checkbox"
-                            id="inStock"
-                            checked={showInStockOnly}
-                            onChange={(e) => setShowInStockOnly(e.target.checked)}
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                        />
-                        <label htmlFor="inStock" className="ml-2 block text-sm text-gray-700">
-                            In Stock Only
-                        </label>
-                    </div>
-                </div>
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-4">
+            {/* Compact Filter Bar */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+                <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search..."
+                    className="flex-1 min-w-[120px] max-w-xs px-3 py-2 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-gray-400 bg-white"
+                />
+                <select
+                    value={selectedCategoryId}
+                    onChange={(e) => setSelectedCategoryId(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                    className="px-3 py-2 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-gray-400 bg-white"
+                >
+                    <option value="all">All</option>
+                    {categories.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                </select>
+                <label className="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer select-none">
+                    <input
+                        type="checkbox"
+                        checked={showInStockOnly}
+                        onChange={(e) => setShowInStockOnly(e.target.checked)}
+                        className="h-3.5 w-3.5 rounded border-gray-300 text-gray-800 focus:ring-gray-400"
+                    />
+                    In Stock
+                </label>
             </div>
 
-            {/* Products Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {/* Products Grid — tight gap, mobile-first 2-col */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-[3px] sm:gap-1">
                 {filteredProducts.map((product) => (
                     <ProductCard
                         key={product.id}
@@ -239,84 +216,50 @@ interface ProductCardProps {
 
 function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardProps) {
     const primaryImage = product.images.find(img => img.isPrimary) || product.images[0];
-    // Use thumbnail for the card; fall back to full image if no thumbnail yet
     const cardImageSrc = primaryImage?.thumbnailUrl || primaryImage?.imageUrl;
 
     return (
-        <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
-            {/* Product Image — clickable to open detail modal */}
-            <button
-                type="button"
-                onClick={onOpen}
-                className="block w-full relative aspect-[3/4] bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                aria-label={`View ${product.name}`}
-            >
+        <div className="group cursor-pointer" onClick={onOpen}>
+            {/* Image — edge to edge, no border/shadow */}
+            <div className="relative aspect-[3/4] bg-gray-50 overflow-hidden">
                 {cardImageSrc ? (
                     <Image
                         src={cardImageSrc}
                         alt={primaryImage?.altText || product.name}
                         fill
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                        className="object-cover"
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <div className="text-center">
-                            <div className="text-4xl mb-2">📷</div>
-                            <div className="text-sm">No Image</div>
-                        </div>
+                    <div className="w-full h-full flex items-center justify-center text-gray-300">
+                        <span className="text-3xl">📷</span>
                     </div>
                 )}
 
-                {/* Stock Status Badge */}
+                {/* Sold out badge */}
                 {!product.isInStock && (
-                    <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                    <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
                         Sold Out
                     </div>
                 )}
-            </button>
 
-            {/* Product Info */}
-            <div className="p-4">
-                <div className="mb-2">
-                    <div className="flex items-start justify-between gap-1">
-                        <h3 className="font-semibold text-gray-900 line-clamp-2">{product.name}</h3>
-                        {product.productCode && (
-                            <span className="flex-shrink-0 font-mono text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded mt-0.5">
-                                {product.productCode}
-                            </span>
-                        )}
-                    </div>
-                    <p className="text-sm text-gray-600">{product.categoryName}</p>
-                </div>
+                {/* Like button — top right */}
+                <button
+                    onClick={(e) => { e.stopPropagation(); onLike(); }}
+                    disabled={isLiked}
+                    className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-colors ${
+                        isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+                    }`}
+                    aria-label={isLiked ? 'Already liked' : 'Like'}
+                >
+                    <span className="text-sm">{isLiked ? '❤️' : '🤍'}</span>
+                </button>
+            </div>
 
-                {product.description && (
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
-                )}
-
-                <div className="flex items-center justify-between">
-                    <div>
-                        <span className="text-lg font-bold text-indigo-600">
-                            {formatPrice(product.price)}
-                        </span>
-                        {product.stockQuantity <= 5 && product.isInStock && (
-                            <p className="text-xs text-orange-600">Only {product.stockQuantity} left</p>
-                        )}
-                    </div>
-
-                    <button
-                        onClick={onLike}
-                        disabled={isLiked}
-                        title={isLiked ? 'Already liked' : 'Like this product'}
-                        className={`flex items-center space-x-1 transition-colors ${isLiked
-                            ? 'text-red-500 cursor-default'
-                            : 'text-gray-400 hover:text-red-500'
-                            }`}
-                    >
-                        <span className="text-lg">{isLiked ? '❤️' : '🤍'}</span>
-                        <span className="text-sm">{product.likesCount}</span>
-                    </button>
-                </div>
+            {/* Minimal info — just name + price */}
+            <div className="px-1 pt-2 pb-3">
+                <p className="text-xs sm:text-sm text-gray-900 line-clamp-1 leading-tight">{product.name}</p>
+                <p className="text-xs sm:text-sm font-semibold text-gray-900 mt-0.5">{formatPrice(product.price)}</p>
             </div>
         </div>
     );
