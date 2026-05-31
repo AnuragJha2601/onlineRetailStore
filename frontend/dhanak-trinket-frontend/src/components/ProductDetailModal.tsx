@@ -70,12 +70,12 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 </button>
 
                 {/* Image area */}
-                <div className="relative aspect-square bg-gray-100">
+                <div className="relative aspect-[3/4] bg-gray-100">
                     {displaySrc ? (
                         <img
                             src={displaySrc}
                             alt={currentImage?.altText || product.name}
-                            className={`w-full h-full object-contain transition-opacity duration-300 ${imageLoading ? 'opacity-60' : 'opacity-100'}`}
+                            className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoading ? 'opacity-60' : 'opacity-100'}`}
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
