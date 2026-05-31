@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AdminProduct, UpdateProductRequest, Category, SubCategory } from '@/types/product';
+import { AdminProduct, UpdateProductRequest, Category, SubCategory, ProductImage } from '@/types/product';
 import { productApi } from '@/services/productApi';
 
 interface EditProductModalProps {
@@ -32,6 +32,9 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
     });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [images, setImages] = useState<ProductImage[]>(product.images || []);
+    const [newImages, setNewImages] = useState<File[]>([]);
+    const [uploadingImages, setUploadingImages] = useState(false);
 
     // Load categories on mount
     useEffect(() => {
@@ -88,6 +91,44 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
             };
             return updated;
         });
+    };
+
+    const handleDeleteImage = async (imageId: number) => {
+        if (!confirm('Delete this image?')) return;
+        const res = await productApi.deleteProductImage(product.id, imageId);
+        if (res.success) {
+            setImages(prev => {
+                const remaining = prev.filter(i => i.id !== imageId);
+                // If we deleted the primary, promote the first remaining
+                const deleted = prev.find(i => i.id === imageId);
+                if (deleted?.isPrimary && remaining.length > 0) {
+                    remaining[0] = { ...remaining[0], isPrimary: true };
+                }
+                return remaining;
+            });
+        }
+    };
+
+    const handleSetPrimary = async (imageId: number) => {
+        const res = await productApi.setPrimaryImage(product.id, imageId);
+        if (res.success) {
+            setImages(prev => prev.map(i => ({ ...i, isPrimary: i.id === imageId })));
+        }
+    };
+
+    const handleUploadNewImages = async () => {
+        if (newImages.length === 0) return;
+        setUploadingImages(true);
+        for (const file of newImages) {
+            await productApi.uploadProductImage(product.id, file);
+        }
+        // Refresh images from server
+        const res = await productApi.getProduct(product.id);
+        if (res.success && res.data) {
+            setImages(res.data.images);
+        }
+        setNewImages([]);
+        setUploadingImages(false);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -238,6 +279,58 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                                 className="h-4 w-4 text-indigo-600 border-gray-300 rounded" />
                             <label htmlFor="isInStock" className="text-sm text-gray-700">Available for sale</label>
                         </div>
+                    </div>
+
+                    {/* Images */}
+                    <div>
+                        <p className="text-xs font-medium text-gray-600 mb-2">Images ({images.length}/5)</p>
+                        <div className="grid grid-cols-4 gap-2">
+                            {images.map(img => (
+                                <div key={img.id}
+                                    onClick={() => !img.isPrimary && handleSetPrimary(img.id)}
+                                    className={`relative group rounded-lg overflow-hidden cursor-pointer border-2 transition-colors ${img.isPrimary ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200 hover:border-gray-400'}`}>
+                                    <img src={img.thumbnailUrl || img.imageUrl} alt={img.altText} className="w-full aspect-square object-cover" />
+                                    {img.isPrimary && (
+                                        <span className="absolute top-0.5 left-0.5 bg-indigo-600 text-white text-[9px] px-1.5 py-0.5 rounded">Primary</span>
+                                    )}
+                                    <button type="button" onClick={(e) => { e.stopPropagation(); handleDeleteImage(img.id); }}
+                                        className="absolute top-0.5 right-0.5 bg-black/60 hover:bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-all">
+                                        ✕
+                                    </button>
+                                </div>
+                            ))}
+
+                            {/* Add image button */}
+                            {images.length < 5 && (
+                                <label className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50 flex flex-col items-center justify-center cursor-pointer transition-colors">
+                                    {uploadingImages ? (
+                                        <span className="text-xs text-gray-500">Uploading…</span>
+                                    ) : (
+                                        <>
+                                            <span className="text-xl text-gray-400">+</span>
+                                            <span className="text-[9px] text-gray-500">Add</span>
+                                        </>
+                                    )}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        disabled={uploadingImages}
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            e.target.value = '';
+                                            setUploadingImages(true);
+                                            await productApi.uploadProductImage(product.id, file);
+                                            const res = await productApi.getProduct(product.id);
+                                            if (res.success && res.data) setImages(res.data.images);
+                                            setUploadingImages(false);
+                                        }}
+                                        className="hidden"
+                                    />
+                                </label>
+                            )}
+                        </div>
+                        <p className="text-[10px] text-gray-400 mt-1">Click an image to set as primary. Hover to delete.</p>
                     </div>
                 </form>
 

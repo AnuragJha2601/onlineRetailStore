@@ -13,6 +13,7 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
     const [isLoading, setIsLoading] = useState(false);
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
     const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+    const [primaryIndex, setPrimaryIndex] = useState(0);
     const [categories, setCategories] = useState<Category[]>([]);
     const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
     const [newCategoryName, setNewCategoryName] = useState('');
@@ -94,33 +95,40 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
         const files = Array.from(e.target.files || []);
         if (files.length === 0) return;
 
-        // Validate file types and sizes
-        const validFiles = files.filter(file => {
+        const remaining = 5 - selectedImages.length;
+        if (remaining <= 0) {
+            onError?.('Maximum 5 images allowed per product.');
+            return;
+        }
+
+        const validFiles = files.slice(0, remaining).filter(file => {
             const isValidType = file.type.startsWith('image/');
-            const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB limit
+            const isValidSize = file.size <= 5 * 1024 * 1024;
             return isValidType && isValidSize;
         });
 
-        if (validFiles.length !== files.length) {
-            onError?.('Some files were rejected. Please ensure all files are images under 5MB.');
+        if (validFiles.length === 0) {
+            onError?.('Invalid files. Ensure images are under 5MB.');
+            return;
         }
 
-        setSelectedImages(validFiles);
-
-        // Create preview URLs
-        const previewUrls = validFiles.map(file => URL.createObjectURL(file));
-        setImagePreviewUrls(previewUrls);
+        const newPreviews = validFiles.map(file => URL.createObjectURL(file));
+        setSelectedImages(prev => [...prev, ...validFiles]);
+        setImagePreviewUrls(prev => [...prev, ...newPreviews]);
+        // Reset file input so same file can be re-selected
+        e.target.value = '';
     };
 
     const removeImage = (index: number) => {
-        const newImages = selectedImages.filter((_, i) => i !== index);
-        const newPreviews = imagePreviewUrls.filter((_, i) => i !== index);
-
-        // Clean up the removed preview URL
         URL.revokeObjectURL(imagePreviewUrls[index]);
-
-        setSelectedImages(newImages);
-        setImagePreviewUrls(newPreviews);
+        setSelectedImages(prev => prev.filter((_, i) => i !== index));
+        setImagePreviewUrls(prev => prev.filter((_, i) => i !== index));
+        // Adjust primary index
+        if (index === primaryIndex) {
+            setPrimaryIndex(0);
+        } else if (index < primaryIndex) {
+            setPrimaryIndex(prev => prev - 1);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -140,9 +148,14 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
                 throw new Error('Product creation returned no data');
             }
 
-            // Upload images if any are selected
+            // Upload images — primary first so it gets IsPrimary=true
             if (selectedImages.length > 0 && createdProduct.id) {
-                const imageUploadPromises = selectedImages.map(image =>
+                // Reorder: primary first, then the rest
+                const orderedImages = [
+                    selectedImages[primaryIndex],
+                    ...selectedImages.filter((_, i) => i !== primaryIndex),
+                ];
+                const imageUploadPromises = orderedImages.map(image =>
                     productApi.uploadProductImage(createdProduct.id, image)
                 );
 
@@ -169,6 +182,7 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
             });
             setSelectedImages([]);
             setImagePreviewUrls([]);
+            setPrimaryIndex(0);
 
             onSuccess?.(`Product "${createdProduct.name}" created successfully!`);
 
@@ -396,46 +410,55 @@ export default function ProductUploadForm({ onSuccess, onError }: ProductUploadF
 
                 {/* Image Upload */}
                 <div>
-                    <label htmlFor="images" className="block text-sm font-medium text-gray-700 mb-1">
-                        Product Images
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Product Images ({selectedImages.length}/5)
                     </label>
-                    <input
-                        type="file"
-                        id="images"
-                        multiple
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                        Select multiple images. Max 5MB per image. JPEG, PNG, WebP supported.
+
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                        {/* Existing image previews */}
+                        {imagePreviewUrls.map((url, index) => (
+                            <div
+                                key={index}
+                                onClick={() => setPrimaryIndex(index)}
+                                className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-colors ${
+                                    index === primaryIndex ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200 hover:border-gray-400'
+                                }`}
+                            >
+                                <img src={url} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
+                                {index === primaryIndex && (
+                                    <span className="absolute top-1 left-1 bg-indigo-600 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
+                                        Primary
+                                    </span>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); removeImage(index); }}
+                                    className="absolute top-1 right-1 bg-black/60 hover:bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs transition-colors"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        ))}
+
+                        {/* Add Image button */}
+                        {selectedImages.length < 5 && (
+                            <label className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50 flex flex-col items-center justify-center cursor-pointer transition-colors">
+                                <span className="text-2xl text-gray-400">+</span>
+                                <span className="text-[10px] text-gray-500 mt-0.5">Add Image</span>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    className="hidden"
+                                />
+                            </label>
+                        )}
+                    </div>
+
+                    <p className="text-xs text-gray-500 mt-2">
+                        Click an image to set it as primary (shown in catalog). Max 5MB each.
                     </p>
                 </div>
-
-                {/* Image Previews */}
-                {imagePreviewUrls.length > 0 && (
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Image Previews</label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {imagePreviewUrls.map((url, index) => (
-                                <div key={index} className="relative">
-                                    <img
-                                        src={url}
-                                        alt={`Preview ${index + 1}`}
-                                        className="w-full h-24 object-cover rounded-md border border-gray-300"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => removeImage(index)}
-                                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
 
                 {/* Submit Button */}
                 <div className="flex justify-end pt-4">

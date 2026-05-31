@@ -2,8 +2,10 @@ using AutoMapper;
 using DhanakTrinket.Core.DTOs;
 using DhanakTrinket.Core.Entities;
 using DhanakTrinket.Core.Interfaces;
+using DhanakTrinket.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Webp;
@@ -19,17 +21,20 @@ public class ProductsController : ControllerBase
     private readonly IBlobStorageService _blobStorageService;
     private readonly IMapper _mapper;
     private readonly ILogger<ProductsController> _logger;
+    private readonly DhanakTrinketDbContext _context;
 
     public ProductsController(
         IProductService productService,
         IBlobStorageService blobStorageService,
         IMapper mapper,
-        ILogger<ProductsController> logger)
+        ILogger<ProductsController> logger,
+        DhanakTrinketDbContext context)
     {
         _productService = productService;
         _blobStorageService = blobStorageService;
         _mapper = mapper;
         _logger = logger;
+        _context = context;
     }
 
     /// <summary>
@@ -307,6 +312,91 @@ public class ProductsController : ControllerBase
         {
             _logger.LogError(ex, "Error updating product {ProductId}", id);
             return StatusCode(500, ApiResponse<ProductDto>.ErrorResponse("An error occurred while updating the product"));
+        }
+    }
+
+    /// <summary>
+    /// Delete an image from a product (Admin only)
+    /// </summary>
+    [Authorize(Roles = "Admin")]
+    [HttpDelete("{productId}/images/{imageId}")]
+    public async Task<ActionResult<ApiResponse<object>>> DeleteProductImage(int productId, int imageId)
+    {
+        try
+        {
+            var image = await _context.ProductImages
+                .FirstOrDefaultAsync(i => i.Id == imageId && i.ProductId == productId);
+
+            if (image == null)
+                return NotFound(ApiResponse<object>.ErrorResponse("Image not found"));
+
+            // Delete blobs
+            if (!string.IsNullOrEmpty(image.BlobPath))
+            {
+                try { await _blobStorageService.DeleteImageAsync(image.BlobPath); } catch { /* best-effort */ }
+            }
+            if (!string.IsNullOrEmpty(image.ThumbnailUrl))
+            {
+                // Extract blob name from thumbnail URL for deletion
+                var thumbUri = new Uri(image.ThumbnailUrl);
+                var thumbPath = thumbUri.AbsolutePath.TrimStart('/');
+                // Remove container name prefix
+                var containerPrefix = "product-thumbnails/";
+                if (thumbPath.StartsWith(containerPrefix))
+                    thumbPath = thumbPath[containerPrefix.Length..];
+                try { await _blobStorageService.DeleteImageAsync(thumbPath); } catch { /* best-effort */ }
+            }
+
+            _context.ProductImages.Remove(image);
+
+            // If deleted image was primary, promote the next one
+            if (image.IsPrimary)
+            {
+                var nextImage = await _context.ProductImages
+                    .Where(i => i.ProductId == productId && i.Id != imageId)
+                    .OrderBy(i => i.DisplayOrder)
+                    .FirstOrDefaultAsync();
+                if (nextImage != null)
+                    nextImage.IsPrimary = true;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Image deleted successfully"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting image {ImageId} for product {ProductId}", imageId, productId);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse("An error occurred while deleting the image"));
+        }
+    }
+
+    /// <summary>
+    /// Set an image as primary (Admin only)
+    /// </summary>
+    [Authorize(Roles = "Admin")]
+    [HttpPut("{productId}/images/{imageId}/primary")]
+    public async Task<ActionResult<ApiResponse<object>>> SetPrimaryImage(int productId, int imageId)
+    {
+        try
+        {
+            var images = await _context.ProductImages
+                .Where(i => i.ProductId == productId)
+                .ToListAsync();
+
+            var target = images.FirstOrDefault(i => i.Id == imageId);
+            if (target == null)
+                return NotFound(ApiResponse<object>.ErrorResponse("Image not found"));
+
+            foreach (var img in images)
+                img.IsPrimary = img.Id == imageId;
+
+            await _context.SaveChangesAsync();
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Primary image updated"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting primary image {ImageId} for product {ProductId}", imageId, productId);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse("An error occurred"));
         }
     }
 

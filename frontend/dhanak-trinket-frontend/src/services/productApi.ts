@@ -185,6 +185,20 @@ export const productApi = {
         }
     },
 
+    async deleteProductImage(productId: number, imageId: number): Promise<ApiResponse<object>> {
+        return apiRequest<object>(`/products/${productId}/images/${imageId}`, {
+            method: 'DELETE',
+            headers: authHeader(),
+        });
+    },
+
+    async setPrimaryImage(productId: number, imageId: number): Promise<ApiResponse<object>> {
+        return apiRequest<object>(`/products/${productId}/images/${imageId}/primary`, {
+            method: 'PUT',
+            headers: authHeader(),
+        });
+    },
+
     // Record a sale (Admin only) — called from "Mark as Sold" modal
     async recordSale(request: RecordSaleRequest): Promise<ApiResponse<SaleDto>> {
         return apiRequest<SaleDto>('/sales', {
