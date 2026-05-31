@@ -149,41 +149,8 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
         );
     }
 
-    // New Arrivals — products added in last 7 days
-    const newArrivals = products.filter(p => {
-        const daysAgo = (Date.now() - new Date(p.createdAt).getTime()) / (1000 * 60 * 60 * 24);
-        return daysAgo <= 7 && p.isInStock;
-    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
     return (
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-4">
-            {/* New Arrivals Horizontal Scroll */}
-            {newArrivals.length > 0 && (
-                <div className="mb-6">
-                    <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3 px-1">New Arrivals</h2>
-                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2">
-                        {newArrivals.map(product => (
-                            <div key={product.id} className="flex-shrink-0 w-36 sm:w-44 cursor-pointer" onClick={() => setSelectedProduct(product)}>
-                                <div className="relative aspect-[3/4] bg-gray-50 rounded-lg overflow-hidden">
-                                    {product.images[0] && (
-                                        <Image
-                                            src={product.images[0].thumbnailUrl || product.images[0].imageUrl}
-                                            alt={product.name}
-                                            fill
-                                            sizes="180px"
-                                            className="object-cover"
-                                        />
-                                    )}
-                                    <div className="absolute top-1.5 left-1.5 bg-rose-500 text-white text-[9px] font-bold uppercase px-1.5 py-0.5 rounded">New</div>
-                                </div>
-                                <p className="text-xs text-gray-700 mt-1.5 line-clamp-1 px-0.5">{product.name}</p>
-                                <p className="text-xs font-medium text-gray-900 px-0.5">{formatPrice(product.price)}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
             {/* Compact Filter Bar */}
             <div className="flex flex-wrap items-center gap-2 mb-4">
                 <input
