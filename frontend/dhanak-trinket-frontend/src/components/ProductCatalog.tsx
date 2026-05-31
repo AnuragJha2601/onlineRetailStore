@@ -20,6 +20,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
     const [categories, setCategories] = useState<Category[]>([]);
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | 'all'>('all');
     const [showInStockOnly, setShowInStockOnly] = useState(true);
+    const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc' | 'popular'>('newest');
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [maintenanceMode, setMaintenanceMode] = useState(false);
     const [likedProductIds, setLikedProductIds] = useState<Set<number>>(() => {
@@ -42,7 +43,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
 
     useEffect(() => {
         filterProducts();
-    }, [products, searchTerm, selectedCategoryId, showInStockOnly]);
+    }, [products, searchTerm, selectedCategoryId, showInStockOnly, sortBy]);
 
     const loadProducts = async () => {
         try {
@@ -83,6 +84,22 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
         // Filter by stock status
         if (showInStockOnly) {
             filtered = filtered.filter(product => product.isInStock);
+        }
+
+        // Sort
+        switch (sortBy) {
+            case 'newest':
+                filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                break;
+            case 'price-asc':
+                filtered.sort((a, b) => a.price - b.price);
+                break;
+            case 'price-desc':
+                filtered.sort((a, b) => b.price - a.price);
+                break;
+            case 'popular':
+                filtered.sort((a, b) => b.likesCount - a.likesCount);
+                break;
         }
 
         setFilteredProducts(filtered);
@@ -132,8 +149,41 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
         );
     }
 
+    // New Arrivals — products added in last 7 days
+    const newArrivals = products.filter(p => {
+        const daysAgo = (Date.now() - new Date(p.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+        return daysAgo <= 7 && p.isInStock;
+    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
     return (
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-4">
+            {/* New Arrivals Horizontal Scroll */}
+            {newArrivals.length > 0 && (
+                <div className="mb-6">
+                    <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3 px-1">New Arrivals</h2>
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2">
+                        {newArrivals.map(product => (
+                            <div key={product.id} className="flex-shrink-0 w-36 sm:w-44 cursor-pointer" onClick={() => setSelectedProduct(product)}>
+                                <div className="relative aspect-[3/4] bg-gray-50 rounded-lg overflow-hidden">
+                                    {product.images[0] && (
+                                        <Image
+                                            src={product.images[0].thumbnailUrl || product.images[0].imageUrl}
+                                            alt={product.name}
+                                            fill
+                                            sizes="180px"
+                                            className="object-cover"
+                                        />
+                                    )}
+                                    <div className="absolute top-1.5 left-1.5 bg-rose-500 text-white text-[9px] font-bold uppercase px-1.5 py-0.5 rounded">New</div>
+                                </div>
+                                <p className="text-xs text-gray-700 mt-1.5 line-clamp-1 px-0.5">{product.name}</p>
+                                <p className="text-xs font-medium text-gray-900 px-0.5">{formatPrice(product.price)}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* Compact Filter Bar */}
             <div className="flex flex-wrap items-center gap-2 mb-4">
                 <input
@@ -141,7 +191,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search..."
-                    className="flex-1 min-w-[120px] max-w-xs px-3 py-2 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-gray-400 bg-white"
+                    className="flex-1 min-w-[100px] max-w-xs px-3 py-2 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-gray-400 bg-white"
                 />
                 <select
                     value={selectedCategoryId}
@@ -152,6 +202,16 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
                     {categories.map(c => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
+                </select>
+                <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                    className="px-3 py-2 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-gray-400 bg-white"
+                >
+                    <option value="newest">Newest</option>
+                    <option value="popular">Popular</option>
+                    <option value="price-asc">Price: Low → High</option>
+                    <option value="price-desc">Price: High → Low</option>
                 </select>
                 <label className="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer select-none">
                     <input
@@ -256,8 +316,8 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                             fill
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                             className={`object-cover transition-all duration-700 ease-in-out ${hoverImageSrc
-                                    ? `group-hover:opacity-0 ${touched ? 'opacity-0' : ''}`
-                                    : `group-hover:scale-110 ${touched ? 'scale-110' : ''}`
+                                ? `group-hover:opacity-0 ${touched ? 'opacity-0' : ''}`
+                                : `group-hover:scale-110 ${touched ? 'scale-110' : ''}`
                                 }`}
                         />
                         {hoverImageSrc && (
@@ -267,8 +327,8 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                                 fill
                                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                 className={`object-cover transition-all duration-700 ease-in-out ${touched
-                                        ? 'opacity-100 scale-110'
-                                        : 'opacity-0 group-hover:opacity-100 group-hover:scale-110'
+                                    ? 'opacity-100 scale-110'
+                                    : 'opacity-0 group-hover:opacity-100 group-hover:scale-110'
                                     }`}
                             />
                         )}
@@ -291,8 +351,8 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                     onClick={(e) => { e.stopPropagation(); onLike(); }}
                     disabled={isLiked}
                     className={`absolute top-2 right-2 flex items-center gap-1 px-1.5 h-7 rounded-full bg-white/80 backdrop-blur-sm transition-all ${isLiked || product.likesCount > 0
-                            ? 'opacity-100'
-                            : 'sm:opacity-0 sm:group-hover:opacity-100 opacity-100'
+                        ? 'opacity-100'
+                        : 'sm:opacity-0 sm:group-hover:opacity-100 opacity-100'
                         } ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
                     aria-label={isLiked ? 'Already liked' : 'Like'}
                 >
