@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import ProductUploadForm from '@/components/ProductUploadForm';
 import InventoryScreen from '@/components/InventoryScreen';
 import ExpensesScreen from '@/components/ExpensesScreen';
 import SalesScreen from '@/components/SalesScreen';
@@ -10,20 +9,18 @@ import CategoriesScreen from '@/components/CategoriesScreen';
 import { useAuth } from '@/contexts/AuthContext';
 import { productApi } from '@/services/productApi';
 
-type Tab = 'inventory' | 'expenses' | 'sales' | 'categories' | 'add-product';
+type Tab = 'inventory' | 'expenses' | 'sales' | 'categories';
 
 const TABS: { id: Tab; label: string }[] = [
     { id: 'inventory', label: 'Inventory' },
     { id: 'expenses', label: 'Expenses' },
     { id: 'sales', label: 'Sales' },
     { id: 'categories', label: 'Categories' },
-    { id: 'add-product', label: 'Add Product' },
 ];
 
 export default function AdminPage() {
     const { isAdmin, isLoading, logout } = useAuth();
     const [activeTab, setActiveTab] = useState<Tab>('inventory');
-    const [addProductMessage, setAddProductMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const [maintenanceMode, setMaintenanceMode] = useState(false);
     const [togglingMaintenance, setTogglingMaintenance] = useState(false);
 
@@ -105,36 +102,6 @@ export default function AdminPage() {
                 {activeTab === 'sales' && <SalesScreen />}
 
                 {activeTab === 'categories' && <CategoriesScreen />}
-
-                {activeTab === 'add-product' && (
-                    <div className="max-w-3xl">
-                        <div className="mb-6">
-                            <h2 className="text-lg font-semibold text-gray-900">Add New Product</h2>
-                            <p className="text-sm text-gray-500 mt-0.5">
-                                Upload high-quality images and detailed descriptions to showcase your jewelry.
-                            </p>
-                        </div>
-                        {addProductMessage && (
-                            <div className={`mb-5 rounded-lg px-4 py-3 text-sm flex items-start gap-3 ${addProductMessage.type === 'success'
-                                ? 'bg-green-50 border border-green-200 text-green-800'
-                                : 'bg-red-50 border border-red-200 text-red-700'
-                                }`}>
-                                <span className="flex-1">{addProductMessage.text}</span>
-                                <button onClick={() => setAddProductMessage(null)} className="opacity-60 hover:opacity-100">✕</button>
-                            </div>
-                        )}
-                        <ProductUploadForm
-                            onSuccess={text => {
-                                setAddProductMessage({ type: 'success', text });
-                                setTimeout(() => setAddProductMessage(null), 6000);
-                            }}
-                            onError={text => {
-                                setAddProductMessage({ type: 'error', text });
-                                setTimeout(() => setAddProductMessage(null), 8000);
-                            }}
-                        />
-                    </div>
-                )}
             </main>
         </div>
     );
