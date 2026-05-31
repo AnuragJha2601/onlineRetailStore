@@ -150,17 +150,17 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                             </span>
                         </div>
 
-                    <p className="text-sm text-gray-500 mb-3">{product.categoryName}</p>
+                        <p className="text-sm text-gray-500 mb-3">{product.categoryName}</p>
 
-                    {product.description && (
-                        <p className="text-sm text-gray-700 leading-relaxed">{product.description}</p>
-                    )}
+                        {product.description && (
+                            <p className="text-sm text-gray-700 leading-relaxed">{product.description}</p>
+                        )}
 
-                    {product.isInStock && product.stockQuantity <= 5 && (
-                        <p className="mt-3 text-xs font-medium text-orange-600">
-                            Only {product.stockQuantity} left in stock
-                        </p>
-                    )}
+                        {product.isInStock && product.stockQuantity <= 5 && (
+                            <p className="mt-3 text-xs font-medium text-orange-600">
+                                Only {product.stockQuantity} left in stock
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>

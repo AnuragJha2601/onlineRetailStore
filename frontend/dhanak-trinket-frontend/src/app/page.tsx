@@ -19,43 +19,37 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-3">
-            <div className="flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-2 sm:py-3 gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <Image
                 src="/logo.jpg"
                 alt="Dhanak Trinket"
-                width={56}
-                height={56}
-                className="rounded-full object-cover"
+                width={40}
+                height={40}
+                className="rounded-full object-cover flex-shrink-0 sm:w-14 sm:h-14"
                 priority
               />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Dhanak Trinket</h1>
-                <p className="text-sm text-gray-500">Ethnic Finds, Timeless Shine</p>
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Dhanak Trinket</h1>
+                <p className="text-[11px] sm:text-sm text-gray-500">Ethnic Finds, Timeless Shine</p>
               </div>
             </div>
-            <nav className="flex space-x-4 items-center">
-              {isAdmin && (
-                <>
-                  <span className="bg-indigo-600 text-white px-3 py-2 rounded-md text-sm font-medium">
-                    Catalog
-                  </span>
-                  <a
-                    href="/admin"
-                    className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Admin
-                  </a>
-                  <button
-                    onClick={logout}
-                    className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium border border-gray-300 hover:border-red-300 transition-colors"
-                  >
-                    Logout
-                  </button>
-                </>
-              )}
-            </nav>
+            {isAdmin && (
+              <nav className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+                <span className="bg-indigo-600 text-white px-2 sm:px-3 py-1.5 rounded-md text-[11px] sm:text-sm font-medium">
+                  Catalog
+                </span>
+                <a href="/admin"
+                  className="text-gray-600 hover:text-gray-900 px-2 sm:px-3 py-1.5 text-[11px] sm:text-sm font-medium">
+                  Admin
+                </a>
+                <button onClick={logout}
+                  className="text-gray-500 hover:text-red-600 px-2 sm:px-3 py-1 text-[11px] sm:text-sm border border-gray-300 rounded-md">
+                  Logout
+                </button>
+              </nav>
+            )}
           </div>
         </div>
       </header>
