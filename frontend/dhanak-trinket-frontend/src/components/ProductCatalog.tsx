@@ -5,12 +5,14 @@ import Image from 'next/image';
 import { Product, Category, ProductFilterRequest } from '@/types/product';
 import { productApi, formatPrice } from '@/services/productApi';
 import ProductDetailModal from '@/components/ProductDetailModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ProductCatalogProps {
     onError?: (message: string) => void;
 }
 
 export default function ProductCatalog({ onError }: ProductCatalogProps) {
+    const { isAdmin } = useAuth();
     const [products, setProducts] = useState<Product[]>([]);
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
@@ -115,7 +117,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
         );
     }
 
-    if (maintenanceMode) {
+    if (maintenanceMode && !isAdmin) {
         return (
             <div className="max-w-7xl mx-auto p-6">
                 <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
