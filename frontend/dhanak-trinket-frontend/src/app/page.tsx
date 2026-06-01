@@ -32,8 +32,8 @@ export default function Home() {
                 priority
               />
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Dhanak Trinket</h1>
-                <p className="text-[11px] sm:text-sm text-gray-500">Ethnic Finds, Timeless Shine</p>
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate font-serif tracking-wide">Dhanak Trinket</h1>
+                <p className="text-[11px] sm:text-sm text-gray-500 tracking-wider uppercase">Ethnic Finds, Timeless Shine</p>
               </div>
             </div>
             {isAdmin && (

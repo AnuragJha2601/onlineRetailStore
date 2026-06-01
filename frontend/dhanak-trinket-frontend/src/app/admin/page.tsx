@@ -55,7 +55,7 @@ export default function AdminPage() {
                             <Image src="/logo.jpg" alt="Dhanak Trinket" width={36} height={36}
                                 className="rounded-full object-cover flex-shrink-0" priority />
                             <div className="min-w-0">
-                                <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">Dhanak Trinket</h1>
+                                <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate font-serif tracking-wide">Dhanak Trinket</h1>
                                 <p className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">Admin Dashboard</p>
                             </div>
                         </div>

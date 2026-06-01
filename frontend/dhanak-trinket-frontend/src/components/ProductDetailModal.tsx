@@ -144,7 +144,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                     {/* Product details */}
                     <div className="p-5">
                         <div className="flex items-start justify-between gap-3 mb-2">
-                            <h2 className="text-xl font-bold text-gray-900 leading-snug">{product.name}</h2>
+                            <h2 className="text-xl font-bold text-gray-900 leading-snug font-serif">{product.name}</h2>
                             <span className="text-xl font-bold text-indigo-600 whitespace-nowrap">
                                 {formatPrice(product.price)}
                             </span>

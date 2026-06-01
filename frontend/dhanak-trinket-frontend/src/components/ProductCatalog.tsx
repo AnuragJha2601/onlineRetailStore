@@ -332,8 +332,8 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
 
             {/* Minimal info — name + price */}
             <div className="px-1 pt-2.5 pb-4">
-                <p className="text-[13px] text-gray-700 line-clamp-1">{product.name}</p>
-                <p className="text-sm font-medium text-gray-900 mt-1 tracking-wide">{formatPrice(product.price)}</p>
+                <p className="text-[13px] text-gray-700 line-clamp-1 font-serif">{product.name}</p>
+                <p className="text-sm font-semibold text-gray-900 mt-1">{formatPrice(product.price)}</p>
             </div>
         </div>
     );
