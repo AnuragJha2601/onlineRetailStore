@@ -100,6 +100,16 @@ export default function Home() {
           </div>
         )}
 
+        {/* Hero Tagline */}
+        <section className="bg-gradient-to-b from-amber-50/60 to-white py-8 sm:py-12 text-center">
+          <h2 className="font-serif text-2xl sm:text-4xl text-gray-900 leading-snug">
+            Timeless Elegance,<br className="sm:hidden" /> Made for You
+          </h2>
+          <p className="mt-2 text-sm sm:text-base text-gray-500 tracking-wide">
+            Handcrafted ethnic jewelry — curated with love
+          </p>
+        </section>
+
         {/* Product Catalog */}
         <ProductCatalog onError={handleError} />
       </main>
