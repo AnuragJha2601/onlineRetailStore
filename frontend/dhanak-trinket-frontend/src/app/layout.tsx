@@ -16,6 +16,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Dhanak Trinket — Ethnic Finds, Timeless Shine",
   description: "Handcrafted jewelry collection featuring bangles, necklaces, and ethnic accessories.",
+  icons: {
+    icon: "/logo.jpg",
+    apple: "/logo.jpg",
+  },
 };
 
 export default function RootLayout({
