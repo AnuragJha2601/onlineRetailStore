@@ -234,7 +234,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
             </div>
 
             {/* Products Grid — tight gap, mobile-first 2-col */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-[3px] sm:gap-1">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                 {filteredProducts.map((product) => (
                     <ProductCard
                         key={product.id}
@@ -309,13 +309,13 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
 
     return (
         <div
-            className={`group cursor-pointer ${touched ? 'is-touched' : ''}`}
+            className={`group cursor-pointer rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300 ${touched ? 'is-touched' : ''}`}
             onClick={handleCardClick}
             onBlur={handleBlur}
             onMouseLeave={() => setTouched(false)}
             tabIndex={0}
         >
-            {/* Image — edge to edge, with hover/touch zoom + swap */}
+            {/* Image — with hover/touch zoom + swap */}
             <div className="relative aspect-[3/4] bg-gray-50 overflow-hidden">
                 {cardImageSrc ? (
                     <>
@@ -372,10 +372,11 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                 </button>
             </div>
 
-            {/* Minimal info — name + price */}
-            <div className="px-1 pt-2.5 pb-4">
-                <p className="text-[13px] text-gray-700 line-clamp-1 font-serif">{product.name}</p>
+            {/* Product info */}
+            <div className="px-3 pt-3 pb-4">
+                <p className="text-sm text-gray-800 line-clamp-1 font-serif">{product.name}</p>
                 <p className="text-sm font-semibold text-gray-900 mt-1">{formatPrice(product.price)}</p>
+                <p className="text-[11px] text-gray-400 mt-0.5 uppercase tracking-wider">{product.categoryName}</p>
             </div>
         </div>
     );
