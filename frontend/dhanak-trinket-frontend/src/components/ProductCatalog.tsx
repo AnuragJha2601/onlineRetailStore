@@ -21,6 +21,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | 'all'>('all');
     const [showInStockOnly, setShowInStockOnly] = useState(true);
     const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc' | 'popular'>('newest');
+    const [activeNav, setActiveNav] = useState<'all' | 'new-arrivals' | 'trending' | number>('all');
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [maintenanceMode, setMaintenanceMode] = useState(false);
     const [likedProductIds, setLikedProductIds] = useState<Set<number>>(() => {
@@ -43,7 +44,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
 
     useEffect(() => {
         filterProducts();
-    }, [products, searchTerm, selectedCategoryId, showInStockOnly, sortBy]);
+    }, [products, searchTerm, selectedCategoryId, showInStockOnly, sortBy, activeNav]);
 
     const loadProducts = async () => {
         try {
@@ -65,10 +66,17 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
     const filterProducts = () => {
         let filtered = [...products];
 
-        // Filter by category
-        if (selectedCategoryId !== 'all') {
-            filtered = filtered.filter(product => product.categoryId === selectedCategoryId);
+        // Nav pill filter
+        if (activeNav === 'new-arrivals') {
+            const fourteenDaysAgo = new Date();
+            fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+            filtered = filtered.filter(p => new Date(p.createdAt) >= fourteenDaysAgo);
+        } else if (activeNav === 'trending') {
+            filtered = filtered.filter(p => p.likesCount > 0);
+        } else if (typeof activeNav === 'number') {
+            filtered = filtered.filter(product => product.categoryId === activeNav);
         }
+        // 'all' — no category filter
 
         // Filter by search term
         if (searchTerm.trim()) {
@@ -86,8 +94,9 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
             filtered = filtered.filter(product => product.isInStock);
         }
 
-        // Sort
-        switch (sortBy) {
+        // Sort — trending always sorts by likes, new-arrivals always by newest
+        const effectiveSort = activeNav === 'trending' ? 'popular' : activeNav === 'new-arrivals' ? 'newest' : sortBy;
+        switch (effectiveSort) {
             case 'newest':
                 filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
                 break;
@@ -149,46 +158,79 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
         );
     }
 
+    const handleNavClick = (nav: typeof activeNav) => {
+        setActiveNav(nav);
+        // Reset category dropdown sync
+        if (typeof nav === 'number') {
+            setSelectedCategoryId(nav);
+        } else {
+            setSelectedCategoryId('all');
+        }
+    };
+
+    // Build nav items: special tabs + categories that have products
+    const categoriesWithProducts = categories.filter(c =>
+        products.some(p => p.categoryId === c.id && (!showInStockOnly || p.isInStock))
+    );
+
     return (
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-4">
-            {/* Compact Filter Bar */}
-            <div className="flex flex-wrap items-center gap-2 mb-4">
+            {/* Category Nav Pills */}
+            <div className="overflow-x-auto scrollbar-hide -mx-2 px-2 mb-3">
+                <div className="flex items-center gap-2 min-w-max">
+                    <button
+                        onClick={() => handleNavClick('all')}
+                        className={`px-4 py-2 sm:py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeNav === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    >All</button>
+                    <button
+                        onClick={() => handleNavClick('new-arrivals')}
+                        className={`px-4 py-2 sm:py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeNav === 'new-arrivals' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    >New Arrivals</button>
+                    <button
+                        onClick={() => handleNavClick('trending')}
+                        className={`px-4 py-2 sm:py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeNav === 'trending' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    >Trending</button>
+                    <span className="w-px h-5 bg-gray-300" />
+                    {categoriesWithProducts.map(c => (
+                        <button
+                            key={c.id}
+                            onClick={() => handleNavClick(c.id)}
+                            className={`px-4 py-2 sm:py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeNav === c.id ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                        >{c.name}</button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Compact Filter Row — search full-width on mobile */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
                 <input
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search..."
-                    className="flex-1 min-w-[100px] max-w-xs px-3 py-2 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-gray-400 bg-white"
+                    placeholder="Search by name or code..."
+                    className="w-full sm:flex-1 sm:max-w-xs px-3 py-2 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-gray-400 bg-white"
                 />
-                <select
-                    value={selectedCategoryId}
-                    onChange={(e) => setSelectedCategoryId(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                    className="px-3 py-2 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-gray-400 bg-white"
-                >
-                    <option value="all">All</option>
-                    {categories.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                </select>
-                <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                    className="px-3 py-2 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-gray-400 bg-white"
-                >
-                    <option value="newest">Newest</option>
-                    <option value="popular">Popular</option>
-                    <option value="price-asc">Price: Low → High</option>
-                    <option value="price-desc">Price: High → Low</option>
-                </select>
-                <label className="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer select-none">
-                    <input
-                        type="checkbox"
-                        checked={showInStockOnly}
-                        onChange={(e) => setShowInStockOnly(e.target.checked)}
-                        className="h-3.5 w-3.5 rounded border-gray-300 text-gray-800 focus:ring-gray-400"
-                    />
-                    In Stock
-                </label>
+                <div className="flex items-center gap-2">
+                    <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                        className="px-3 py-2 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-gray-400 bg-white"
+                    >
+                        <option value="newest">Newest</option>
+                        <option value="popular">Popular</option>
+                        <option value="price-asc">Price: Low → High</option>
+                        <option value="price-desc">Price: High → Low</option>
+                    </select>
+                    <label className="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer select-none whitespace-nowrap">
+                        <input
+                            type="checkbox"
+                            checked={showInStockOnly}
+                            onChange={(e) => setShowInStockOnly(e.target.checked)}
+                            className="h-3.5 w-3.5 rounded border-gray-300 text-gray-800 focus:ring-gray-400"
+                        />
+                        In Stock
+                    </label>
+                </div>
             </div>
 
             {/* Products Grid — tight gap, mobile-first 2-col */}
