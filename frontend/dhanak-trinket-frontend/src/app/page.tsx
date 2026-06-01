@@ -8,7 +8,6 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function Home() {
   const { isAdmin, logout } = useAuth();
   const [message, setMessage] = useState<{ type: 'error'; text: string } | null>(null);
-  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const handleError = (text: string) => {
     setMessage({ type: 'error', text });
@@ -55,17 +54,17 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Slim Contact Strip — dismissible */}
-      {!bannerDismissed && (
-        <div className="bg-gradient-to-r from-rose-50 via-amber-50 to-rose-50 border-b border-rose-100">
-          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 flex items-center justify-between gap-2">
-            <p className="text-xs sm:text-sm text-rose-700 font-medium flex-1 text-center">
-              ✨ Order via <a href="https://chat.whatsapp.com/Bs6ue8BYGiY7xeZ7wk5EE8?mode=gi_t" target="_blank" rel="noopener noreferrer" className="underline font-semibold text-green-700">WhatsApp</a> or <a href="https://www.instagram.com/dhanaktrinket?igsh=dGRvb3R5YmpqbzJ5&utm_source=qr" target="_blank" rel="noopener noreferrer" className="underline font-semibold text-pink-600">Instagram</a> · Bulk orders welcome!
-            </p>
-            <button onClick={() => setBannerDismissed(true)} className="text-gray-400 hover:text-gray-600 text-lg leading-none flex-shrink-0" aria-label="Dismiss">×</button>
-          </div>
+      {/* Scrolling Promo Marquee */}
+      <div className="bg-gradient-to-r from-rose-50 via-amber-50 to-rose-50 border-b border-rose-100 overflow-hidden">
+        <div className="animate-marquee whitespace-nowrap py-2 text-xs sm:text-sm text-rose-700 font-medium">
+          <span className="mx-8">✨ Order via WhatsApp or Instagram · Bulk orders welcome!</span>
+          <span className="mx-8">🎉 New collections added every week</span>
+          <span className="mx-8">💎 Handcrafted ethnic jewelry — bangles, earrings, necklaces & more</span>
+          <span className="mx-8">✨ Order via WhatsApp or Instagram · Bulk orders welcome!</span>
+          <span className="mx-8">🎉 New collections added every week</span>
+          <span className="mx-8">💎 Handcrafted ethnic jewelry — bangles, earrings, necklaces & more</span>
         </div>
-      )}
+      </div>
 
       {/* Main Content */}
       <main>

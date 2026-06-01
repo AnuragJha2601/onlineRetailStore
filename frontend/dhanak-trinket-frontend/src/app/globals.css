@@ -44,6 +44,17 @@ body {
   display: none;
 }
 
+/* Marquee scrolling animation */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  animation: marquee 25s linear infinite;
+}
+
 /* Loading animation */
 @keyframes spin {
   from {
