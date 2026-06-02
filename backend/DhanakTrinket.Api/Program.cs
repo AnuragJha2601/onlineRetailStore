@@ -19,15 +19,16 @@ builder.Services.AddControllers();
 // Configure Entity Framework
 builder.Services.AddDbContext<DhanakTrinketDbContext>(options =>
 {
-    // Use Azure SQL if a connection string is configured, otherwise fall back to SQLite (local dev)
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    if (!string.IsNullOrEmpty(connectionString) && !connectionString.StartsWith("Server=localhost"))
+    if (!string.IsNullOrEmpty(connectionString) && connectionString.Contains(".database.windows.net"))
     {
+        // Azure SQL with Managed Identity
         options.UseSqlServer(connectionString);
     }
     else
     {
-        options.UseSqlite("Data Source=DhanakTrinket.db");
+        // Local dev — SQLite
+        options.UseSqlite(connectionString ?? "Data Source=DhanakTrinket.db");
     }
     // Suppress the "pending model changes" warning — snapshot was generated against SQLite
     // but prod uses SQL Server; schema is correct, the drift is cosmetic (column type annotations only)
