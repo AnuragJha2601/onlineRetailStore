@@ -4,6 +4,7 @@ using DhanakTrinket.Infrastructure.Repositories;
 using DhanakTrinket.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Azure.Storage.Blobs;
+using Azure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -37,9 +38,16 @@ builder.Services.AddDbContext<DhanakTrinketDbContext>(options =>
 builder.Services.AddSingleton(provider =>
 {
     var connectionString = builder.Configuration.GetConnectionString("BlobStorage");
-    if (string.IsNullOrWhiteSpace(connectionString))
-        connectionString = "UseDevelopmentStorage=true";
-    return new BlobServiceClient(connectionString);
+    if (!string.IsNullOrWhiteSpace(connectionString))
+    {
+        // Local dev (Azurite) or legacy connection string
+        return new BlobServiceClient(connectionString);
+    }
+
+    // Production: use Managed Identity (System-Assigned)
+    var accountName = builder.Configuration["AzureStorage:AccountName"] ?? "stdhanak2026prod";
+    var blobUri = new Uri($"https://{accountName}.blob.core.windows.net");
+    return new BlobServiceClient(blobUri, new DefaultAzureCredential());
 });
 
 // Configure AutoMapper

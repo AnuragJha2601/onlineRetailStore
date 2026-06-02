@@ -29,9 +29,10 @@ bld/
 *.sln.docstates
 
 # Sensitive configuration files with secrets
-appsettings.Production.json
 appsettings.Development.json
-appsettings.*.json
+appsettings.Local.json
+appsettings.Production.json
+appsettings.Production.template.json
 !appsettings.json
 
 # Database files

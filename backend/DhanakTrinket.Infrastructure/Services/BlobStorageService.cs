@@ -128,7 +128,22 @@ public class BlobStorageService : IBlobStorageService
         };
         sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
-        return blobClient.GenerateSasUri(sasBuilder).ToString();
+        if (blobClient.CanGenerateSasUri)
+        {
+            // Local dev / connection string auth — use account key SAS
+            return blobClient.GenerateSasUri(sasBuilder).ToString();
+        }
+
+        // Managed Identity — use User Delegation SAS
+        var userDelegationKey = _blobServiceClient.GetUserDelegationKey(
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow.AddHours(2));
+
+        var uriBuilder = new BlobUriBuilder(blobClient.Uri)
+        {
+            Sas = sasBuilder.ToSasQueryParameters(userDelegationKey, _blobServiceClient.AccountName)
+        };
+        return uriBuilder.ToString();
     }
 
     private static string GetContentType(string fileExtension)
