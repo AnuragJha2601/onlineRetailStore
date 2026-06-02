@@ -197,7 +197,16 @@ frontend/
 - Public thumbnail container: requires "Allow Blob anonymous access" = Enabled on `stdhanak2026prod` storage account
 
 ## Future Features (Planned)
-- **P&L dashboard**: Monthly revenue-vs-expenses chart and summary table
+### P&L Dashboard (next up — frontend only, no migrations)
+- **New "P&L" tab** in admin dashboard (5th tab)
+- **Backend**: Add `GET /api/expenses/summary?year=` endpoint (groups expenses by month + category totals), mirrors existing `GET /api/sales/summary`
+- **Summary cards**: Total Revenue | Total Expenses | Net Profit/Loss (top row)
+- **Monthly bar chart**: CSS-only side-by-side bars (green revenue, red expenses) — no chart library
+- **Monthly breakdown table**: Revenue, Expenses, Profit, Margin% per month; expandable rows show expense category breakdown
+- **Year selector** dropdown at top
+- **Mobile**: cards stack, chart uses horizontal bars, table collapses to cards
+- **Data source**: `getSalesSummary(year)` + new `getExpensesSummary(year)` — 2 API calls total
+
 ### Wholesale Line-Item Breakdown (future — do NOT build yet)
 Currently a wholesale sale is a **single `Sale` row** with:
 - `SaleType = Wholesale`

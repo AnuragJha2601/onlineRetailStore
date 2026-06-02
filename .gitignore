@@ -6,4 +6,27 @@ app_logs*/
 webapp_recent_logs/
 webapp_recent*/
 *.zip
-*.zip
+
+# Build outputs
+backend/**/bin/
+backend/**/obj/
+backend/publish/
+backend/publish_out/
+
+# IDE
+.vs/
+*.user
+
+# Frontend
+frontend/**/node_modules/
+frontend/**/.next/
+
+# Secrets — NEVER commit real credentials
+# Use Azure App Service env vars for production secrets
+# Keep appsettings.json (safe defaults) and .template.json (documentation)
+# If you need local dev secrets, create a file below and it will be ignored:
+backend/**/appsettings.Local.json
+*.local.json
+.env
+.env.*
+!.env.example
