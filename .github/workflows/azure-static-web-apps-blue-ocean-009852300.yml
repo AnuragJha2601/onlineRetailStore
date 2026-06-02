@@ -34,6 +34,7 @@ jobs:
       - name: Build Next.js app
         env:
           NEXT_PUBLIC_API_BASE_URL: https://api-dhanak-trinket-2026.azurewebsites.net/api
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: 142941387657-80081d6m5e3hkkvk4gkar469qouls9m9.apps.googleusercontent.com
         run: |
           cd frontend/dhanak-trinket-frontend
           npm run build
