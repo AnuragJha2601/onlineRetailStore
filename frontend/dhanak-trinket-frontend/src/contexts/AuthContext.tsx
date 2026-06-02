@@ -10,6 +10,7 @@ interface AuthContextValue {
     isAdmin: boolean;
     isLoading: boolean;
     login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+    googleLogin: (credential: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => void;
 }
 
@@ -62,13 +63,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
+    const googleLogin = useCallback(async (credential: string) => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/auth/google-login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken: credential }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                return { success: false, error: data.message || 'Google login failed' };
+            }
+
+            const newToken: string = data.data.token;
+            localStorage.setItem(TOKEN_KEY, newToken);
+            setToken(newToken);
+            return { success: true };
+        } catch {
+            return { success: false, error: 'Unable to connect to server' };
+        }
+    }, []);
+
     const logout = useCallback(() => {
         localStorage.removeItem(TOKEN_KEY);
         setToken(null);
     }, []);
 
     return (
-        <AuthContext.Provider value={{ token, isAdmin: token !== null, isLoading, login, logout }}>
+        <AuthContext.Provider value={{ token, isAdmin: token !== null, isLoading, login, googleLogin, logout }}>
             {children}
         </AuthContext.Provider>
     );

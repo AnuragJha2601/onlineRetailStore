@@ -6,8 +6,10 @@ using Microsoft.EntityFrameworkCore;
 using Azure.Storage.Blobs;
 using Azure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +17,21 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // builder.Services.AddEndpointsApiExplorer();
 // builder.Services.AddSwaggerGen();
+
+// Rate limiting for auth endpoints — per IP
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("auth", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
 
 // Configure Entity Framework
 builder.Services.AddDbContext<DhanakTrinketDbContext>(options =>
@@ -136,6 +153,7 @@ var app = builder.Build();
 // Enable CORS
 app.UseCors("AllowFrontend");
 
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
