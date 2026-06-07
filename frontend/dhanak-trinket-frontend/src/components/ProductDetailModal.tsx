@@ -74,8 +74,8 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 className="relative bg-white w-full h-full sm:h-auto sm:max-w-lg sm:rounded-2xl sm:shadow-2xl sm:max-h-[90vh] flex flex-col overflow-hidden"
                 onClick={e => e.stopPropagation()}
             >
-                {/* Mobile sticky header */}
-                <div className="sticky top-0 z-20 flex items-center justify-between px-4 py-2.5 bg-white border-b border-gray-100 sm:hidden">
+                {/* Mobile header — no sticky needed; it's a flex child above the scroll area */}
+                <div className="relative z-20 flex items-center justify-between px-4 py-2.5 bg-white border-b border-gray-100 sm:hidden">
                     <button onClick={onClose} className="text-gray-600 text-sm font-medium">← Back</button>
                     <span className="text-xs text-gray-400 truncate max-w-[55%]">{product.name}</span>
                     <div className="w-10" />
