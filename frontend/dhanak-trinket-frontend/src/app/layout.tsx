@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     "Dhanak",
     "mangalsutra"
   ],
-  metadataBase: new URL("https://dhanaktrinket.com"),
+  metadataBase: new URL("https://www.dhanaktrinket.com"),
   alternates: {
     canonical: "/",
   },
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     title: "Dhanak Trinket — Ethnic Finds, Timeless Shine",
     description:
       "Shop trendy, premium necklaces, earrings, rings, anti-tarnish jewellery and timeless ethnic finds at Dhanak Trinket.",
-    url: "https://dhanaktrinket.com",
+    url: "https://www.dhanaktrinket.com",
     siteName: "Dhanak Trinket",
     locale: "en_IN",
     type: "website",

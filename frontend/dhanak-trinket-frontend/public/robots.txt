@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /login/
 
-Sitemap: https://dhanaktrinket.com/sitemap.xml
+Sitemap: https://www.dhanaktrinket.com/sitemap.xml
