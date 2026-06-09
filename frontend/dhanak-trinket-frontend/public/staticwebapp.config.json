@@ -4,7 +4,9 @@
         "exclude": [
             "/images/*.{png,jpg,gif,ico}",
             "/_next/*",
-            "/favicon.ico"
+            "/favicon.ico",
+            "/sitemap.xml",
+            "/robots.txt"
         ]
     },
     "routes": [
@@ -14,6 +16,7 @@
         }
     ],
     "mimeTypes": {
-        ".json": "text/json"
+        ".json": "text/json",
+        ".xml": "application/xml"
     }
 }
