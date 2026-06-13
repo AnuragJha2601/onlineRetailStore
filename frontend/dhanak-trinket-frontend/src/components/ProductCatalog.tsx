@@ -324,7 +324,7 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                             alt={primaryImage?.altText || product.name}
                             fill
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                            className={`object-cover transition-all duration-700 ease-in-out ${hoverImageSrc
+                            className={`object-cover transition-all duration-700 ease-in-out ${!product.isInStock ? 'grayscale brightness-[0.85]' : ''} ${hoverImageSrc
                                 ? `group-hover:opacity-0 ${touched ? 'opacity-0' : ''}`
                                 : `group-hover:scale-110 ${touched ? 'scale-110' : ''}`
                                 }`}
@@ -335,7 +335,7 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                                 alt={secondImage?.altText || product.name}
                                 fill
                                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                className={`object-cover transition-all duration-700 ease-in-out ${touched
+                                className={`object-cover transition-all duration-700 ease-in-out ${!product.isInStock ? 'grayscale brightness-[0.85]' : ''} ${touched
                                     ? 'opacity-100 scale-110'
                                     : 'opacity-0 group-hover:opacity-100 group-hover:scale-110'
                                     }`}
@@ -348,11 +348,14 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
                     </div>
                 )}
 
-                {/* Sold out badge */}
+                {/* Sold out overlay + badge */}
                 {!product.isInStock && (
-                    <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-                        Sold Out
-                    </div>
+                    <>
+                        <div className="absolute inset-0 bg-black/15 pointer-events-none" />
+                        <div className="absolute top-2.5 left-2.5 bg-black/85 text-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wider">
+                            Sold Out
+                        </div>
+                    </>
                 )}
 
                 {/* Like button — always visible on mobile, hover-reveal on desktop */}
@@ -374,8 +377,8 @@ function ProductCard({ product, onLike, onOpen, isLiked = false }: ProductCardPr
 
             {/* Product info */}
             <div className="px-3 pt-3 pb-4">
-                <p className="text-sm text-gray-800 line-clamp-1 font-serif">{product.name}</p>
-                <p className="text-sm font-semibold text-gray-900 mt-1">{formatPrice(product.price)}</p>
+                <p className={`text-sm line-clamp-1 font-serif ${product.isInStock ? 'text-gray-800' : 'text-gray-400'}`}>{product.name}</p>
+                <p className={`text-sm font-semibold mt-1 ${product.isInStock ? 'text-gray-900' : 'text-gray-400'}`}>{formatPrice(product.price)}</p>
                 <p className="text-[11px] text-gray-400 mt-0.5 uppercase tracking-wider">{product.categoryName}</p>
             </div>
         </div>

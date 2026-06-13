@@ -135,7 +135,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                         )}
 
                         {!product.isInStock && (
-                            <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                            <div className="absolute top-3 left-3 bg-black/85 text-white px-3.5 py-1 text-xs font-semibold uppercase tracking-wider">
                                 Sold Out
                             </div>
                         )}
