@@ -50,7 +50,7 @@ export default function HeroCarousel() {
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
         >
-            <div className="cursor-pointer max-h-[55vh] sm:max-h-[70vh] overflow-hidden" onClick={scrollToCatalog}>
+            <div className="cursor-pointer max-h-[55vh] sm:max-h-[65vh] overflow-hidden" onClick={scrollToCatalog}>
                 {/* Desktop image */}
                 <Image
                     src={slide.desktopImage}
@@ -58,7 +58,7 @@ export default function HeroCarousel() {
                     width={1672}
                     height={941}
                     priority={slide.id === 1}
-                    className="hidden sm:block w-full h-auto object-cover object-top -mt-[15px]"
+                    className="hidden sm:block w-full h-auto object-cover object-top -mt-[22px]"
                 />
                 {/* Mobile image */}
                 <Image
