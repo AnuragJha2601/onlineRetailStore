@@ -5,13 +5,9 @@ import Image from 'next/image';
 
 interface HeroSlide {
     id: number;
-    desktopImage?: string;
-    mobileImage?: string;
+    desktopImage: string;
+    mobileImage: string;
     alt: string;
-    // Fallback for slides without images
-    title?: string;
-    subtitle?: string;
-    bgGradient?: string;
 }
 
 const SLIDES: HeroSlide[] = [
@@ -23,17 +19,15 @@ const SLIDES: HeroSlide[] = [
     },
     {
         id: 2,
-        alt: 'Everyday Shine',
-        title: 'Everyday Shine ✦',
-        subtitle: 'Beautiful jewellery for every mood, every moment.',
-        bgGradient: 'from-rose-50 via-pink-50 to-amber-50',
+        desktopImage: '/hero/hero-2-desktop.webp',
+        mobileImage: '/hero/hero-2-desktop.webp',
+        alt: 'Everyday Shine, Everyday You — Beautiful jewellery for every mood',
     },
     {
         id: 3,
-        alt: 'Festive Glow',
-        title: 'Festive Glow ✨',
-        subtitle: 'Celebrate every moment with a little extra sparkle.',
-        bgGradient: 'from-amber-100/60 via-yellow-50 to-orange-50',
+        desktopImage: '/hero/hero-3-desktop.webp',
+        mobileImage: '/hero/hero-3-desktop.webp',
+        alt: 'Festive Glow, Made to Shine — Celebrate every moment with sparkle',
     },
 ];
 
@@ -56,7 +50,6 @@ export default function HeroCarousel() {
     }, [paused, next]);
 
     const slide = SLIDES[current];
-    const hasImage = slide.desktopImage && slide.mobileImage;
 
     const scrollToCatalog = () => {
         const el = document.getElementById('catalog');
@@ -65,50 +58,30 @@ export default function HeroCarousel() {
 
     return (
         <section
-            className={`relative overflow-hidden ${hasImage ? 'bg-amber-50' : `bg-gradient-to-br ${slide.bgGradient}`} transition-colors duration-700`}
+            className="relative overflow-hidden bg-amber-50 transition-colors duration-700"
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
         >
-            {hasImage ? (
-                /* Image-based slide — constrained height, full-width clickable */
-                <div className="cursor-pointer" onClick={scrollToCatalog}>
-                    {/* Desktop image */}
-                    <Image
-                        src={slide.desktopImage!}
-                        alt={slide.alt}
-                        width={985}
-                        height={258}
-                        priority={slide.id === 1}
-                        className="hidden sm:block w-full h-auto"
-                    />
-                    {/* Mobile image */}
-                    <Image
-                        src={slide.mobileImage!}
-                        alt={slide.alt}
-                        width={986}
-                        height={258}
-                        priority={slide.id === 1}
-                        className="block sm:hidden w-full h-auto"
-                    />
-                </div>
-            ) : (
-                /* Text-only fallback slide */
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 flex flex-col items-center text-center">
-                    <div className="mb-4 text-amber-400/60 text-3xl">✦</div>
-                    <h2 className="font-serif text-3xl sm:text-5xl lg:text-6xl text-gray-900 leading-tight whitespace-pre-line">
-                        {slide.title}
-                    </h2>
-                    <p className="mt-4 text-base sm:text-lg text-gray-600 max-w-md">
-                        {slide.subtitle}
-                    </p>
-                    <button
-                        onClick={scrollToCatalog}
-                        className="mt-8 px-8 py-3 bg-gray-900 text-white text-sm font-medium tracking-wider uppercase rounded-sm hover:bg-gray-800 transition-colors"
-                    >
-                        Explore Collection
-                    </button>
-                </div>
-            )}
+            <div className="cursor-pointer max-h-[55vh] sm:max-h-[70vh] overflow-hidden" onClick={scrollToCatalog}>
+                {/* Desktop image */}
+                <Image
+                    src={slide.desktopImage}
+                    alt={slide.alt}
+                    width={1717}
+                    height={916}
+                    priority={slide.id === 1}
+                    className="hidden sm:block w-full h-auto object-cover object-top"
+                />
+                {/* Mobile image */}
+                <Image
+                    src={slide.mobileImage}
+                    alt={slide.alt}
+                    width={750}
+                    height={500}
+                    priority={slide.id === 1}
+                    className="block sm:hidden w-full h-auto object-cover object-top"
+                />
+            </div>
 
             {/* Dots — only show if multiple slides */}
             {SLIDES.length > 1 && (
