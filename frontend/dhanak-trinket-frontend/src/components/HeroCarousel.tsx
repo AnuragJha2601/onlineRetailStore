@@ -55,8 +55,8 @@ export default function HeroCarousel() {
                 <Image
                     src={slide.desktopImage}
                     alt={slide.alt}
-                    width={1717}
-                    height={916}
+                    width={1672}
+                    height={941}
                     priority={slide.id === 1}
                     className="hidden sm:block w-full h-auto object-cover object-top"
                 />
