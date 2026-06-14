@@ -118,19 +118,19 @@ export default function Home() {
         {/* Shop by Category */}
         <CategoryCircles onCategoryClick={handleCategoryClick} />
 
-        {/* Fresh Arrivals */}
-        <ProductCarousel title="Fresh Arrivals" sortBy="newest" pageSize={10} />
-
         {/* Trending Now */}
         <ProductCarousel title="Trending Now" sortBy="popular" pageSize={10} />
 
-        {/* Trust Strip */}
-        <TrustStrip />
+        {/* Fresh Arrivals */}
+        <ProductCarousel title="Fresh Arrivals" sortBy="newest" pageSize={10} />
 
         {/* Full Catalog */}
         <div id="catalog">
           <ProductCatalog onError={handleError} initialCategoryId={catalogCategoryId} />
         </div>
+
+        {/* Why Women Choose Dhanak */}
+        <TrustStrip />
       </main>
 
       {/* Footer */}
