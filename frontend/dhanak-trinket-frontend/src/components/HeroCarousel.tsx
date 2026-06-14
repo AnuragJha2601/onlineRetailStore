@@ -1,36 +1,38 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 
 interface HeroSlide {
     id: number;
-    title: string;
-    subtitle: string;
-    cta: string;
-    bgGradient: string;
-    // When real images are ready, add: desktopImage, mobileImage
+    desktopImage?: string;
+    mobileImage?: string;
+    alt: string;
+    // Fallback for slides without images
+    title?: string;
+    subtitle?: string;
+    bgGradient?: string;
 }
 
 const SLIDES: HeroSlide[] = [
     {
         id: 1,
-        title: 'Timeless Elegance,\nMade for You',
-        subtitle: "Ethnic finds you'll reach for every day.",
-        cta: 'Explore Collection',
-        bgGradient: 'from-amber-50 via-orange-50 to-rose-50',
+        desktopImage: '/hero/hero-1-desktop.webp',
+        mobileImage: '/hero/hero-1-mobile.webp',
+        alt: 'Timeless Elegance, Made for You — Ethnic finds for every day',
     },
     {
         id: 2,
+        alt: 'Everyday Shine',
         title: 'Everyday Shine ✦',
         subtitle: 'Effortless jewellery for every moment.',
-        cta: 'Explore Collection',
         bgGradient: 'from-rose-50 via-pink-50 to-amber-50',
     },
     {
         id: 3,
+        alt: 'Festive Glow',
         title: 'Festive Glow ✨',
         subtitle: 'Shine brighter in every celebration.',
-        cta: 'Explore Collection',
         bgGradient: 'from-amber-100/60 via-yellow-50 to-orange-50',
     },
 ];
@@ -47,7 +49,6 @@ export default function HeroCarousel() {
 
     const goTo = (index: number) => setCurrent(index);
 
-    // Auto-play
     useEffect(() => {
         if (paused) return;
         const timer = setInterval(next, AUTO_PLAY_MS);
@@ -55,6 +56,7 @@ export default function HeroCarousel() {
     }, [paused, next]);
 
     const slide = SLIDES[current];
+    const hasImage = slide.desktopImage && slide.mobileImage;
 
     const scrollToCatalog = () => {
         const el = document.getElementById('catalog');
@@ -63,40 +65,67 @@ export default function HeroCarousel() {
 
     return (
         <section
-            className={`relative bg-gradient-to-br ${slide.bgGradient} transition-colors duration-700 overflow-hidden`}
+            className={`relative overflow-hidden ${hasImage ? 'bg-amber-50' : `bg-gradient-to-br ${slide.bgGradient}`} transition-colors duration-700`}
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
         >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32 flex flex-col items-center text-center">
-                {/* Decorative element */}
-                <div className="mb-4 text-amber-400/60 text-3xl">✦</div>
+            {hasImage ? (
+                /* Image-based slide — full-width clickable banner */
+                <div className="cursor-pointer" onClick={scrollToCatalog}>
+                    {/* Desktop image */}
+                    <Image
+                        src={slide.desktopImage!}
+                        alt={slide.alt}
+                        width={1717}
+                        height={916}
+                        priority={slide.id === 1}
+                        className="hidden sm:block w-full h-auto"
+                    />
+                    {/* Mobile image */}
+                    <Image
+                        src={slide.mobileImage!}
+                        alt={slide.alt}
+                        width={768}
+                        height={1365}
+                        priority={slide.id === 1}
+                        className="block sm:hidden w-full h-auto"
+                    />
+                </div>
+            ) : (
+                /* Text-only fallback slide */
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32 flex flex-col items-center text-center">
+                    <div className="mb-4 text-amber-400/60 text-3xl">✦</div>
+                    <h2 className="font-serif text-3xl sm:text-5xl lg:text-6xl text-gray-900 leading-tight whitespace-pre-line">
+                        {slide.title}
+                    </h2>
+                    <p className="mt-4 text-base sm:text-lg text-gray-600 max-w-md">
+                        {slide.subtitle}
+                    </p>
+                    <button
+                        onClick={scrollToCatalog}
+                        className="mt-8 px-8 py-3 bg-gray-900 text-white text-sm font-medium tracking-wider uppercase rounded-sm hover:bg-gray-800 transition-colors"
+                    >
+                        Explore Collection
+                    </button>
+                </div>
+            )}
 
-                <h2 className="font-serif text-3xl sm:text-5xl lg:text-6xl text-gray-900 leading-tight whitespace-pre-line transition-opacity duration-500">
-                    {slide.title}
-                </h2>
-                <p className="mt-4 text-base sm:text-lg text-gray-600 max-w-md transition-opacity duration-500">
-                    {slide.subtitle}
-                </p>
-                <button
-                    onClick={scrollToCatalog}
-                    className="mt-8 px-8 py-3 bg-gray-900 text-white text-sm font-medium tracking-wider uppercase rounded-sm hover:bg-gray-800 transition-colors"
-                >
-                    {slide.cta}
-                </button>
-
-                {/* Dots */}
-                <div className="flex gap-2 mt-10">
+            {/* Dots — only show if multiple slides */}
+            {SLIDES.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                     {SLIDES.map((_, i) => (
                         <button
                             key={i}
                             onClick={() => goTo(i)}
-                            className={`h-2 rounded-full transition-all duration-300 ${i === current ? 'w-6 bg-gray-800' : 'w-2 bg-gray-400/40 hover:bg-gray-400'
+                            className={`h-2 rounded-full transition-all duration-300 ${i === current
+                                ? 'w-6 bg-white/90 shadow-sm'
+                                : 'w-2 bg-white/40 hover:bg-white/60'
                                 }`}
                             aria-label={`Go to slide ${i + 1}`}
                         />
                     ))}
                 </div>
-            </div>
+            )}
         </section>
     );
 }
