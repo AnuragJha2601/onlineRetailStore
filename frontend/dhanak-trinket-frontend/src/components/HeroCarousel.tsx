@@ -23,15 +23,17 @@ const SLIDES: HeroSlide[] = [
     },
     {
         id: 2,
-        desktopImage: '/hero/hero-2-desktop.webp',
-        mobileImage: '/hero/hero-2-mobile.webp',
-        alt: 'Everyday Shine, Everyday You — Beautiful jewellery for every mood',
+        alt: 'Everyday Shine',
+        title: 'Everyday Shine ✦',
+        subtitle: 'Beautiful jewellery for every mood, every moment.',
+        bgGradient: 'from-rose-50 via-pink-50 to-amber-50',
     },
     {
         id: 3,
-        desktopImage: '/hero/hero-3-desktop.webp',
-        mobileImage: '/hero/hero-3-mobile.webp',
-        alt: 'Festive Glow, Made to Shine — Celebrate every moment with sparkle',
+        alt: 'Festive Glow',
+        title: 'Festive Glow ✨',
+        subtitle: 'Celebrate every moment with a little extra sparkle.',
+        bgGradient: 'from-amber-100/60 via-yellow-50 to-orange-50',
     },
 ];
 
