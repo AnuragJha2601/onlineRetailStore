@@ -1,18 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
 import ProductCatalog from '@/components/ProductCatalog';
+import HeroCarousel from '@/components/HeroCarousel';
+import CategoryCircles from '@/components/CategoryCircles';
+import ProductCarousel from '@/components/ProductCarousel';
+import TrustStrip from '@/components/TrustStrip';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Home() {
   const { isAdmin, logout } = useAuth();
   const [message, setMessage] = useState<{ type: 'error'; text: string } | null>(null);
+  const [catalogCategoryId, setCatalogCategoryId] = useState<number | undefined>(undefined);
 
   const handleError = (text: string) => {
     setMessage({ type: 'error', text });
-    // Auto-clear error message after 8 seconds
     setTimeout(() => setMessage(null), 8000);
+  };
+
+  const handleCategoryClick = (categoryId: number) => {
+    setCatalogCategoryId(categoryId);
+    // Scroll to catalog section
+    setTimeout(() => {
+      const el = document.getElementById('catalog');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   return (
@@ -99,18 +112,25 @@ export default function Home() {
           </div>
         )}
 
-        {/* Hero Tagline */}
-        <section className="bg-gradient-to-b from-amber-50/60 to-white py-8 sm:py-12 text-center">
-          <h2 className="font-serif text-2xl sm:text-4xl text-gray-900 leading-snug">
-            Timeless Elegance,<br className="sm:hidden" /> Made for You
-          </h2>
-          <p className="mt-2 text-sm sm:text-base text-gray-500 tracking-wide">
-            Handcrafted ethnic jewelry — curated with love
-          </p>
-        </section>
+        {/* Hero Carousel */}
+        <HeroCarousel />
 
-        {/* Product Catalog */}
-        <ProductCatalog onError={handleError} />
+        {/* Shop by Category */}
+        <CategoryCircles onCategoryClick={handleCategoryClick} />
+
+        {/* Fresh Arrivals */}
+        <ProductCarousel title="Fresh Arrivals" sortBy="newest" pageSize={10} />
+
+        {/* Trending Now */}
+        <ProductCarousel title="Trending Now" sortBy="popular" pageSize={10} />
+
+        {/* Trust Strip */}
+        <TrustStrip />
+
+        {/* Full Catalog */}
+        <div id="catalog">
+          <ProductCatalog onError={handleError} initialCategoryId={catalogCategoryId} />
+        </div>
       </main>
 
       {/* Footer */}

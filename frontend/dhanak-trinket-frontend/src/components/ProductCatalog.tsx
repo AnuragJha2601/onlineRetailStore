@@ -11,9 +11,10 @@ const PAGE_SIZE = 20;
 
 interface ProductCatalogProps {
     onError?: (message: string) => void;
+    initialCategoryId?: number;
 }
 
-export default function ProductCatalog({ onError }: ProductCatalogProps) {
+export default function ProductCatalog({ onError, initialCategoryId }: ProductCatalogProps) {
     const { isAdmin } = useAuth();
     const [products, setProducts] = useState<Product[]>([]);
     const [totalCount, setTotalCount] = useState(0);
@@ -117,6 +118,14 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
             if (res.success && res.data) setMaintenanceMode(true);
         });
     }, []);
+
+    // Respond to external category selection (from CategoryCircles)
+    useEffect(() => {
+        if (initialCategoryId !== undefined) {
+            setActiveNav(initialCategoryId);
+            setSelectedCategoryId(initialCategoryId);
+        }
+    }, [initialCategoryId]);
 
     // Reload page 1 when filters change
     useEffect(() => {
