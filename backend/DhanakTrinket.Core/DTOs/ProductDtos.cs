@@ -31,6 +31,17 @@ public class ApiResponse<T>
     }
 }
 
+/// <summary>Paginated response wrapper — includes items + total count for client-side paging.</summary>
+public class PaginatedResponse<T>
+{
+    public List<T> Items { get; set; } = new();
+    public int TotalCount { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
+    public bool HasMore => Page < TotalPages;
+}
+
 // Product DTOs
 public class ProductDto
 {
@@ -103,6 +114,7 @@ public class ProductFilterRequest
     public string? SearchTerm { get; set; }
     public string? ProductCode { get; set; }     // exact code lookup
     public bool? InStockOnly { get; set; }
+    public string? SortBy { get; set; }          // newest (default), popular, price-asc, price-desc
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 20;
 }

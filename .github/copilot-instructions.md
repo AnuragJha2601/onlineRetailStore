@@ -4,9 +4,10 @@
 You are working on **Dhanak Trinket**, an e-commerce platform for ethnic finds including bangles, necklaces, imitation jewelry, and future expansion to ethnic wear built with .NET Core backend and Next.js frontend.
 
 ## Key Information
-- **Tech Stack**: ASP.NET Core 8.0 Web API + Next.js 14+ with TypeScript
-- **Database**: Azure SQL Database + Azure Blob Storage for images  
+- **Tech Stack**: ASP.NET Core 9.0 Web API + Next.js 16 with TypeScript
+- **Database**: Azure SQL Database (Managed Identity) + Azure Blob Storage (Managed Identity)
 - **Cloud**: Azure ecosystem (App Service, Static Web Apps, CDN)
+- **Auth**: Google OAuth for admin login (JWT issued by backend); legacy password fallback kept temporarily
 - **Owner Expertise**: Strong in C#, building scalable jewelry catalog
 
 ## Code Style & Conventions
@@ -157,9 +158,15 @@ frontend/
 - **Specification pattern** for dynamic queries
 - **DTO mapping** with AutoMapper between layers
 
-## Implemented Features (as of May 2026)
+## Implemented Features (as of June 2026)
 - Product catalog with images (Azure Blob Storage, public thumbnails + private full images)
-- Admin authentication (JWT, BCrypt, single `dhanakadmin` user, 8-hour tokens)
+- **Admin authentication (June 2026)**: Google OAuth primary login + legacy password fallback; per-IP rate limiting (5 req/min) on auth endpoints
+  - Frontend: `@react-oauth/google` GoogleLogin component, `GoogleOAuthWrapper` context, password form behind "Use password login" toggle
+  - Backend: `POST /api/auth/google-login` validates Google ID token, checks email against `AdminAuth:AllowedEmails` config array, issues JWT
+  - Backend: `POST /api/auth/login` legacy endpoint kept as fallback (returns 503 if env vars not set)
+  - Allowed admin emails configured via Azure env vars: `AdminAuth__AllowedEmails__0`, `__1`, `__2`
+  - Google OAuth Client ID: configured via `GoogleAuth__ClientId` env var in Azure App Service
+  - Rate limiting: `[EnableRateLimiting("auth")]` on AuthController, partitioned by `RemoteIpAddress`
 - Inventory management: add product (multi-image upload), mark as sold, stock tracking, thumbnail per row
 - Expenses tracking: create expense with category + optional bill image upload
 - Sales recording: retail (catalog or custom item) + wholesale (description + total)
@@ -172,21 +179,39 @@ frontend/
 - **`EditProductModal`**: admin can edit all product fields including channel prices.
 - **Like button localStorage deduplication**: heart button disabled/filled after first click per browser; liked IDs stored in `dhanak_liked_products` localStorage key.
 
-## Image Architecture
+## Image & Blob Architecture
 - **Upload**: `POST /api/products/{id}/images` generates a 300×300 JPEG thumbnail (SixLabors.ImageSharp v3.1.7) and uploads both full image and thumbnail to separate blob containers
 - **Full image**: private `product-images` container; `BlobPath` stored in `ProductImage`; SAS URL generated on `GET /api/products/{id}` only
 - **Thumbnail**: public `product-thumbnails` container; plain `https://` URL stored in `ProductImage.ThumbnailUrl`; returned as-is from list API — **zero blob SDK calls on list**
 - **Azure prerequisite**: storage account must have "Allow Blob anonymous access" = Enabled
+- **Blob auth (June 2026)**: Uses `DefaultAzureCredential` (Managed Identity) in production — no storage connection string needed. SAS URLs use User Delegation Key. Local dev uses `UseDevelopmentStorage=true` in `appsettings.Development.json`.
 
 ## Deployment
 - **Backend**: Azure App Service `api-dhanak-trinket-2026`, manually `dotnet publish → zip → az webapp deploy`
   - Must kill VS Code dotnet process before publishing: `Get-Process dotnet | Stop-Process -Force`
-  - Delete `obj/Release` folders in all three projects before publish
-  - Use `/p:UseSharedCompilation=false`, output to `C:\temp\` (not inside repo)
+  - Use `/p:UseSharedCompilation=false`, output to `C:\temp\dhanak-pub-<timestamp>` (not inside repo)
+  - Publish command: `$ts = Get-Date -Format 'yyyyMMdd-HHmmss'; dotnet publish backend/DhanakTrinket.Api/DhanakTrinket.Api.csproj -c Release -o "C:\temp\dhanak-pub-$ts" --nologo /p:UseSharedCompilation=false`
+  - Deploy: `Compress-Archive -Path "C:\temp\dhanak-pub-$ts\*" -DestinationPath "C:\temp\dhanak-pub-$ts.zip" -Force; az webapp deploy --resource-group rg-dhanak-trinket-prod --name api-dhanak-trinket-2026 --src-path "C:\temp\dhanak-pub-$ts.zip" --type zip --clean true`
 - **Frontend**: Azure Static Web Apps `blue-ocean-089852300.7.azurestaticapps.net`, auto-deploys on `git push` via GitHub Actions
-- **Database**: Azure SQL `db-dhanak-trinket`. EF migrations run on startup. Provider-aware migration branching required (`ActiveProvider == "Microsoft.EntityFrameworkCore.SqlServer"` for raw SQL DDL vs EF methods for SQLite).
+  - **Custom domain**: `dhanaktrinket.in`
+  - Build env vars set in `.github/workflows/azure-static-web-apps-blue-ocean-009852300.yml` (NOT in `.env.production`)
+  - Frontend `.env*` files are gitignored — `.env.local` for local dev only, production values come from GitHub Actions workflow
+- **Database**: Azure SQL `db-dhanak-trinket` on `sql-dhanak-trinket-prod.database.windows.net`. Uses Managed Identity (`Authentication=Active Directory Default`). EF migrations run on startup. Provider branching: checks `.database.windows.net` in connection string → SQL Server; otherwise → SQLite.
 - **Auth localStorage key**: `dhanak_admin_token` — must be consistent in both `AuthContext.tsx` and `productApi.ts`
 - **Resource group**: `rg-dhanak-trinket-prod`
+
+## Azure App Service Environment Variables
+```
+Jwt__Secret                              — JWT signing key
+AdminAuth__Username                      — dhanakadmin (legacy, remove after Google OAuth verified)
+AdminAuth__PasswordHash                  — BCrypt hash (legacy, remove after Google OAuth verified)
+GoogleAuth__ClientId                     — Google OAuth client ID
+AdminAuth__AllowedEmails__0              — anurocks144@gmail.com
+AdminAuth__AllowedEmails__1              — dhanaktrinket@gmail.com
+AdminAuth__AllowedEmails__2              — taniyagupta250295@gmail.com
+ConnectionStrings__DefaultConnection     — Azure SQL MI connection string
+AzureStorage__AccountName                — stdhanak2026prod (blob MI, no connection string)
+```
 
 ## Known Gotchas
 - `apiRequest` spread order: always put `...options` **first**, then override `headers` — otherwise the headers object is overwritten
@@ -197,7 +222,33 @@ frontend/
 - Public thumbnail container: requires "Allow Blob anonymous access" = Enabled on `stdhanak2026prod` storage account
 
 ## Future Features (Planned)
-### P&L Dashboard (next up — frontend only, no migrations)
+### Product Code Generator (next up — new admin tab + migration)
+A pricing-dictionary tool used right after buying from wholesale market, before product photos are ready.
+
+**Business workflow:**
+- Each unique (base price, MRP) pair gets a reusable code like `B01`, `E05`
+- Code prefix maps to category: `B` = Bangles, `E` = Earrings, `N` = Necklaces, `R` = Rings, etc.
+- Sequential numbering per category, auto-assigned
+- Multiple physical products share the same code if pricing is identical
+- Code is written on the physical product tag for later lookup
+
+**Admin screen — two modes:**
+1. **Tag a new product**: Enter base price → system suggests existing combos (e.g., `150–300 → B12`). Match → click → show code. No match → enter MRP + pick category → new code created.
+2. **Look up a code**: Enter code `B12` → see base price, MRP, margin%.
+
+**Data model:**
+```
+PricingCode { Id, Code, CategoryPrefix, SequenceNumber,
+             BasePrice, RetailPrice, CreatedAt, LinkedProductId? FK }
+```
+- Optionally linkable to a catalog product later
+- 20–30 entries per wholesale trip (bulk-friendly UI needed)
+- Base price is sensitive — admin-only endpoint, never on public API
+- **New "Product Codes" tab** in admin dashboard (5th tab)
+- **Backend**: `PricingCodesController` — `POST /api/pricing-codes`, `GET /api/pricing-codes?basePrice=`, `GET /api/pricing-codes/{code}`, `GET /api/pricing-codes`
+- **Migration**: New `PricingCodes` table
+
+### P&L Dashboard (frontend only, no migrations)
 - **New "P&L" tab** in admin dashboard (5th tab)
 - **Backend**: Add `GET /api/expenses/summary?year=` endpoint (groups expenses by month + category totals), mirrors existing `GET /api/sales/summary`
 - **Summary cards**: Total Revenue | Total Expenses | Net Profit/Loss (top row)
@@ -226,7 +277,7 @@ explicitly requested**.
 - **Edit/delete products**: Edit modal done (May 2026); delete not yet implemented
 - **Customer management / CRM**: Link sales to customer profiles, view purchase history
 - **Export to CSV**: Download sales and expense data for accounting
-- **Google OAuth admin login**: Replace username/password with Google SSO for the admin account
+- **Google OAuth admin login**: ✅ Implemented June 2026 — remove legacy password fallback after verified stable
 - **Inventory alerts**: Low-stock notifications (push or email) when stock drops below a threshold
 - **Discount / promo codes**: Apply percentage or flat discounts at checkout for future e-commerce mode
 - **Order management**: Cart → checkout → order tracking when direct purchase is enabled

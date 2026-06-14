@@ -1,3 +1,4 @@
+using DhanakTrinket.Core.DTOs;
 using DhanakTrinket.Core.Entities;
 using DhanakTrinket.Core.Interfaces;
 using DhanakTrinket.Infrastructure.Data;
@@ -22,6 +23,63 @@ public class ProductRepository : IProductRepository
             .Include(p => p.SubCategory)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
+    }
+
+    public async Task<(List<Product> Items, int TotalCount)> GetFilteredAsync(ProductFilterRequest request)
+    {
+        var query = _context.Products
+            .Include(p => p.Images)
+            .Include(p => p.Category)
+            .Include(p => p.SubCategory)
+            .AsQueryable();
+
+        // Exact code lookup
+        if (!string.IsNullOrWhiteSpace(request.ProductCode))
+        {
+            var code = request.ProductCode.Trim().ToLower();
+            query = query.Where(p => p.ProductCode != null && p.ProductCode.ToLower() == code);
+        }
+        else
+        {
+            // Category filter
+            if (request.CategoryId.HasValue)
+                query = query.Where(p => p.CategoryId == request.CategoryId.Value);
+
+            // Search
+            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+            {
+                var term = request.SearchTerm.Trim();
+                query = query.Where(p => p.Name.Contains(term) ||
+                                         p.Description.Contains(term) ||
+                                         (p.ProductCode != null && p.ProductCode.Contains(term)));
+            }
+        }
+
+        // Stock filter
+        if (request.InStockOnly == true)
+            query = query.Where(p => p.IsInStock);
+
+        // Get total count before pagination
+        var totalCount = await query.CountAsync();
+
+        // Sort
+        query = request.SortBy?.ToLower() switch
+        {
+            "popular" => query.OrderByDescending(p => p.LikesCount).ThenByDescending(p => p.CreatedAt),
+            "price-asc" => query.OrderBy(p => p.Price).ThenByDescending(p => p.CreatedAt),
+            "price-desc" => query.OrderByDescending(p => p.Price).ThenByDescending(p => p.CreatedAt),
+            _ => query.OrderByDescending(p => p.CreatedAt), // "newest" or default
+        };
+
+        // Paginate
+        var page = Math.Max(1, request.Page);
+        var pageSize = Math.Clamp(request.PageSize, 1, 100);
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
     }
 
     public async Task<Product?> GetByIdAsync(int id)

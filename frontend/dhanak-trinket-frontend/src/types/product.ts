@@ -6,6 +6,15 @@ export interface ApiResponse<T> {
     errors: string[];
 }
 
+export interface PaginatedResponse<T> {
+    items: T[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    hasMore: boolean;
+}
+
 // ─── Category & SubCategory types ────────────────────────────────────────────
 
 export interface Category {
@@ -94,6 +103,7 @@ export interface ProductFilterRequest {
     searchTerm?: string;
     productCode?: string;
     inStockOnly?: boolean;
+    sortBy?: string;
     page?: number;
     pageSize?: number;
 }

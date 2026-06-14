@@ -5,6 +5,7 @@ import {
     UpdateProductRequest,
     ProductFilterRequest,
     ApiResponse,
+    PaginatedResponse,
     RecordSaleRequest,
     SaleDto,
     SalesSummaryDto,
@@ -81,20 +82,21 @@ async function apiRequest<T>(
 
 // Product API functions
 export const productApi = {
-    // Get all products with optional filtering
-    async getProducts(filters?: ProductFilterRequest): Promise<ApiResponse<Product[]>> {
+    // Get products with server-side filtering, sorting, and pagination
+    async getProducts(filters?: ProductFilterRequest): Promise<ApiResponse<PaginatedResponse<Product>>> {
         const params = new URLSearchParams();
 
         if (filters?.categoryId) params.append('categoryId', filters.categoryId.toString());
         if (filters?.searchTerm) params.append('searchTerm', filters.searchTerm);
         if (filters?.inStockOnly !== undefined) params.append('inStockOnly', filters.inStockOnly.toString());
+        if (filters?.sortBy) params.append('sortBy', filters.sortBy);
         if (filters?.page) params.append('page', filters.page.toString());
         if (filters?.pageSize) params.append('pageSize', filters.pageSize.toString());
 
         const queryString = params.toString();
         const endpoint = `/products${queryString ? `?${queryString}` : ''}`;
 
-        return apiRequest<Product[]>(endpoint);
+        return apiRequest<PaginatedResponse<Product>>(endpoint);
     },
 
     // Get single product by ID

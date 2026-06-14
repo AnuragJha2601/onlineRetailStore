@@ -38,44 +38,31 @@ public class ProductsController : ControllerBase
     }
 
     /// <summary>
-    /// Get all products with optional filtering — public, returns retail price only.
+    /// Get products with server-side filtering, sorting, and pagination — public, returns retail price only.
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<List<ProductDto>>>> GetProducts(
+    public async Task<ActionResult<ApiResponse<PaginatedResponse<ProductDto>>>> GetProducts(
         [FromQuery] ProductFilterRequest? request = null)
     {
         try
         {
-            IEnumerable<Product> products;
+            request ??= new ProductFilterRequest();
+            var (items, totalCount) = await _productService.GetFilteredProductsAsync(request);
 
-            if (!string.IsNullOrWhiteSpace(request?.ProductCode))
+            var productDtos = _mapper.Map<List<ProductDto>>(items);
+            var paginated = new PaginatedResponse<ProductDto>
             {
-                var match = await _productService.GetProductByCodeAsync(request.ProductCode);
-                products = match != null ? [match] : [];
-            }
-            else if (request?.CategoryId.HasValue == true)
-            {
-                products = await _productService.GetProductsByCategoryAsync(request.CategoryId.Value);
-            }
-            else if (!string.IsNullOrWhiteSpace(request?.SearchTerm))
-            {
-                products = await _productService.SearchProductsAsync(request.SearchTerm);
-            }
-            else
-            {
-                products = await _productService.GetAllProductsAsync();
-            }
-
-            if (request?.InStockOnly == true)
-                products = products.Where(p => p.IsInStock);
-
-            var productDtos = _mapper.Map<List<ProductDto>>(products.ToList());
-            return Ok(ApiResponse<List<ProductDto>>.SuccessResponse(productDtos, "Products retrieved successfully"));
+                Items = productDtos,
+                TotalCount = totalCount,
+                Page = Math.Max(1, request.Page),
+                PageSize = Math.Clamp(request.PageSize, 1, 100),
+            };
+            return Ok(ApiResponse<PaginatedResponse<ProductDto>>.SuccessResponse(paginated, "Products retrieved successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving products");
-            return StatusCode(500, ApiResponse<List<ProductDto>>.ErrorResponse("An error occurred while retrieving products"));
+            return StatusCode(500, ApiResponse<PaginatedResponse<ProductDto>>.ErrorResponse("An error occurred while retrieving products"));
         }
     }
 

@@ -1,3 +1,4 @@
+using DhanakTrinket.Core.DTOs;
 using DhanakTrinket.Core.Entities;
 using DhanakTrinket.Core.Interfaces;
 
@@ -15,6 +16,11 @@ public class ProductService : IProductService
     public async Task<IEnumerable<Product>> GetAllProductsAsync()
     {
         return await _productRepository.GetAllAsync();
+    }
+
+    public async Task<(List<Product> Items, int TotalCount)> GetFilteredProductsAsync(ProductFilterRequest request)
+    {
+        return await _productRepository.GetFilteredAsync(request);
     }
 
     public async Task<Product?> GetProductByIdAsync(int id)

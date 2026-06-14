@@ -38,7 +38,8 @@ A modern, scalable e-commerce platform specializing in jewelry and imitation acc
 ### Backend
 - **Framework**: ASP.NET Core 9.0 Web API
 - **Language**: C# 13
-- **Authentication**: JWT Bearer tokens, BCrypt.Net-Next password hashing
+- **Authentication**: JWT Bearer tokens; Google OAuth primary + BCrypt.Net-Next legacy fallback
+- **Rate Limiting**: Per-IP fixed window (5 req/min on auth endpoints)
 - **Validation**: FluentValidation
 - **Mapping**: AutoMapper
 - **ORM**: Entity Framework Core 9 (code-first, SQLite for dev / Azure SQL for prod)
@@ -162,7 +163,8 @@ POST   /api/products/{id}/images            - Upload image; generates 300x300 th
 PATCH  /api/products/{id}/stock             - Update stock quantity / in-stock flag
 
 # Admin auth
-POST   /api/auth/login                      - Authenticate and receive JWT (8-hour expiry)
+POST   /api/auth/google-login              - Google OAuth login (validates ID token, checks email whitelist)
+POST   /api/auth/login                      - Legacy password login (fallback, returns 503 if not configured)
 
 # Sales (admin)
 POST   /api/sales                           - Record a sale (decrements stock if ProductId given)
@@ -203,14 +205,23 @@ DELETE /api/expenses/{id}                   - Delete expense record
 - **SQL Injection Prevention**: Entity Framework parameterized queries
 
 ### Current Auth Implementation
-- **JWT Bearer**: Single `dhanakadmin` user, credentials stored in Azure App Service env vars
-- **BCrypt hashing**: `BCrypt.Net-Next` for password hash comparison
-- **Token storage**: Frontend stores JWT in `localStorage` key `dhanak_admin_token` (8-hour expiry)
+- **Google OAuth (June 2026)**: Primary login method. `@react-oauth/google` on frontend, `Google.Apis.Auth` on backend
+  - `POST /api/auth/google-login` validates Google ID token, checks email against `AdminAuth:AllowedEmails` config array
+  - Allowed emails managed via Azure env vars: `AdminAuth__AllowedEmails__0`, `__1`, `__2`
+  - Google OAuth Client ID configured via `GoogleAuth__ClientId` env var
+  - Frontend `GoogleOAuthWrapper` context provides `GoogleOAuthProvider`
+  - Login page shows Google button + collapsible password fallback
+- **Legacy password fallback**: `POST /api/auth/login` kept temporarily; returns 503 if username/hash env vars not set
+- **JWT Bearer**: 8-hour tokens with `Admin` role claim
+- **Token storage**: Frontend stores JWT in `localStorage` key `dhanak_admin_token`
 - **Route protection**: All admin endpoints use `[Authorize(Roles = "Admin")]`
+- **Rate limiting**: `[EnableRateLimiting("auth")]` on `AuthController`, partitioned by `RemoteIpAddress` (5 req/min per IP)
 
-### Future Implementation
-- **Rate Limiting**: API throttling for abuse prevention
-- **Data Protection**: GDPR compliance for customer data
+### Managed Identity (June 2026)
+- **Azure SQL**: Connection string uses `Authentication=Active Directory Default` — no password in config
+- **Blob Storage**: `DefaultAzureCredential` → `BlobServiceClient` — no storage connection string needed
+- **SAS URLs**: Use User Delegation Key (MI-based) instead of account key
+- **Provider branching**: Program.cs checks `.database.windows.net` in connection string → SQL Server; otherwise → SQLite
 
 ---
 

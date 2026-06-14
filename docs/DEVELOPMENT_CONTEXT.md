@@ -19,7 +19,7 @@
 - **Backend**: ASP.NET Core 9.0 Web API (owner is C# expert)
 - **Database**: Azure SQL Database (EF Core code-first; SQLite for local dev)
 - **Cloud**: Azure ecosystem (App Service, Static Web Apps, Blob Storage)
-- **Auth**: JWT Bearer, BCrypt.Net-Next, single `dhanakadmin` user
+- **Auth**: Google OAuth primary (June 2026); legacy JWT/BCrypt fallback kept temporarily
 - **No per-product CostPrice**: Removed in May 2026. Cost prices are sensitive business data and must not be exposed on the wire (even admin endpoints might be cached/logged). P&L is tracked via the Expenses tab (bulk purchase invoices) vs Sales tab. Per-product cost tracking is a future feature.
 
 ---
@@ -52,7 +52,7 @@ onlineRetailStore/
             ├── components/         # UI components (InventoryScreen, SalesScreen, ExpensesScreen...)
             ├── services/           # productApi.ts — all API calls + formatPrice/formatDate
             ├── types/              # product.ts — all TypeScript types
-            └── contexts/           # AuthContext.tsx
+            └── contexts/           # AuthContext.tsx, GoogleOAuthWrapper.tsx
 ```
 
 ---
@@ -61,7 +61,8 @@ onlineRetailStore/
 
 | Resource | Value |
 |---|---|
-| Customer Store | `https://blue-ocean-089852300.7.azurestaticapps.net` |
+| Customer Store | `https://dhanaktrinket.in` (custom domain) |
+| SWA URL | `https://blue-ocean-089852300.7.azurestaticapps.net` |
 | Admin Panel | `https://blue-ocean-089852300.7.azurestaticapps.net/admin` |
 | Backend API | `https://api-dhanak-trinket-2026.azurewebsites.net` |
 | Azure SQL | `db-dhanak-trinket` on `sql-dhanak-trinket-prod` |
@@ -131,11 +132,14 @@ git push origin main
 
 ```
 Jwt__Secret                              — JWT signing key
-AdminAuth__Username                      — dhanakadmin
-AdminAuth__PasswordHash                  — BCrypt hash
-ConnectionStrings__DefaultConnection     — Azure SQL connection string
-AzureStorage__ConnectionString           — Blob Storage connection string
-AzureStorage__ContainerName              — product-images (full images)
+AdminAuth__Username                      — dhanakadmin (legacy, remove after Google OAuth verified)
+AdminAuth__PasswordHash                  — BCrypt hash (legacy, remove after Google OAuth verified)
+GoogleAuth__ClientId                     — Google OAuth client ID
+AdminAuth__AllowedEmails__0              — anurocks144@gmail.com
+AdminAuth__AllowedEmails__1              — dhanaktrinket@gmail.com
+AdminAuth__AllowedEmails__2              — taniyagupta250295@gmail.com
+ConnectionStrings__DefaultConnection     — Azure SQL MI connection string
+AzureStorage__AccountName                — stdhanak2026prod (blob MI, no connection string)
 ```
 Note: `product-thumbnails` container is auto-created by the app on first upload (public access).
 

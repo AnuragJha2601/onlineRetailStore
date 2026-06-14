@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Product, Category, ProductFilterRequest } from '@/types/product';
 import { productApi, formatPrice } from '@/services/productApi';
 import ProductDetailModal from '@/components/ProductDetailModal';
 import { useAuth } from '@/contexts/AuthContext';
+
+const PAGE_SIZE = 20;
 
 interface ProductCatalogProps {
     onError?: (message: string) => void;
@@ -14,9 +16,13 @@ interface ProductCatalogProps {
 export default function ProductCatalog({ onError }: ProductCatalogProps) {
     const { isAdmin } = useAuth();
     const [products, setProducts] = useState<Product[]>([]);
-    const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+    const [totalCount, setTotalCount] = useState(0);
+    const [hasMore, setHasMore] = useState(false);
+    const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [searchInput, setSearchInput] = useState('');
     const [categories, setCategories] = useState<Category[]>([]);
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | 'all'>('all');
     const [showInStockOnly, setShowInStockOnly] = useState(true);
@@ -35,15 +41,13 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
     const closeProduct = () => {
         if (selectedProduct) {
             setSelectedProduct(null);
-            // Only push back to '/' if we're still on a /product/ URL
-            // (avoids double-back if browser Back was pressed)
             if (window.location.pathname.startsWith('/product/')) {
                 window.history.pushState(null, '', '/');
             }
         }
     };
 
-    // Handle browser Back button — close modal if open
+    // Handle browser Back button
     useEffect(() => {
         const handlePopState = () => {
             if (selectedProduct && !window.location.pathname.startsWith('/product/')) {
@@ -53,6 +57,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
         window.addEventListener('popstate', handlePopState);
         return () => window.removeEventListener('popstate', handlePopState);
     }, [selectedProduct]);
+
     const [likedProductIds, setLikedProductIds] = useState<Set<number>>(() => {
         if (typeof window === 'undefined') return new Set();
         try {
@@ -61,8 +66,50 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
         } catch { return new Set<number>(); }
     });
 
+    // Build filter params from current UI state
+    const buildFilters = useCallback((pageNum: number): ProductFilterRequest => {
+        const filters: ProductFilterRequest = {
+            page: pageNum,
+            pageSize: PAGE_SIZE,
+            sortBy: activeNav === 'trending' ? 'popular' : activeNav === 'new-arrivals' ? 'newest' : sortBy,
+        };
+        if (typeof activeNav === 'number') filters.categoryId = activeNav;
+        else if (selectedCategoryId !== 'all') filters.categoryId = selectedCategoryId;
+        if (searchTerm.trim()) filters.searchTerm = searchTerm.trim();
+        if (showInStockOnly) filters.inStockOnly = true;
+        return filters;
+    }, [activeNav, selectedCategoryId, searchTerm, showInStockOnly, sortBy]);
+
+    // Load products (page 1 = fresh load, page > 1 = append)
+    const loadProducts = useCallback(async (pageNum: number, append = false) => {
+        try {
+            if (append) setLoadingMore(true); else setLoading(true);
+            const filters = buildFilters(pageNum);
+            const response = await productApi.getProducts(filters);
+
+            if (response.success && response.data) {
+                const { items, totalCount: total, hasMore: more } = response.data;
+                if (append) {
+                    setProducts(prev => [...prev, ...items]);
+                } else {
+                    setProducts(items);
+                }
+                setTotalCount(total);
+                setHasMore(more);
+                setPage(pageNum);
+            } else {
+                onError?.(response.message || 'Failed to load products');
+            }
+        } catch (error) {
+            onError?.(error instanceof Error ? error.message : 'Failed to load products');
+        } finally {
+            setLoading(false);
+            setLoadingMore(false);
+        }
+    }, [buildFilters, onError]);
+
+    // Initial load + categories
     useEffect(() => {
-        loadProducts();
         productApi.getCategories().then(res => {
             if (res.success && res.data) setCategories(res.data);
         });
@@ -71,80 +118,25 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
         });
     }, []);
 
+    // Reload page 1 when filters change
     useEffect(() => {
-        filterProducts();
-    }, [products, searchTerm, selectedCategoryId, showInStockOnly, sortBy, activeNav]);
+        loadProducts(1);
+    }, [searchTerm, selectedCategoryId, showInStockOnly, sortBy, activeNav]);
 
-    const loadProducts = async () => {
-        try {
-            setLoading(true);
-            const response = await productApi.getProducts();
-
-            if (response.success && response.data) {
-                setProducts(response.data);
-            } else {
-                onError?.(response.message || 'Failed to load products');
-            }
-        } catch (error) {
-            onError?.(error instanceof Error ? error.message : 'Failed to load products');
-        } finally {
-            setLoading(false);
-        }
+    // Debounce search input
+    const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+    const handleSearchChange = (value: string) => {
+        setSearchInput(value);
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => setSearchTerm(value), 350);
     };
 
-    const filterProducts = () => {
-        let filtered = [...products];
-
-        // Nav pill filter
-        if (activeNav === 'new-arrivals') {
-            const fourteenDaysAgo = new Date();
-            fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-            filtered = filtered.filter(p => new Date(p.createdAt) >= fourteenDaysAgo);
-        } else if (activeNav === 'trending') {
-            filtered = filtered.filter(p => p.likesCount > 0);
-        } else if (typeof activeNav === 'number') {
-            filtered = filtered.filter(product => product.categoryId === activeNav);
-        }
-        // 'all' — no category filter
-
-        // Filter by search term
-        if (searchTerm.trim()) {
-            const term = searchTerm.toLowerCase();
-            filtered = filtered.filter(product =>
-                product.name.toLowerCase().includes(term) ||
-                product.description.toLowerCase().includes(term) ||
-                product.categoryName.toLowerCase().includes(term) ||
-                (product.productCode?.toLowerCase().includes(term) ?? false)
-            );
-        }
-
-        // Filter by stock status
-        if (showInStockOnly) {
-            filtered = filtered.filter(product => product.isInStock);
-        }
-
-        // Sort — trending always sorts by likes, new-arrivals always by newest
-        const effectiveSort = activeNav === 'trending' ? 'popular' : activeNav === 'new-arrivals' ? 'newest' : sortBy;
-        switch (effectiveSort) {
-            case 'newest':
-                filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-                break;
-            case 'price-asc':
-                filtered.sort((a, b) => a.price - b.price);
-                break;
-            case 'price-desc':
-                filtered.sort((a, b) => b.price - a.price);
-                break;
-            case 'popular':
-                filtered.sort((a, b) => b.likesCount - a.likesCount);
-                break;
-        }
-
-        setFilteredProducts(filtered);
+    const handleLoadMore = () => {
+        if (!loadingMore && hasMore) loadProducts(page + 1, true);
     };
 
     const handleLike = async (productId: number) => {
-        if (likedProductIds.has(productId)) return;   // already liked from this browser
+        if (likedProductIds.has(productId)) return;
         try {
             const response = await productApi.likeProduct(productId);
             if (response.success) {
@@ -154,7 +146,8 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
                             ? { ...product, likesCount: product.likesCount + 1 }
                             : product
                     )
-                ); const updated = new Set(likedProductIds);
+                );
+                const updated = new Set(likedProductIds);
                 updated.add(productId);
                 setLikedProductIds(updated);
                 try { localStorage.setItem('dhanak_liked_products', JSON.stringify([...updated])); } catch { /* ignore */ }
@@ -189,18 +182,12 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
 
     const handleNavClick = (nav: typeof activeNav) => {
         setActiveNav(nav);
-        // Reset category dropdown sync
         if (typeof nav === 'number') {
             setSelectedCategoryId(nav);
         } else {
             setSelectedCategoryId('all');
         }
     };
-
-    // Build nav items: special tabs + categories that have products
-    const categoriesWithProducts = categories.filter(c =>
-        products.some(p => p.categoryId === c.id && (!showInStockOnly || p.isInStock))
-    );
 
     return (
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-4">
@@ -220,7 +207,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
                         className={`px-4 py-2 sm:py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeNav === 'trending' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                     >Trending</button>
                     <span className="w-px h-5 bg-gray-300" />
-                    {categoriesWithProducts.map(c => (
+                    {categories.map(c => (
                         <button
                             key={c.id}
                             onClick={() => handleNavClick(c.id)}
@@ -230,12 +217,12 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
                 </div>
             </div>
 
-            {/* Compact Filter Row — search full-width on mobile */}
+            {/* Compact Filter Row */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
                 <input
                     type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    value={searchInput}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     placeholder="Search by name or code..."
                     className="w-full sm:flex-1 sm:max-w-xs px-3 py-2 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-gray-400 bg-white"
                 />
@@ -262,9 +249,9 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
                 </div>
             </div>
 
-            {/* Products Grid — tight gap, mobile-first 2-col */}
+            {/* Products Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                {filteredProducts.map((product) => (
+                {products.map((product) => (
                     <ProductCard
                         key={product.id}
                         product={product}
@@ -276,7 +263,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
             </div>
 
             {/* No Products Message */}
-            {filteredProducts.length === 0 && !loading && (
+            {products.length === 0 && !loading && (
                 <div className="text-center py-12">
                     <div className="text-gray-400 text-6xl mb-4">🔍</div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
@@ -288,10 +275,28 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
                 </div>
             )}
 
+            {/* Load More — hidden on curated tabs (New Arrivals / Trending show single page) */}
+            {hasMore && activeNav !== 'new-arrivals' && activeNav !== 'trending' && (
+                <div className="mt-8 text-center">
+                    <button
+                        onClick={handleLoadMore}
+                        disabled={loadingMore}
+                        className="px-8 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    >
+                        {loadingMore ? (
+                            <span className="flex items-center gap-2 justify-center">
+                                <span className="animate-spin h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full" />
+                                Loading...
+                            </span>
+                        ) : 'Load More'}
+                    </button>
+                </div>
+            )}
+
             {/* Results Count */}
-            {filteredProducts.length > 0 && (
-                <div className="mt-8 text-center text-sm text-gray-600">
-                    Showing {filteredProducts.length} of {products.length} products
+            {products.length > 0 && (
+                <div className="mt-4 text-center text-sm text-gray-500">
+                    Showing {products.length} of {totalCount} products
                 </div>
             )}
 

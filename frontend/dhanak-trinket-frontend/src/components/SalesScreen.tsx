@@ -478,7 +478,7 @@ export default function SalesScreen() {
             productApi.getProducts({ inStockOnly: true, pageSize: 200 }),
             productApi.getSales(),
         ]);
-        if (prodRes.success && prodRes.data) setProducts(prodRes.data);
+        if (prodRes.success && prodRes.data) setProducts(prodRes.data.items);
         if (salesRes.success && salesRes.data) setSales(salesRes.data);
         setLoading(false);
     }, []);
@@ -512,7 +512,7 @@ export default function SalesScreen() {
             showToast('success', 'Sale deleted.');
             // Refresh products so stock reflects restored qty
             const prodRes = await productApi.getProducts({ inStockOnly: false, pageSize: 200 });
-            if (prodRes.success && prodRes.data) setProducts(prodRes.data.filter(p => p.isInStock));
+            if (prodRes.success && prodRes.data) setProducts(prodRes.data.items.filter(p => p.isInStock));
         } else {
             showToast('error', 'Failed to delete sale.');
         }

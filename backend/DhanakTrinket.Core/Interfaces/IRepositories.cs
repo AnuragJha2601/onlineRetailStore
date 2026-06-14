@@ -1,3 +1,4 @@
+using DhanakTrinket.Core.DTOs;
 using DhanakTrinket.Core.Entities;
 
 namespace DhanakTrinket.Core.Interfaces;
@@ -5,6 +6,7 @@ namespace DhanakTrinket.Core.Interfaces;
 public interface IProductRepository
 {
     Task<IEnumerable<Product>> GetAllAsync();
+    Task<(List<Product> Items, int TotalCount)> GetFilteredAsync(ProductFilterRequest request);
     Task<Product?> GetByIdAsync(int id);
     Task<Product?> GetByCodeAsync(string productCode);
     Task<IEnumerable<Product>> GetByCategoryAsync(int categoryId);
@@ -40,6 +42,7 @@ public interface ISubCategoryRepository
 public interface IProductService
 {
     Task<IEnumerable<Product>> GetAllProductsAsync();
+    Task<(List<Product> Items, int TotalCount)> GetFilteredProductsAsync(ProductFilterRequest request);
     Task<Product?> GetProductByIdAsync(int id);
     Task<Product?> GetProductByCodeAsync(string productCode);
     Task<IEnumerable<Product>> GetProductsByCategoryAsync(int categoryId);
