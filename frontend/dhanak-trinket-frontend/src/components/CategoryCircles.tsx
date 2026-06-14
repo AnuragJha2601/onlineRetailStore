@@ -48,12 +48,12 @@ export default function CategoryCircles({ onCategoryClick }: CategoryCirclesProp
                 <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-6 text-center sm:text-left">
                     Shop by Category
                 </h3>
-                <div className="flex gap-5 sm:gap-8 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:justify-center sm:flex-wrap">
+                <div className="flex gap-5 sm:gap-0 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 sm:justify-items-center">
                     {categories.map((cat) => (
                         <button
                             key={cat.id}
                             onClick={() => onCategoryClick(cat.id)}
-                            className="flex flex-col items-center gap-2 flex-shrink-0 group"
+                            className="flex flex-col items-center gap-2 flex-shrink-0 group w-20 sm:w-full sm:max-w-[120px]"
                         >
                             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-gray-100 group-hover:border-amber-300 transition-colors bg-gray-50">
                                 {cat.thumbnailUrl ? (
@@ -68,7 +68,7 @@ export default function CategoryCircles({ onCategoryClick }: CategoryCirclesProp
                                     <div className="w-full h-full flex items-center justify-center text-2xl text-gray-300">💍</div>
                                 )}
                             </div>
-                            <span className="text-xs sm:text-sm text-gray-700 font-medium uppercase tracking-wider whitespace-nowrap">
+                            <span className="text-xs sm:text-sm text-gray-700 font-medium uppercase tracking-wider text-center">
                                 {cat.name}
                             </span>
                         </button>

@@ -58,7 +58,7 @@ export default function HeroCarousel() {
                     width={1672}
                     height={941}
                     priority={slide.id === 1}
-                    className="hidden sm:block w-full h-auto object-cover object-top -mt-[52px]"
+                    className="hidden sm:block w-full h-auto object-cover object-top -mt-[55px]"
                 />
                 {/* Mobile image */}
                 <Image
