@@ -17,18 +17,6 @@ const SLIDES: HeroSlide[] = [
         mobileImage: '/hero/hero-1-mobile.webp',
         alt: 'Timeless Elegance, Made for You — Ethnic finds for every day',
     },
-    {
-        id: 2,
-        desktopImage: '/hero/hero-2-desktop.webp',
-        mobileImage: '/hero/hero-2-desktop.webp',
-        alt: 'Everyday Shine, Everyday You — Beautiful jewellery for every mood',
-    },
-    {
-        id: 3,
-        desktopImage: '/hero/hero-3-desktop.webp',
-        mobileImage: '/hero/hero-3-desktop.webp',
-        alt: 'Festive Glow, Made to Shine — Celebrate every moment with sparkle',
-    },
 ];
 
 const AUTO_PLAY_MS = 5000;
