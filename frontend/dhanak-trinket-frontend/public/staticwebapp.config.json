@@ -13,6 +13,10 @@
         {
             "route": "/admin",
             "rewrite": "/admin/index.html"
+        },
+        {
+            "route": "/product/*",
+            "rewrite": "/product/index.html"
         }
     ],
     "mimeTypes": {

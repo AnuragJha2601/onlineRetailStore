@@ -161,6 +161,28 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                                 Only {product.stockQuantity} left in stock
                             </p>
                         )}
+
+                        {/* Share actions */}
+                        <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-3">
+                            <button onClick={() => {
+                                const url = `${window.location.origin}/product/${product.id}/`;
+                                if (navigator.share) {
+                                    navigator.share({ title: product.name, text: `Check out ${product.name} on Dhanak Trinket!`, url });
+                                } else {
+                                    navigator.clipboard.writeText(url);
+                                }
+                            }}
+                                className="text-sm text-gray-600 hover:text-gray-900 font-medium">
+                                ↗ Share Link
+                            </button>
+                            <button onClick={() => {
+                                const url = `${window.location.origin}/product/${product.id}/`;
+                                window.open(`https://wa.me/?text=${encodeURIComponent(`Check out ${product.name} — ${formatPrice(product.price)} on Dhanak Trinket! ${url}`)}`, '_blank');
+                            }}
+                                className="text-sm text-green-700 hover:text-green-800 font-medium">
+                                💬 WhatsApp
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

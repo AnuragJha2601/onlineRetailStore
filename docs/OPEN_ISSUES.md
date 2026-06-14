@@ -2,7 +2,7 @@
 
 ## Current Status
 **Project Phase**: Live in Production  
-**Last Updated**: May 6, 2026
+**Last Updated**: June 2, 2026
 
 ---
 
@@ -90,9 +90,9 @@
 ## 🚧 Open / Pending
 
 ### Immediate
-- [ ] Enable "Allow Blob anonymous access" on `stdhanak2026prod` storage account (needed for public `product-thumbnails` container to work)
-- [ ] Move blob connection string from `appsettings.Production.json` to Azure App Service environment variables
-- [ ] Remove base64 fallback in `UploadProductImage` — blob storage works, fallback no longer needed
+- [ ] Remove legacy password auth (backend endpoint + frontend toggle) after Google OAuth verified stable
+- [ ] Remove old Azure env vars: `AdminAuth__Username`, `AdminAuth__PasswordHash`
+- [ ] Rotate Azure Storage access keys (app no longer uses them after MI migration)
 - [ ] Re-seed/replace placeholder seed products with real photos
 - [ ] Edit/delete products in admin panel
 
@@ -104,120 +104,32 @@
 
 ## 📅 Planned Features
 
-### P&L Dashboard
-- Monthly revenue (Sales) vs expenses chart + summary table
-- `Profit = SUM(Sales.TotalAmount) − SUM(Expenses.Amount)` per month
+### Product Code Generator (next up — new admin tab + migration)
+A pricing-dictionary tool used right after buying products from wholesale market, before photos are ready.
 
-### Wholesale Line-Item Breakdown (future — do NOT build yet)
-Currently a wholesale sale is a **single `Sale` row** — `BuyerName`/`BuyerPhone` on
-`Sale`, item description in `Notes`, deal total in `SellingPrice`.
+**Business workflow:**
+- Each unique (base price, MRP) pair gets a reusable code like `B01`, `E05`
+- Code prefix = category: `B` = Bangles, `E` = Earrings, `N` = Necklaces, `R` = Rings, etc.
+- Sequential numbering per category, auto-assigned on creation
+- Multiple physical products can share the same code if pricing is identical
+- Code is written on the physical product tag for later lookup
 
-When multi-line wholesale is needed, the planned design is:
+**Admin screen — two modes:**
+1. **Tag a new product**: Enter base price → system suggests existing combos with that price (e.g., `150–300 → B12`, `150–350 → B16`). If match found → click → show code. If no match → enter MRP + pick category → system creates new code.
+2. **Look up a code**: Enter code (e.g., `B12`) → instantly see base price, MRP, margin%.
+
+**Data model:**
 ```
-WholesaleOrder  { Id, BuyerName, BuyerPhone, OrderDate, TotalAmount, Notes, CreatedAt }
-Sale            { ..., WholesaleOrderId? FK → WholesaleOrder }  ← becomes a line item
+PricingCode { Id, Code ("B01"), CategoryPrefix ("B"), SequenceNumber (1),
+             BasePrice (decimal), RetailPrice (decimal),
+             CreatedAt, LinkedProductId? (FK → Product, nullable) }
 ```
-Each `Sale` row = one SKU + qty + unit price. `WholesaleOrder` = header.
-Requires new migration, new controller endpoint, and UI redesign. **Do not add
-`WholesaleOrders` table or FK until this feature is explicitly requested.**
-
-### Customer Management / CRM
-- Link sales to customer profiles; view purchase history per customer
-
-### Per-Product Cost Price (future)
-- **Decision (May 2026)**: Removed for security — cost data must not appear on the wire/in logs. P&L tracked via Expenses vs Sales tabs.
-- Future: server-side only field, never returned by any API endpoint.
-
-### Export to CSV
-- Download sales and expense data for offline accounting
-
-### Other
-- Google OAuth admin login (replace username/password)
-- Inventory low-stock alerts (push or email)
-- Discount / promo codes
-- Shopping cart + checkout + payment (Razorpay/Stripe) for direct purchase mode
-
----
-
-## ✅ Completed
-
-### Infrastructure
-- [x] Azure App Service (`api-dhanak-trinket-2026`)
-- [x] Azure Static Web Apps `blue-ocean-089852300.7.azurestaticapps.net`
-- [x] Azure SQL Database (`db-dhanak-trinket`)
-- [x] Azure Blob Storage (`stdhanak2026prod`, `product-images` container; bills at `expenses/YYYY/MM/DD/`)
-
-### Backend
-- [x] ASP.NET Core 9.0 Web API — Clean Architecture (Core/Infrastructure/Api)
-- [x] EF Core with Azure SQL (Managed Identity auth); provider-aware migrations (SQL Server / SQLite)
-- [x] Full CRUD for products + image upload
-- [x] CORS configured — explicit `WithOrigins` list for Static Web App URL
-- [x] Image upload: private blob container, SAS URLs generated on read
-- [x] Standardized `ApiResponse<T>` wrapper
-- [x] `PendingModelChangesWarning` suppressed in Program.cs
-
-### Frontend
-- [x] Next.js 16 static export deployed to Azure Static Web Apps
-- [x] Customer catalog with search and category filter
-- [x] Production API URL baked in via GitHub Actions env var
-- [x] SPA routing via `staticwebapp.config.json`
-
-### Admin Auth
-- [x] JWT Bearer auth — single `dhanakadmin` user, credentials in App Service env vars
-- [x] BCrypt.Net-Next password hashing (8-hour tokens)
-- [x] Login page at `/login` → stores JWT in localStorage key `dhanak_admin_token`
-- [x] `AuthContext` + `useAuth` hook
-- [x] Admin page protected — redirects to `/login` when not authenticated
-
-### Admin Dashboard — Tabbed UI
-- [x] 4 tabs: **Inventory** | **Expenses** | **Sales** | **Add Product**
-- [x] Each tab manages its own state independently
-
-### Inventory Management
-- [x] Products table with "Mark as Sold" button per row
-- [x] `MarkAsSoldModal` — Retail/Wholesale toggle, date, qty, price, channel, customer/buyer details
-- [x] Client-side stock decrement on successful sale
-
-### Expenses Tracking (May 3, 2026)
-- [x] `Expense` entity: `ExpenseDate`, `Description`, `Amount`, `Category` (enum), `VendorName?`, `BillImagePath?`, `Notes?`
-- [x] `ExpenseCategory` enum: `InventoryPurchase`, `Packaging`, `Shipping`, `Marketing`, `Other`
-- [x] `ExpensesController`: `POST /api/expenses`, `POST /api/expenses/{id}/bill`, `GET /api/expenses`, `DELETE /api/expenses/{id}`
-- [x] Bill image upload to Azure Blob Storage (`expenses/YYYY/MM/DD/` prefix), SAS URL returned
-- [x] EF migration for Expenses table — provider-aware (SQL Server uses raw SQL DDL; SQLite uses EF methods)
-- [x] `ExpensesScreen` frontend — list-first, inline add form, "View bill" link per row
-
-### Sales Tracking (May 3, 2026)
-- [x] `Sale` + `WholesaleDeal` entities
-- [x] `SalesController`: `POST /api/sales`, `GET /api/sales`, `GET /api/sales/summary`, `DELETE /api/sales/{id}`
-- [x] `RecordSaleRequest.ProductId` is `int?` — supports custom items and wholesale deals without a catalog product
-- [x] Stock decremented only when `ProductId` is provided; restored on DELETE
-- [x] `SalesScreen` frontend — Retail/Wholesale toggle, catalog product dropdown (auto-fills price), custom item option, client-side list update
-- [x] `productApi.recordSale()`, `getSales()`, `getSalesSummary()`, `deleteSale()` added
-
-### Bug Fixes (May 3, 2026)
-- [x] `apiRequest` spread order fixed — `...options` first, then `headers` override (was silently overwriting Content-Type)
-- [x] FormData uploads skip `Content-Type` default so browser sets multipart boundary
-- [x] localStorage key mismatch fixed — `dhanak_admin_token` used consistently in both `AuthContext` and `productApi`
-- [x] Azure SQL `TEXT DEFAULT` error — provider-aware migration uses `nvarchar` for SQL Server
-
----
-
-## 🚧 Open / Pending
-
-### Immediate
-- [ ] Move blob connection string from `appsettings.Production.json` to Azure App Service environment variables
-- [ ] Remove base64 fallback in `UploadProductImage` — blob storage works, fallback is no longer needed
-- [ ] Re-seed products with real photos (current seed data has no images)
-- [ ] Edit/delete products in admin panel
-
-### Features Missing
-- [ ] Product detail page (clicking a catalog item does nothing)
-- [ ] Like functionality wired up end-to-end (field exists, no UI)
-- [ ] GitHub Actions workflow for backend deploy (currently manual `az webapp deploy`)
-
----
-
-## 📅 Planned Features
+- Optionally linkable to a catalog Product when photos are eventually added
+- 20–30 entries per wholesale trip (bulk-friendly UI)
+- Base price is sensitive — admin-only, never exposed via public API
+- **New "Product Codes" tab** in admin dashboard (5th tab)
+- **Backend**: `PricingCodesController` — `POST /api/pricing-codes`, `GET /api/pricing-codes?basePrice=`, `GET /api/pricing-codes/{code}`, `GET /api/pricing-codes`
+- **Migration**: New `PricingCodes` table
 
 ### P&L Dashboard
 - Monthly revenue (Sales) vs expenses chart + summary table
@@ -236,6 +148,13 @@ Each `Sale` row = one SKU + qty + unit price. `WholesaleOrder` = header.
 Requires new migration, new controller endpoint, and UI redesign. **Do not add
 `WholesaleOrders` table or FK until this feature is explicitly requested.**
 
+### SEO Improvements (long-term)
+- **Backend dynamic sitemap**: `GET /api/sitemap` endpoint that generates XML sitemap with all product URLs (`/product/{id}/`). SWA route rewrites `/sitemap.xml` → backend endpoint. Updates automatically as products are added/sold.
+- **Server-side meta tags**: For proper WhatsApp/social link previews with product images, consider an Azure Function or middleware that injects `og:title`, `og:image`, `og:description` into the HTML `<head>` before serving `/product/*` pages. Client-side meta updates (current approach) are visible to users but not to most social media crawlers.
+- **Structured data (JSON-LD)**: Add `Product` schema markup to product pages for rich Google results (price, availability, image, reviews).
+- **Canonical URLs per product**: Each `/product/{id}/` page should have `<link rel="canonical" href="https://dhanaktrinket.in/product/{id}/" />`.
+- **Image alt text audit**: Ensure all product images have descriptive alt text for image search ranking.
+
 ### Customer Management / CRM
 - Link sales to customer profiles; view purchase history per customer
 
@@ -246,217 +165,6 @@ Requires new migration, new controller endpoint, and UI redesign. **Do not add
 ### Export to CSV
 - Download sales and expense data for offline accounting
 
-### Other
-- Google OAuth admin login (replace username/password)
-- Inventory low-stock alerts (push or email)
-- Discount / promo codes
-- Shopping cart + checkout + payment (Razorpay/Stripe) for direct purchase mode
-- [ ] GitHub Actions workflow for backend deploy (currently manual `az webapp deploy`)
-
----
-
-## 📅 Phase 2 — Planned Features
-
-### Authentication & Role-Based Access
-- [ ] **Admin login page** — simple login (username/password or Azure AD) that checks user role
-- [ ] **Role-based nav** — "Admin" tab only visible when logged in as admin; catalog-only view for unauthenticated users
-- [ ] **Route protection** — `/admin` redirects to login if not authenticated; catalog remains fully public
-- [ ] **Backend** — JWT or session auth, `[Authorize(Roles = "Admin")]` on all admin endpoints
-- [ ] **Considerations**: Keep it simple initially (single admin user, hashed password in DB or env var) before full Azure AD B2C
-
-### Per-Product Cost Price (future — server-side only)
-- **Decision (May 2026)**: Removed — cost data must not appear on the wire. P&L via Expenses vs Sales.
-- [ ] **Backend** — if re-introduced, store as encrypted-at-rest, never returned by any DTO/endpoint
-- [ ] **Admin form** — enter MRP directly; no auto-compute from cost
-
-### E-commerce
-- [ ] Shopping cart and checkout
-- [ ] Payment gateway (Razorpay/Stripe)
-- [ ] Order management
-- [ ] Email notifications (order confirmation, dispatch)
-
-## 🔄 Medium Priority Items
-
-### Development Environment
-- [ ] Set up local development environment guide
-- [ ] Configure debugging for both frontend and backend
-- [ ] Create sample data seeding scripts
-- [ ] Set up code formatting and linting rules
-
-### Features - Phase 1
-- [ ] Product likes functionality (without user auth)
-- [ ] Stock status display (In Stock/Sold Out)
-- [ ] Basic product search
-- [ ] Category-based filtering
-- [ ] Mobile-responsive design implementation
-
-### Testing
-- [ ] Set up unit testing framework for backend
-- [ ] Configure testing for frontend components
-- [ ] Create integration tests for API endpoints
-- [ ] Set up automated testing in CI/CD pipeline
-
----
-
-## 📅 Future Considerations
-
-### Phase 2 Features (E-commerce)
-- [ ] User authentication system (Azure AD B2C)
-- [ ] Shopping cart functionality
-- [ ] Checkout process design
-- [ ] Payment gateway integration (Razorpay/Stripe)
-- [ ] Order management system
-- [ ] Email notification system
-
-### Performance & Optimization
-- [ ] Implement caching strategies (Redis)
-- [ ] Set up Azure CDN for images
-- [ ] Optimize database queries and indexing
-- [ ] Add Progressive Web App (PWA) features
-- [ ] Image compression and multiple sizes
-
-### Admin Features
-- [ ] Admin dashboard for product management
-- [ ] Bulk product upload functionality
-- [ ] Inventory management interface
-- [ ] Sales analytics and reporting
-- [ ] Customer management system
-
----
-
-## ❗ Technical Challenges
-
-### Image Management
-- **Challenge**: Handling high-quality jewelry images efficiently
-- **Considerations**: 
-  - Multiple image sizes for different screen resolutions
-  - Image compression without quality loss
-  - Fast loading and smooth user experience
-  - Storage costs optimization
-
-### Mobile Experience
-- **Challenge**: Ensuring excellent mobile shopping experience
-- **Considerations**:
-  - Touch-friendly product galleries
-  - Fast loading on slower connections
-  - Intuitive navigation for small screens
-  - Mobile payment integration
-
-### SEO Optimization
-- **Challenge**: Making products discoverable via search engines
-- **Considerations**:
-  - Server-side rendering with Next.js
-  - Structured data for product pages
-  - Meta tags optimization
-  - Sitemap generation
-  - Page load speed optimization
-
-### Scalability Planning
-- **Challenge**: Architecture that can handle business growth
-- **Considerations**:
-  - Database scaling strategies
-  - API rate limiting and caching
-  - CDN setup for global reach
-  - Monitoring and alerting systems
-
----
-
-## 🐛 Known Issues
-
-*No known issues at this time - project is in initial setup phase*
-
----
-
-## 💡 Ideas & Enhancements
-
-### User Experience
-- [ ] Product comparison feature
-- [ ] Wishlist functionality
-- [ ] Recently viewed products
-- [ ] Product recommendations based on likes
-- [ ] Social sharing integration
-
-### Business Features
-- [ ] Discount and coupon system
-- [ ] Bulk order pricing
-- [ ] Customer reviews and ratings
-- [ ] Inventory alerts for low stock
-- [ ] Seasonal collection organization
-
-### Technical Improvements
-- [ ] GraphQL API consideration for flexible queries
-- [ ] Real-time notifications for stock updates
-- [ ] Advanced search with filters (price, material, color)
-- [ ] Multi-language support
-- [ ] Currency conversion for international customers
-
----
-
-## 📊 Metrics & Success Criteria
-
-### Phase 1 Success Metrics
-- [ ] Website loads in under 2 seconds
-- [ ] Mobile-responsive design passes Google Mobile-Friendly test
-- [ ] All products displayable with high-quality images
-- [ ] Search functionality returns relevant results
-- [ ] Category filtering works seamlessly
-
-### Business Goals
-- [ ] Achieve 100+ product listings
-- [ ] Enable product liking functionality
-- [ ] Mobile traffic > 70% of total traffic
-- [ ] Page load speed score > 90 (Google PageSpeed)
-- [ ] Zero critical security vulnerabilities
-
----
-
-## 🔧 Development Workflow
-
-### Current Workflow Status
-- [ ] Git repository initialized and connected to GitHub
-- [ ] Development branch strategy defined
-- [ ] Code review process established
-- [ ] CI/CD pipeline configured
-- [ ] Deployment process documented
-
-### Documentation Updates Needed
-- [ ] API documentation (when backend is ready)
-- [ ] Component library documentation
-- [ ] Deployment guide for new developers
-- [ ] User manual for admin features
-- [ ] Troubleshooting guide
-
----
-
-## 📝 Notes
-
-### Design Decisions Log
-- **Date**: May 2, 2026
-- **Decision**: Chose .NET Core + Next.js stack over full TypeScript
-- **Reasoning**: Owner expertise in C#, better Azure integration, enterprise-grade features
-
-### Important Reminders
-- This is a public GitHub repository - maintain professional standards
-- Focus on mobile-first design due to target market
-- Keep future payment integration in mind when designing APIs
-- Document all Azure resource configurations for reproducibility
-
----
-
-## 🤝 Contribution Guidelines
-
-### For External Contributors
-- Follow existing code style and conventions
-- Write tests for new features
-- Update documentation for changes
-- Respect the project's scope and vision
-
-### For AI Assistants
-- Always check this document for current priorities
-- Reference DEVELOPMENT_CONTEXT.md for full project understanding
-- Update this file when resolving issues or adding new challenges
-- Maintain professional tone suitable for public repository
-
----
+### Other\n- Google OAuth admin login — ✅ Done (June 2026)\n- Inventory low-stock alerts (push or email)\n- Discount / promo codes\n- Shopping cart + checkout + payment (Razorpay/Stripe) for direct purchase mode\n\n---
 
 *This document is actively maintained and updated as the project evolves. Check back regularly for the latest status and priorities.*

@@ -24,6 +24,35 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
     const [activeNav, setActiveNav] = useState<'all' | 'new-arrivals' | 'trending' | number>('all');
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [maintenanceMode, setMaintenanceMode] = useState(false);
+
+    // Open modal and push product URL
+    const openProduct = (product: Product) => {
+        setSelectedProduct(product);
+        window.history.pushState({ productId: product.id }, '', `/product/${product.id}/`);
+    };
+
+    // Close modal and restore URL
+    const closeProduct = () => {
+        if (selectedProduct) {
+            setSelectedProduct(null);
+            // Only push back to '/' if we're still on a /product/ URL
+            // (avoids double-back if browser Back was pressed)
+            if (window.location.pathname.startsWith('/product/')) {
+                window.history.pushState(null, '', '/');
+            }
+        }
+    };
+
+    // Handle browser Back button — close modal if open
+    useEffect(() => {
+        const handlePopState = () => {
+            if (selectedProduct && !window.location.pathname.startsWith('/product/')) {
+                setSelectedProduct(null);
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [selectedProduct]);
     const [likedProductIds, setLikedProductIds] = useState<Set<number>>(() => {
         if (typeof window === 'undefined') return new Set();
         try {
@@ -240,7 +269,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
                         key={product.id}
                         product={product}
                         onLike={() => handleLike(product.id)}
-                        onOpen={() => setSelectedProduct(product)}
+                        onOpen={() => openProduct(product)}
                         isLiked={likedProductIds.has(product.id)}
                     />
                 ))}
@@ -270,7 +299,7 @@ export default function ProductCatalog({ onError }: ProductCatalogProps) {
             {selectedProduct && (
                 <ProductDetailModal
                     product={selectedProduct}
-                    onClose={() => setSelectedProduct(null)}
+                    onClose={closeProduct}
                 />
             )}
         </div>
