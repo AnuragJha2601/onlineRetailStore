@@ -53,7 +53,7 @@ export default function CategoryCircles({ onCategoryClick }: CategoryCirclesProp
                         <button
                             key={cat.id}
                             onClick={() => onCategoryClick(cat.id)}
-                            className="flex flex-col items-center gap-2 flex-shrink-0 group w-20 sm:w-full sm:max-w-[120px]"
+                            className="flex flex-col items-center gap-2 flex-shrink-0 group w-24 sm:w-full sm:max-w-[120px]"
                         >
                             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-gray-100 group-hover:border-amber-300 transition-colors bg-gray-50">
                                 {cat.thumbnailUrl ? (
