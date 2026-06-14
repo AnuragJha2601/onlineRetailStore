@@ -23,17 +23,15 @@ const SLIDES: HeroSlide[] = [
     },
     {
         id: 2,
-        alt: 'Everyday Shine',
-        title: 'Everyday Shine ✦',
-        subtitle: 'Effortless jewellery for every moment.',
-        bgGradient: 'from-rose-50 via-pink-50 to-amber-50',
+        desktopImage: '/hero/hero-2-desktop.webp',
+        mobileImage: '/hero/hero-2-mobile.webp',
+        alt: 'Everyday Shine, Everyday You — Beautiful jewellery for every mood',
     },
     {
         id: 3,
-        alt: 'Festive Glow',
-        title: 'Festive Glow ✨',
-        subtitle: 'Shine brighter in every celebration.',
-        bgGradient: 'from-amber-100/60 via-yellow-50 to-orange-50',
+        desktopImage: '/hero/hero-3-desktop.webp',
+        mobileImage: '/hero/hero-3-mobile.webp',
+        alt: 'Festive Glow, Made to Shine — Celebrate every moment with sparkle',
     },
 ];
 
@@ -71,24 +69,24 @@ export default function HeroCarousel() {
         >
             {hasImage ? (
                 /* Image-based slide — constrained height, full-width clickable */
-                <div className="cursor-pointer max-h-[50vh] sm:max-h-[65vh] overflow-hidden" onClick={scrollToCatalog}>
+                <div className="cursor-pointer" onClick={scrollToCatalog}>
                     {/* Desktop image */}
                     <Image
                         src={slide.desktopImage!}
                         alt={slide.alt}
-                        width={1717}
-                        height={916}
+                        width={985}
+                        height={258}
                         priority={slide.id === 1}
-                        className="hidden sm:block w-full h-auto object-cover object-top"
+                        className="hidden sm:block w-full h-auto"
                     />
                     {/* Mobile image */}
                     <Image
                         src={slide.mobileImage!}
                         alt={slide.alt}
-                        width={768}
-                        height={1365}
+                        width={986}
+                        height={258}
                         priority={slide.id === 1}
-                        className="block sm:hidden w-full h-auto object-cover object-top"
+                        className="block sm:hidden w-full h-auto"
                     />
                 </div>
             ) : (
