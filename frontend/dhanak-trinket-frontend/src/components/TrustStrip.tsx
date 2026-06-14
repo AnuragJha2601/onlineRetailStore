@@ -29,16 +29,16 @@ export default function TrustStrip() {
     const showImage = !imgError;
 
     return (
-        <section className="py-10 sm:py-16 bg-gradient-to-b from-amber-50/50 to-white">
+        <section className="py-6 sm:py-10 bg-gradient-to-b from-amber-50/50 to-white">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
                 {/* Split layout: image + text */}
-                <div className={`flex flex-col ${showImage ? 'lg:flex-row' : ''} items-center gap-8 lg:gap-14`}>
+                <div className={`flex flex-col ${showImage ? 'lg:flex-row' : ''} items-center gap-6 lg:gap-12`}>
 
                     {/* Lifestyle image — gracefully hidden if missing */}
                     {showImage && (
-                        <div className="w-full lg:w-5/12 flex-shrink-0">
-                            <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-amber-50">
+                        <div className="w-full lg:w-1/2 flex-shrink-0">
+                            <div className="relative aspect-[4/3] sm:aspect-[4/5] rounded-2xl overflow-hidden bg-amber-50">
                                 <Image
                                     src={LIFESTYLE_IMAGE}
                                     alt="Woman wearing Dhanak Trinket jewelry"
@@ -52,9 +52,9 @@ export default function TrustStrip() {
                     )}
 
                     {/* Text content */}
-                    <div className={`w-full ${showImage ? 'lg:w-7/12' : 'max-w-2xl mx-auto'}`}>
+                    <div className={`w-full ${showImage ? 'lg:w-1/2' : 'max-w-2xl mx-auto'}`}>
                         {/* Section heading */}
-                        <div className={`mb-6 sm:mb-8 ${showImage ? 'text-center lg:text-left' : 'text-center'}`}>
+                        <div className={`mb-4 sm:mb-8 ${showImage ? 'text-center lg:text-left' : 'text-center'}`}>
                             <h3 className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-700/70 mb-2">
                                 Why Women Choose
                             </h3>
@@ -65,12 +65,12 @@ export default function TrustStrip() {
                         </div>
 
                         {/* Tagline */}
-                        <p className={`text-gray-500 text-sm sm:text-base leading-relaxed max-w-lg mb-6 sm:mb-8 italic ${showImage ? 'text-center lg:text-left mx-auto lg:mx-0' : 'text-center mx-auto'}`}>
-                            Crafted to become part of your everyday moments.
+                        <p className={`text-gray-500 text-sm sm:text-base leading-relaxed max-w-lg mb-4 sm:mb-8 italic ${showImage ? 'text-center lg:text-left mx-auto lg:mx-0' : 'text-center mx-auto'}`}>
+                            Designed to shine through everyday moments and celebrations alike.
                         </p>
 
                         {/* Feature grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+                        <div className="grid grid-cols-2 gap-4 sm:gap-6">
                             {FEATURES.map((item) => (
                                 <div key={item.title} className="flex items-start gap-3">
                                     {/* Gold accent dot */}
@@ -90,7 +90,7 @@ export default function TrustStrip() {
                 </div>
 
                 {/* Bottom divider */}
-                <div className="mt-12 sm:mt-16 mx-auto w-24 h-px bg-amber-200/40" />
+                <div className="mt-6 sm:mt-10 mx-auto w-24 h-px bg-amber-200/40" />
             </div>
         </section>
     );

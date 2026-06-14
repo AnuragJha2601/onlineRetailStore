@@ -140,6 +140,7 @@ export default function Home() {
             <p className="text-sm text-gray-500 text-center">
               Handcrafted jewelry — bangles, necklaces & ethnic accessories.
             </p>
+            <p className="text-xs text-gray-400 italic">Discover new arrivals every week</p>
             <a href="https://www.instagram.com/dhanaktrinket?igsh=dGRvb3R5YmpqbzJ5&utm_source=qr" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-pink-200 bg-white text-pink-600 hover:bg-pink-50 hover:text-pink-700 font-medium transition-colors text-sm" aria-label="Follow us on Instagram">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -157,7 +158,7 @@ export default function Home() {
         href="https://chat.whatsapp.com/Bs6ue8BYGiY7xeZ7wk5EE8?mode=gi_t"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-5 right-5 z-40 w-14 h-14 bg-green-500 hover:bg-green-600 rounded-full shadow-lg flex items-center justify-center transition-colors hover:scale-105 active:scale-95"
+        className="fixed bottom-5 right-5 z-40 w-12 h-12 sm:w-14 sm:h-14 bg-green-500 hover:bg-green-600 rounded-full shadow-lg flex items-center justify-center transition-colors hover:scale-105 active:scale-95"
         aria-label="Chat on WhatsApp"
       >
         <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
