@@ -70,8 +70,8 @@ export default function HeroCarousel() {
             onMouseLeave={() => setPaused(false)}
         >
             {hasImage ? (
-                /* Image-based slide — full-width clickable banner */
-                <div className="cursor-pointer" onClick={scrollToCatalog}>
+                /* Image-based slide — constrained height, full-width clickable */
+                <div className="cursor-pointer max-h-[50vh] sm:max-h-[65vh] overflow-hidden" onClick={scrollToCatalog}>
                     {/* Desktop image */}
                     <Image
                         src={slide.desktopImage!}
@@ -79,7 +79,7 @@ export default function HeroCarousel() {
                         width={1717}
                         height={916}
                         priority={slide.id === 1}
-                        className="hidden sm:block w-full h-auto"
+                        className="hidden sm:block w-full h-auto object-cover object-top"
                     />
                     {/* Mobile image */}
                     <Image
@@ -88,12 +88,12 @@ export default function HeroCarousel() {
                         width={768}
                         height={1365}
                         priority={slide.id === 1}
-                        className="block sm:hidden w-full h-auto"
+                        className="block sm:hidden w-full h-auto object-cover object-top"
                     />
                 </div>
             ) : (
                 /* Text-only fallback slide */
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32 flex flex-col items-center text-center">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 flex flex-col items-center text-center">
                     <div className="mb-4 text-amber-400/60 text-3xl">✦</div>
                     <h2 className="font-serif text-3xl sm:text-5xl lg:text-6xl text-gray-900 leading-tight whitespace-pre-line">
                         {slide.title}
