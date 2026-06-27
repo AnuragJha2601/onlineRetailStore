@@ -119,25 +119,6 @@ export default function InventoryScreen() {
         return result;
     }, [products, searchQuery, categoryFilter, subCategoryFilter, stockStatusFilter, sortBy]);
 
-    // Helper: Calculate profit tier based on available prices
-    const getProfitIndicator = (product: AdminProduct) => {
-        const prices: number[] = [];
-        if (product.price) prices.push(product.price);
-        if (product.pariFestPrice) prices.push(product.pariFestPrice);
-        if (product.wholesalePrice) prices.push(product.wholesalePrice);
-
-        if (prices.length < 2) return { color: 'bg-gray-100 text-gray-800', label: 'Single Price' };
-
-        const max = Math.max(...prices);
-        const min = Math.min(...prices);
-        const spread = max - min;
-        const spreadPercent = (spread / min) * 100;
-
-        if (spreadPercent >= 50) return { color: 'bg-green-100 text-green-800', label: 'High Margin' };
-        if (spreadPercent >= 25) return { color: 'bg-blue-100 text-blue-800', label: 'Good Margin' };
-        return { color: 'bg-gray-100 text-gray-800', label: 'Standard' };
-    };
-
     const handleSaleSuccess = (sale: SaleDto) => {
         setProducts(prev => prev.map(p => {
             if (p.id !== sale.productId) return p;
@@ -331,16 +312,11 @@ export default function InventoryScreen() {
                                             <div className="w-14 h-14 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0 text-gray-400 text-xs border border-gray-200">📷</div>
                                         )}
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-start justify-between gap-2 flex-wrap">
+                                            <div className="flex items-start justify-between gap-2">
                                                 <p className="font-medium text-gray-900 text-sm truncate">{p.name}</p>
-                                                <div className="flex gap-1 flex-wrap justify-end">
-                                                    <span className={`inline-block px-1.5 py-0.5 rounded-full text-[10px] font-medium ${getProfitIndicator(p).color} flex-shrink-0`}>
-                                                        {getProfitIndicator(p).label}
-                                                    </span>
-                                                    {p.isInStock
-                                                        ? <span className="inline-block px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-800 flex-shrink-0">In Stock</span>
-                                                        : <span className="inline-block px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700 flex-shrink-0">Sold Out</span>}
-                                                </div>
+                                                {p.isInStock
+                                                    ? <span className="inline-block px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-800 flex-shrink-0">In Stock</span>
+                                                    : <span className="inline-block px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700 flex-shrink-0">Sold Out</span>}
                                             </div>
                                             <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
                                                 {p.productCode && <span className="font-mono bg-gray-100 px-1 py-0.5 rounded">{p.productCode}</span>}
@@ -405,7 +381,6 @@ export default function InventoryScreen() {
                                     <th className="px-4 py-3 text-right">Wholesale</th>
                                     <th className="px-4 py-3 text-center">Stock</th>
                                     <th className="px-4 py-3 text-center">Status</th>
-                                    <th className="px-4 py-3 text-center">Margin</th>
                                     <th className="px-4 py-3 text-center">Actions</th>
                                 </tr>
                             </thead>
@@ -440,11 +415,6 @@ export default function InventoryScreen() {
                                                 {p.isInStock
                                                     ? <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">In Stock</span>
                                                     : <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Sold Out</span>}
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getProfitIndicator(p).color}`}>
-                                                    {getProfitIndicator(p).label}
-                                                </span>
                                             </td>
                                             <td className="px-4 py-3 text-center">
                                                 {deleteConfirmId === p.id ? (
