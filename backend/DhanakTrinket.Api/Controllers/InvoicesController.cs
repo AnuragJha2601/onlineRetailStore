@@ -301,14 +301,22 @@ public class InvoicesController : ControllerBase
                         row.RelativeItem().PaddingLeft(logo != null ? 12 : 0).Column(info =>
                         {
                             info.Item().Text("Dhanak Trinket").FontSize(20).Bold().FontColor("#7c3aed");
-                            info.Item().Text("Ethnic finds & imitation jewellery").FontSize(9).FontColor("#888888");
+                            info.Item().Text("Ethnic Finds, Timeless Shine").FontSize(9).FontColor("#888888");
                         });
 
                         row.ConstantItem(180).AlignRight().Column(meta =>
                         {
                             meta.Item().AlignRight().Text("INVOICE").FontSize(16).Bold().FontColor("#7c3aed");
-                            meta.Item().AlignRight().Text(invoice.InvoiceNumber).FontSize(11).SemiBold();
-                            meta.Item().AlignRight().Text(invoice.InvoiceDate.ToString("dd MMM yyyy")).FontSize(9).FontColor("#666666");
+                            meta.Item().PaddingTop(6).AlignRight().Text(t =>
+                            {
+                                t.Span("No.  ").FontSize(9).FontColor("#999999");
+                                t.Span(invoice.InvoiceNumber).FontSize(11).SemiBold();
+                            });
+                            meta.Item().PaddingTop(2).AlignRight().Text(t =>
+                            {
+                                t.Span("Date  ").FontSize(9).FontColor("#999999");
+                                t.Span(invoice.InvoiceDate.ToString("dd MMM yyyy")).FontSize(10).FontColor("#444444");
+                            });
                         });
                     });
 
@@ -317,7 +325,7 @@ public class InvoicesController : ControllerBase
                     col.Item().PaddingTop(8).Column(bill =>
                     {
                         bill.Item().Text("Bill To").FontSize(9).FontColor("#888888");
-                        bill.Item().Text(invoice.CustomerName).SemiBold();
+                        bill.Item().PaddingTop(1).Text(invoice.CustomerName).FontSize(13).Bold().FontColor("#222222");
                         if (!string.IsNullOrWhiteSpace(invoice.CustomerPhone))
                             bill.Item().Text(invoice.CustomerPhone!).FontSize(9).FontColor("#666666");
                     });
@@ -396,6 +404,13 @@ public class InvoicesController : ControllerBase
                     footer.Item().LineHorizontal(1).LineColor("#e5e0f5");
                     footer.Item().PaddingTop(6).AlignCenter().Text("Thank you for shopping with Dhanak Trinket 💛")
                         .FontSize(10).FontColor("#7c3aed").SemiBold();
+                    footer.Item().PaddingTop(3).AlignCenter().Text(t =>
+                    {
+                        t.Span("Instagram ").FontSize(8).FontColor("#888888");
+                        t.Span("@dhanaktrinket").FontSize(8).FontColor("#7c3aed").SemiBold();
+                        t.Span("   ·   WhatsApp ").FontSize(8).FontColor("#888888");
+                        t.Span("chat.whatsapp.com/Bs6ue8BYGiY7xeZ7wk5EE8").FontSize(8).FontColor("#7c3aed").SemiBold();
+                    });
                     footer.Item().AlignCenter().Text("dhanaktrinket.in").FontSize(8).FontColor("#999999");
                 });
             });
