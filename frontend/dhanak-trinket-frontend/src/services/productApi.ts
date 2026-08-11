@@ -16,8 +16,9 @@ import {
     CreateCategoryRequest,
     SubCategory,
     CreateSubCategoryRequest,
+    InvoiceDto,
+    SaveInvoiceRequest,
 } from '@/types/product';
-
 // Base API configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
 
@@ -345,9 +346,66 @@ export const productApi = {
             body: JSON.stringify({ enabled }),
         });
     },
-};
 
-// Helper functions
+    // ─── Invoices / Billing ─────────────────────────────────────────────────────
+
+    async getInvoices(opts?: { year?: number; search?: string; includeDeleted?: boolean }): Promise<ApiResponse<InvoiceDto[]>> {
+        const params = new URLSearchParams();
+        if (opts?.year) params.set('year', String(opts.year));
+        if (opts?.search) params.set('search', opts.search);
+        if (opts?.includeDeleted) params.set('includeDeleted', 'true');
+        const qs = params.toString() ? `?${params.toString()}` : '';
+        return apiRequest<InvoiceDto[]>(`/invoices${qs}`, { headers: authHeader() });
+    },
+
+    async getInvoice(id: number): Promise<ApiResponse<InvoiceDto>> {
+        return apiRequest<InvoiceDto>(`/invoices/${id}`, { headers: authHeader() });
+    },
+
+    async createInvoice(request: SaveInvoiceRequest): Promise<ApiResponse<InvoiceDto>> {
+        return apiRequest<InvoiceDto>('/invoices', {
+            method: 'POST',
+            headers: authHeader(),
+            body: JSON.stringify(request),
+        });
+    },
+
+    async updateInvoice(id: number, request: SaveInvoiceRequest): Promise<ApiResponse<InvoiceDto>> {
+        return apiRequest<InvoiceDto>(`/invoices/${id}`, {
+            method: 'PUT',
+            headers: authHeader(),
+            body: JSON.stringify(request),
+        });
+    },
+
+    async deleteInvoice(id: number): Promise<ApiResponse<object>> {
+        return apiRequest<object>(`/invoices/${id}`, {
+            method: 'DELETE',
+            headers: authHeader(),
+        });
+    },
+
+    async restoreInvoice(id: number): Promise<ApiResponse<InvoiceDto>> {
+        return apiRequest<InvoiceDto>(`/invoices/${id}/restore`, {
+            method: 'POST',
+            headers: authHeader(),
+        });
+    },
+
+    /** Fetch the bill PDF as a Blob (authenticated). Returns null on failure. */
+    async downloadInvoicePdf(id: number, columns: string[]): Promise<Blob | null> {
+        try {
+            const qs = columns.length ? `?columns=${encodeURIComponent(columns.join(','))}` : '';
+            const res = await fetch(`${API_BASE_URL}/invoices/${id}/pdf${qs}`, {
+                headers: authHeader(),
+            });
+            if (!res.ok) return null;
+            return await res.blob();
+        } catch {
+            return null;
+        }
+    },
+};
 export const formatPrice = (price: number): string => {
     return new Intl.NumberFormat('en-IN', {
         style: 'currency',

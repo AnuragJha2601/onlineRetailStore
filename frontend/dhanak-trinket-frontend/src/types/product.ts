@@ -215,3 +215,65 @@ export interface ExpenseDto {
     notes?: string;
     createdAt: string;
 }
+
+// ─── Invoice / Billing types ─────────────────────────────────────────────────
+
+export interface InvoiceItemRequest {
+    itemName: string;
+    productId?: number;
+    costPrice: number;
+    marginPercent?: number;
+    unitPrice: number;
+    quantity: number;
+}
+
+export interface SaveInvoiceRequest {
+    customerName: string;
+    customerPhone?: string;
+    invoiceDate: string;       // ISO string
+    shipping: number;
+    notes?: string;
+    items: InvoiceItemRequest[];
+}
+
+export interface InvoiceItemDto {
+    id: number;
+    itemName: string;
+    productId?: number;
+    costPrice: number;
+    marginPercent?: number;
+    unitPrice: number;
+    quantity: number;
+    lineTotal: number;
+}
+
+export interface InvoiceDto {
+    id: number;
+    invoiceNumber: string;
+    customerName: string;
+    customerPhone?: string;
+    invoiceDate: string;
+    subtotal: number;
+    shipping: number;
+    grandTotal: number;
+    totalCost: number;         // internal (admin-only)
+    totalProfit: number;       // internal (admin-only)
+    notes?: string;
+    isDeleted: boolean;
+    deletedAt?: string;
+    createdAt: string;
+    items: InvoiceItemDto[];
+}
+
+/** Columns selectable when exporting a bill PDF. `internal` ones expose cost/profit. */
+export const INVOICE_PDF_COLUMNS = [
+    { key: 'item', label: 'Item', internal: false },
+    { key: 'qty', label: 'Qty', internal: false },
+    { key: 'price', label: 'Price', internal: false },
+    { key: 'total', label: 'Total', internal: false },
+    { key: 'cost', label: 'Cost', internal: true },
+    { key: 'margin', label: 'Margin %', internal: true },
+    { key: 'profit', label: 'Profit', internal: true },
+] as const;
+
+export type InvoicePdfColumnKey = typeof INVOICE_PDF_COLUMNS[number]['key'];

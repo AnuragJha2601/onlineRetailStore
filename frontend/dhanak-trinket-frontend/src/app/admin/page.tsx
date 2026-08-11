@@ -5,16 +5,18 @@ import Image from 'next/image';
 import InventoryScreen from '@/components/InventoryScreen';
 import ExpensesScreen from '@/components/ExpensesScreen';
 import SalesScreen from '@/components/SalesScreen';
+import BillingScreen from '@/components/BillingScreen';
 import CategoriesScreen from '@/components/CategoriesScreen';
 import { useAuth } from '@/contexts/AuthContext';
 import { productApi } from '@/services/productApi';
 
-type Tab = 'inventory' | 'expenses' | 'sales' | 'categories';
+type Tab = 'inventory' | 'expenses' | 'sales' | 'billing' | 'categories';
 
 const TABS: { id: Tab; label: string }[] = [
     { id: 'inventory', label: 'Inventory' },
     { id: 'expenses', label: 'Expenses' },
     { id: 'sales', label: 'Sales' },
+    { id: 'billing', label: 'Billing' },
     { id: 'categories', label: 'Categories' },
 ];
 
@@ -101,6 +103,7 @@ export default function AdminPage() {
                 {activeTab === 'inventory' && <InventoryScreen />}
                 {activeTab === 'expenses' && <ExpensesScreen />}
                 {activeTab === 'sales' && <SalesScreen />}
+                {activeTab === 'billing' && <BillingScreen />}
                 {activeTab === 'categories' && <CategoriesScreen />}
             </main>
         </div>

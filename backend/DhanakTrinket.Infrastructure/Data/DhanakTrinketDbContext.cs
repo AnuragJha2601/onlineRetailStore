@@ -18,6 +18,8 @@ public class DhanakTrinketDbContext : DbContext
     public DbSet<BulkSaleItem> BulkSaleItems { get; set; }
     public DbSet<Expense> Expenses { get; set; }
     public DbSet<SiteSetting> SiteSettings { get; set; }
+    public DbSet<Invoice> Invoices { get; set; }
+    public DbSet<InvoiceItem> InvoiceItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -168,6 +170,48 @@ public class DhanakTrinketDbContext : DbContext
             entity.Property(e => e.Key).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Value).IsRequired().HasMaxLength(500);
             entity.HasIndex(e => e.Key).IsUnique();
+        });
+
+        // Invoice configuration
+        modelBuilder.Entity<Invoice>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.InvoiceNumber).IsRequired().HasMaxLength(30);
+            entity.Property(e => e.CustomerName).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.CustomerPhone).HasMaxLength(20);
+            entity.Property(e => e.Subtotal).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.Shipping).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.GrandTotal).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.TotalCost).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.TotalProfit).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            // Soft delete — deleted bills hidden by default, number preserved
+            entity.HasQueryFilter(e => !e.IsDeleted);
+
+            entity.HasIndex(e => e.InvoiceNumber).IsUnique();
+            entity.HasIndex(e => e.InvoiceDate);
+            entity.HasIndex(e => new { e.Year, e.SequenceNumber });
+        });
+
+        // InvoiceItem configuration
+        modelBuilder.Entity<InvoiceItem>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ItemName).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.CostPrice).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.MarginPercent).HasColumnType("decimal(6,2)");
+            entity.Property(e => e.UnitPrice).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.LineTotal).HasColumnType("decimal(10,2)");
+
+            entity.HasOne(e => e.Invoice)
+                  .WithMany(i => i.Items)
+                  .HasForeignKey(e => e.InvoiceId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.InvoiceId);
         });
     }
 

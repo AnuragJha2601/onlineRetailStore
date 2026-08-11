@@ -13,6 +13,9 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// QuestPDF Community license (free for small businesses / low revenue)
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 // Add services to the container
 builder.Services.AddControllers();
 // builder.Services.AddEndpointsApiExplorer();
